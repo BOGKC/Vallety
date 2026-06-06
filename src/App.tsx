@@ -3,7 +3,8 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'react-hot-toast'
 import { queryClient } from './shared/lib/queryClient'
 import { AuthGuard } from './shared/components/AuthGuard'
-import { Layout } from './shared/components/Layout'
+import { AppShell } from './shared/components/AppShell'
+import { ComingSoon } from './shared/components/ComingSoon'
 import { useAuth } from './shared/hooks/useAuth'
 import { SignupPage } from './pages/auth/SignupPage'
 import { LoginPage } from './pages/auth/LoginPage'
@@ -12,7 +13,7 @@ import { PersonalDashboard } from './modes/personal/PersonalDashboard'
 import { BusinessDashboard } from './modes/business/BusinessDashboard'
 import { InvestmentDashboard } from './modes/investment/InvestmentDashboard'
 
-// Initialises the Supabase auth listener for the whole app.
+// Initialises the Supabase auth listener once for the whole app.
 function AuthInit({ children }: { children: React.ReactNode }) {
   useAuth()
   return <>{children}</>
@@ -24,22 +25,49 @@ export default function App() {
       <BrowserRouter>
         <AuthInit>
           <Routes>
-            {/* Public auth routes */}
-            <Route path="/signup" element={<SignupPage />} />
-            <Route path="/login" element={<LoginPage />} />
+            {/* ── Public routes ──────────────────────────────────────────── */}
+            <Route path="/signup"     element={<SignupPage />} />
+            <Route path="/login"      element={<LoginPage />} />
             <Route path="/onboarding" element={<OnboardingPage />} />
 
-            {/* Protected routes */}
+            {/* ── Protected routes (AuthGuard → AppShell) ────────────────── */}
             <Route element={<AuthGuard />}>
-              <Route element={<Layout />}>
+              <Route element={<AppShell />}>
+
                 <Route index element={<Navigate to="/personal" replace />} />
-                <Route path="/personal" element={<PersonalDashboard />} />
-                <Route path="/business" element={<BusinessDashboard />} />
-                <Route path="/investment" element={<InvestmentDashboard />} />
+
+                {/* Personal ───────────────────────────────────────────────── */}
+                <Route path="/personal"                element={<PersonalDashboard />} />
+                <Route path="/personal/transactions"   element={<ComingSoon title="Transactions" />} />
+                <Route path="/personal/budgets"        element={<ComingSoon title="Budgets" />} />
+                <Route path="/personal/goals"          element={<ComingSoon title="Goals" />} />
+                <Route path="/personal/bills"          element={<ComingSoon title="Bills" />} />
+                <Route path="/personal/debts"          element={<ComingSoon title="Debts" />} />
+                <Route path="/personal/net-worth"      element={<ComingSoon title="Net Worth" />} />
+
+                {/* Business ───────────────────────────────────────────────── */}
+                <Route path="/business"                element={<BusinessDashboard />} />
+                <Route path="/business/clients"        element={<ComingSoon title="Clients" />} />
+                <Route path="/business/invoices"       element={<ComingSoon title="Invoices" />} />
+                <Route path="/business/expenses"       element={<ComingSoon title="Expenses" />} />
+                <Route path="/business/mileage"        element={<ComingSoon title="Mileage Log" />} />
+                <Route path="/business/tax"            element={<ComingSoon title="Tax" />} />
+
+                {/* Investment ─────────────────────────────────────────────── */}
+                <Route path="/investment"              element={<InvestmentDashboard />} />
+                <Route path="/investment/portfolio"    element={<ComingSoon title="Portfolio" />} />
+                <Route path="/investment/transactions" element={<ComingSoon title="Investment Transactions" />} />
+                <Route path="/investment/watchlist"    element={<ComingSoon title="Watchlist" />} />
+
+                {/* Shared ─────────────────────────────────────────────────── */}
+                <Route path="/settings"                element={<ComingSoon title="Settings" />} />
+                <Route path="/settings/profile"        element={<ComingSoon title="Profile" />} />
+                <Route path="/advisor"                 element={<ComingSoon title="AI Advisor" />} />
+
               </Route>
             </Route>
 
-            {/* Catch-all */}
+            {/* ── Catch-all ──────────────────────────────────────────────── */}
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
 
@@ -53,7 +81,7 @@ export default function App() {
                 fontSize: '14px',
               },
               success: { iconTheme: { primary: '#0F9D7A', secondary: '#fff' } },
-              error: { iconTheme: { primary: '#f87171', secondary: '#fff' } },
+              error:   { iconTheme: { primary: '#f87171', secondary: '#fff' } },
             }}
           />
         </AuthInit>
