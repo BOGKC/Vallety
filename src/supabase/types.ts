@@ -396,103 +396,125 @@ export type WatchlistItemInsert = OmitGenerated<WatchlistItem>
 export type WatchlistItemUpdate = Partial<WatchlistItemInsert>
 
 // ── Supabase Database shape (for typed client) ───────────────────────────────
+// Row/Insert/Update are intersected with Record<string, unknown> so they
+// satisfy the GenericTable constraint inside @supabase/postgrest-js.
+
+type GR<T> = T & Record<string, unknown>
 
 export interface Database {
   public: {
     Tables: {
       profiles: {
-        Row: Profile
-        Insert: Omit<Profile, 'created_at' | 'updated_at'>
-        Update: ProfileUpdate
+        Row: GR<Profile>
+        Insert: GR<Omit<Profile, 'created_at' | 'updated_at'>>
+        Update: GR<ProfileUpdate>
+        Relationships: []
       }
       accounts: {
-        Row: Account
-        Insert: AccountInsert
-        Update: AccountUpdate
+        Row: GR<Account>
+        Insert: GR<AccountInsert>
+        Update: GR<AccountUpdate>
+        Relationships: []
       }
       transactions: {
-        Row: Transaction
-        Insert: TransactionInsert
-        Update: TransactionUpdate
+        Row: GR<Transaction>
+        Insert: GR<TransactionInsert>
+        Update: GR<TransactionUpdate>
+        Relationships: []
       }
       budgets: {
-        Row: Budget
-        Insert: BudgetInsert
-        Update: BudgetUpdate
+        Row: GR<Budget>
+        Insert: GR<BudgetInsert>
+        Update: GR<BudgetUpdate>
+        Relationships: []
       }
       goals: {
-        Row: Goal
-        Insert: GoalInsert
-        Update: GoalUpdate
+        Row: GR<Goal>
+        Insert: GR<GoalInsert>
+        Update: GR<GoalUpdate>
+        Relationships: []
       }
       bills: {
-        Row: Bill
-        Insert: BillInsert
-        Update: BillUpdate
+        Row: GR<Bill>
+        Insert: GR<BillInsert>
+        Update: GR<BillUpdate>
+        Relationships: []
       }
       debts: {
-        Row: Debt
-        Insert: DebtInsert
-        Update: DebtUpdate
+        Row: GR<Debt>
+        Insert: GR<DebtInsert>
+        Update: GR<DebtUpdate>
+        Relationships: []
       }
       net_worth_snapshots: {
-        Row: NetWorthSnapshot
-        Insert: NetWorthSnapshotInsert
-        Update: NetWorthSnapshotUpdate
+        Row: GR<NetWorthSnapshot>
+        Insert: GR<NetWorthSnapshotInsert>
+        Update: GR<NetWorthSnapshotUpdate>
+        Relationships: []
       }
       business_clients: {
-        Row: BusinessClient
-        Insert: BusinessClientInsert
-        Update: BusinessClientUpdate
+        Row: GR<BusinessClient>
+        Insert: GR<BusinessClientInsert>
+        Update: GR<BusinessClientUpdate>
+        Relationships: []
       }
       invoices: {
-        Row: Invoice
-        Insert: InvoiceInsert
-        Update: InvoiceUpdate
+        Row: GR<Invoice>
+        Insert: GR<InvoiceInsert>
+        Update: GR<InvoiceUpdate>
+        Relationships: []
       }
       invoice_lines: {
-        Row: InvoiceLine
-        Insert: InvoiceLineInsert
-        Update: InvoiceLineUpdate
+        Row: GR<InvoiceLine>
+        Insert: GR<InvoiceLineInsert>
+        Update: GR<InvoiceLineUpdate>
+        Relationships: []
       }
       business_expenses: {
-        Row: BusinessExpense
-        Insert: BusinessExpenseInsert
-        Update: BusinessExpenseUpdate
+        Row: GR<BusinessExpense>
+        Insert: GR<BusinessExpenseInsert>
+        Update: GR<BusinessExpenseUpdate>
+        Relationships: []
       }
       mileage_log: {
-        Row: MileageLog
-        Insert: MileageLogInsert
-        Update: MileageLogUpdate
+        Row: GR<MileageLog>
+        Insert: GR<MileageLogInsert>
+        Update: GR<MileageLogUpdate>
+        Relationships: []
       }
       tax_payments: {
-        Row: TaxPayment
-        Insert: TaxPaymentInsert
-        Update: TaxPaymentUpdate
+        Row: GR<TaxPayment>
+        Insert: GR<TaxPaymentInsert>
+        Update: GR<TaxPaymentUpdate>
+        Relationships: []
       }
       portfolios: {
-        Row: Portfolio
-        Insert: PortfolioInsert
-        Update: PortfolioUpdate
+        Row: GR<Portfolio>
+        Insert: GR<PortfolioInsert>
+        Update: GR<PortfolioUpdate>
+        Relationships: []
       }
       holdings: {
-        Row: Holding
-        Insert: HoldingInsert
-        Update: HoldingUpdate
+        Row: GR<Holding>
+        Insert: GR<HoldingInsert>
+        Update: GR<HoldingUpdate>
+        Relationships: []
       }
       investment_transactions: {
-        Row: InvestmentTransaction
-        Insert: InvestmentTransactionInsert
-        Update: InvestmentTransactionUpdate
+        Row: GR<InvestmentTransaction>
+        Insert: GR<InvestmentTransactionInsert>
+        Update: GR<InvestmentTransactionUpdate>
+        Relationships: []
       }
       watchlist: {
-        Row: WatchlistItem
-        Insert: WatchlistItemInsert
-        Update: WatchlistItemUpdate
+        Row: GR<WatchlistItem>
+        Insert: GR<WatchlistItemInsert>
+        Update: GR<WatchlistItemUpdate>
+        Relationships: []
       }
     }
-    Views: Record<string, never>
-    Functions: Record<string, never>
+    Views: Record<never, never>
+    Functions: Record<never, never>
     Enums: {
       app_mode: AppMode
       business_type: BusinessType
