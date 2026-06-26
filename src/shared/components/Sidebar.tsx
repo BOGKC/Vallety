@@ -1,93 +1,99 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
-  LayoutDashboard, ArrowLeftRight, PieChart, Target, Receipt,
-  CreditCard, TrendingUp, Users, FileText, DollarSign, Car,
-  Calculator, Briefcase, Eye, Settings, Sparkles, ChevronLeft,
-  ChevronRight, Wallet, type LucideIcon,
+  LayoutDashboard, ArrowLeftRight, Target, Calendar, TrendingUp,
+  Sparkles, Settings, ChevronLeft, ChevronRight, type LucideIcon,
 } from 'lucide-react'
 import { useAppStore } from '../store/appStore'
 import { cn } from '../lib/cn'
-import type { AppMode } from '../types'
 
 // ── Nav data ──────────────────────────────────────────────────────────────────
 
-interface NavItem { label: string; icon: LucideIcon; to: string }
-
-const MODE_NAV: Record<AppMode, NavItem[]> = {
-  personal: [
-    { label: 'Dashboard',    icon: LayoutDashboard, to: '/personal' },
-    { label: 'Transactions', icon: ArrowLeftRight,  to: '/personal/transactions' },
-    { label: 'Budgets',      icon: PieChart,        to: '/personal/budgets' },
-    { label: 'Goals',        icon: Target,          to: '/personal/goals' },
-    { label: 'Bills',        icon: Receipt,         to: '/personal/bills' },
-    { label: 'Debts',        icon: CreditCard,      to: '/personal/debts' },
-    { label: 'Net Worth',    icon: TrendingUp,      to: '/personal/net-worth' },
-  ],
-  business: [
-    { label: 'Dashboard', icon: LayoutDashboard, to: '/business' },
-    { label: 'Clients',   icon: Users,           to: '/business/clients' },
-    { label: 'Invoices',  icon: FileText,        to: '/business/invoices' },
-    { label: 'Expenses',  icon: DollarSign,      to: '/business/expenses' },
-    { label: 'Mileage',   icon: Car,             to: '/business/mileage' },
-    { label: 'Tax',       icon: Calculator,      to: '/business/tax' },
-  ],
-  investment: [
-    { label: 'Dashboard',    icon: LayoutDashboard, to: '/investment' },
-    { label: 'Portfolio',    icon: Briefcase,       to: '/investment/portfolio' },
-    { label: 'Transactions', icon: ArrowLeftRight,  to: '/investment/transactions' },
-    { label: 'Watchlist',    icon: Eye,             to: '/investment/watchlist' },
-  ],
+interface NavItem {
+  label: string
+  icon: LucideIcon
+  to: string
+  end?: boolean
+  /** AI Advisor gets a persistent accent treatment + slightly larger icon. */
+  accent?: boolean
 }
 
-const BOTTOM_NAV: NavItem[] = [
-  { label: 'Settings',   icon: Settings,  to: '/settings' },
-  { label: 'AI Advisor', icon: Sparkles,  to: '/advisor' },
+interface NavGroup {
+  label: string
+  items: NavItem[]
+}
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    label: 'Manage',
+    items: [
+      { label: 'Dashboard', icon: LayoutDashboard, to: '/', end: true },
+      { label: 'Money', icon: ArrowLeftRight, to: '/transactions' },
+    ],
+  },
+  {
+    label: 'Plan',
+    items: [
+      { label: 'Planning', icon: Target, to: '/budgets' },
+      { label: 'Bills & Schedules', icon: Calendar, to: '/bills' },
+    ],
+  },
+  {
+    label: 'Grow',
+    items: [
+      { label: 'Wealth', icon: TrendingUp, to: '/net-worth' },
+      { label: 'AI Advisor', icon: Sparkles, to: '/advisor', accent: true },
+    ],
+  },
 ]
 
-const MODE_ACTIVE: Record<AppMode, string> = {
-  personal:   'bg-brand/10 text-brand',
-  business:   'bg-business/10 text-business',
-  investment: 'bg-investment/10 text-investment',
-}
-
-// ── NavItem component ─────────────────────────────────────────────────────────
+// ── Nav item ──────────────────────────────────────────────────────────────────
 
 function SidebarNavItem({
   item,
   collapsed,
-  activeClass,
 }: {
   item: NavItem
   collapsed: boolean
-  activeClass: string
 }) {
   return (
     <NavLink
       to={item.to}
-      end={item.to.split('/').length === 2}
+      end={item.end}
       title={collapsed ? item.label : undefined}
       className={({ isActive }) =>
         cn(
-          'flex items-center gap-3 rounded-lg text-sm font-medium transition-colors',
-          collapsed ? 'w-10 h-10 justify-center mx-auto' : 'px-3 py-2',
+          'group relative flex items-center rounded-md text-[13px] font-medium',
+          'h-9 px-2',
+          collapsed ? 'justify-center' : 'gap-3',
           isActive
-            ? activeClass
-            : 'text-text-secondary hover:bg-white/5 hover:text-text-primary'
+            ? 'bg-[var(--color-accent-muted)] text-[var(--color-accent)]'
+            : item.accent
+              ? 'text-[var(--color-accent)] hover:bg-bg-elevated'
+              : 'text-text-secondary hover:bg-bg-elevated hover:text-text-primary'
         )
       }
+      style={({ isActive }) => ({
+        borderLeft: `2px solid ${isActive ? 'var(--color-accent)' : 'transparent'}`,
+        transition: 'var(--transition-fast)',
+        transitionProperty: 'background-color, color, border-color',
+      })}
     >
-      <item.icon className="h-[18px] w-[18px] flex-shrink-0" />
-      <span
-        style={{
-          maxWidth: collapsed ? 0 : 160,
-          opacity: collapsed ? 0 : 1,
-          overflow: 'hidden',
-          whiteSpace: 'nowrap',
-          transition: 'max-width 150ms ease, opacity 120ms ease',
-        }}
-      >
-        {item.label}
-      </span>
+      <item.icon
+        className={cn('flex-shrink-0', item.accent ? 'h-5 w-5' : 'h-[18px] w-[18px]')}
+      />
+      {!collapsed && (
+        <span className="truncate">{item.label}</span>
+      )}
+
+      {/* Tooltip — collapsed only */}
+      {collapsed && (
+        <span
+          className="pointer-events-none absolute z-50 whitespace-nowrap rounded-md bg-bg-elevated px-2 py-1 text-[12px] font-medium text-text-primary opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100"
+          style={{ left: 68 }}
+        >
+          {item.label}
+        </span>
+      )}
     </NavLink>
   )
 }
@@ -95,103 +101,153 @@ function SidebarNavItem({
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 
 interface SidebarProps {
-  /** Render in mobile-drawer mode: no collapse toggle, full-width labels */
+  /** Render in mobile-drawer mode: always expanded, no collapse toggle. */
   mobile?: boolean
 }
 
 export function Sidebar({ mobile = false }: SidebarProps) {
-  const { mode, sidebarCollapsed, toggleSidebar } = useAppStore()
+  const { sidebarCollapsed, toggleSidebar } = useAppStore()
   const navigate = useNavigate()
 
   const collapsed = mobile ? false : sidebarCollapsed
-  const activeClass = MODE_ACTIVE[mode]
-
-  const handleLogoClick = () => navigate(`/${mode}`)
 
   return (
     <aside
       style={{
-        width: collapsed ? 64 : 240,
-        transition: 'width 150ms ease',
+        width: mobile ? '100%' : collapsed ? 60 : 240,
+        transition: 'width var(--transition-base)',
       }}
       className={cn(
-        'flex flex-col bg-bg-secondary border-r border-border overflow-hidden flex-shrink-0',
-        mobile ? 'w-full' : 'h-full'
+        'flex flex-col bg-bg-secondary overflow-hidden flex-shrink-0',
+        mobile ? 'w-full' : 'h-full border-r border-[var(--border-subtle)]'
       )}
     >
-      {/* Logo ─────────────────────────────────────────────────────────────── */}
-      <button
-        onClick={handleLogoClick}
-        className="flex items-center gap-2.5 h-14 px-4 border-b border-border flex-shrink-0 hover:bg-white/5 transition-colors w-full text-left"
-        aria-label="Go to dashboard"
-      >
-        <div className="h-7 w-7 rounded-lg bg-brand flex items-center justify-center flex-shrink-0">
-          <Wallet className="h-4 w-4 text-white" />
-        </div>
-        <span
-          style={{
-            maxWidth: collapsed ? 0 : 120,
-            opacity: collapsed ? 0 : 1,
-            overflow: 'hidden',
-            whiteSpace: 'nowrap',
-            transition: 'max-width 150ms ease, opacity 120ms ease',
-          }}
-          className="text-text-primary font-semibold text-base"
-        >
-          Vallety
-        </span>
-      </button>
-
-      {/* Mode nav ─────────────────────────────────────────────────────────── */}
-      <nav
+      {/* Header ───────────────────────────────────────────────────────────── */}
+      <div
         className={cn(
-          'flex-1 overflow-y-auto overflow-x-hidden py-3 space-y-0.5',
-          collapsed ? 'px-1.5' : 'px-3'
+          'flex items-center h-[60px] flex-shrink-0 border-b border-[var(--border-subtle)]',
+          collapsed ? 'justify-center px-0' : 'justify-between px-3'
         )}
+      >
+        {collapsed ? (
+          <button
+            onClick={toggleSidebar}
+            title="Expand sidebar"
+            aria-label="Expand sidebar"
+            className="flex h-9 w-9 items-center justify-center rounded-md hover:bg-bg-elevated"
+            style={{ transition: 'var(--transition-fast)' }}
+          >
+            <span className="text-[20px] font-bold leading-none text-[var(--color-accent)]">
+              V
+            </span>
+          </button>
+        ) : (
+          <>
+            <button
+              onClick={() => navigate('/')}
+              className="flex items-center gap-2 text-left"
+              aria-label="Go to dashboard"
+            >
+              <span className="text-[20px] font-bold leading-none text-[var(--color-accent)]">
+                V
+              </span>
+              <span className="text-[14px] font-medium text-text-primary">
+                vallety
+              </span>
+            </button>
+
+            {!mobile && (
+              <button
+                onClick={toggleSidebar}
+                title="Collapse sidebar"
+                aria-label="Collapse sidebar"
+                className="flex h-7 w-7 items-center justify-center rounded-md text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
+                style={{ transition: 'var(--transition-fast)' }}
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Navigation ───────────────────────────────────────────────────────── */}
+      <nav
+        className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-3"
         aria-label="Main navigation"
       >
-        {MODE_NAV[mode].map((item) => (
-          <SidebarNavItem
-            key={item.to}
-            item={item}
-            collapsed={collapsed}
-            activeClass={activeClass}
-          />
+        {NAV_GROUPS.map((group, i) => (
+          <div key={group.label} className={cn(i > 0 && 'mt-4')}>
+            {!collapsed && (
+              <p
+                className="px-2 pb-1.5 text-[10px] font-medium uppercase text-text-muted"
+                style={{ letterSpacing: '0.08em' }}
+              >
+                {group.label}
+              </p>
+            )}
+            <div className="flex flex-col gap-0.5">
+              {group.items.map((item) => (
+                <SidebarNavItem key={item.to} item={item} collapsed={collapsed} />
+              ))}
+            </div>
+          </div>
         ))}
       </nav>
 
-      {/* Divider ───────────────────────────────────────────────────────────── */}
-      <div className="mx-3 border-t border-border" />
-
-      {/* Bottom nav ───────────────────────────────────────────────────────── */}
-      <div
-        className={cn(
-          'py-3 space-y-0.5 flex-shrink-0',
-          collapsed ? 'px-1.5' : 'px-3'
+      {/* Bottom / account ─────────────────────────────────────────────────── */}
+      <div className="flex-shrink-0 border-t border-[var(--border-subtle)] p-2">
+        {collapsed ? (
+          <NavLink
+            to="/settings"
+            title="Settings"
+            aria-label="Settings"
+            className="group relative mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-bg-elevated text-[12px] font-semibold text-[var(--color-accent)]"
+          >
+            Y
+            <span
+              className="pointer-events-none absolute z-50 whitespace-nowrap rounded-md bg-bg-elevated px-2 py-1 text-[12px] font-medium text-text-primary opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100"
+              style={{ left: 68 }}
+            >
+              Settings
+            </span>
+          </NavLink>
+        ) : (
+          <div className="flex items-center gap-2.5 px-1 py-1">
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-bg-elevated text-[12px] font-semibold text-[var(--color-accent)]">
+              Y
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[13px] font-medium leading-tight text-text-primary">
+                You
+              </p>
+              <span className="mt-0.5 inline-block rounded-full bg-bg-elevated px-1.5 py-0.5 text-[10px] font-medium leading-none text-text-muted">
+                Local
+              </span>
+            </div>
+            <NavLink
+              to="/settings"
+              title="Settings"
+              aria-label="Settings"
+              className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
+              style={{ transition: 'var(--transition-fast)' }}
+            >
+              <Settings className="h-4 w-4" />
+            </NavLink>
+          </div>
         )}
-      >
-        {BOTTOM_NAV.map((item) => (
-          <SidebarNavItem
-            key={item.to}
-            item={item}
-            collapsed={collapsed}
-            activeClass="bg-white/10 text-text-primary"
-          />
-        ))}
       </div>
 
-      {/* Collapse toggle (desktop only) ────────────────────────────────────── */}
-      {!mobile && (
+      {/* Expand affordance when collapsed (desktop) ───────────────────────── */}
+      {!mobile && collapsed && (
         <button
           onClick={toggleSidebar}
-          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="flex items-center justify-center h-9 border-t border-border text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors flex-shrink-0"
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title="Expand sidebar"
+          aria-label="Expand sidebar"
+          className="flex h-9 flex-shrink-0 items-center justify-center border-t border-[var(--border-subtle)] text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
+          style={{ transition: 'var(--transition-fast)' }}
         >
-          {collapsed
-            ? <ChevronRight className="h-4 w-4" />
-            : <ChevronLeft  className="h-4 w-4" />
-          }
+          <ChevronRight className="h-4 w-4" />
         </button>
       )}
     </aside>
