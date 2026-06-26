@@ -1,57 +1,80 @@
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { Bell, ChevronDown, LogOut, User, Settings, Menu } from 'lucide-react'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { Bell, LogOut, User, Settings, Menu } from 'lucide-react'
 import { useAppStore } from '../store/appStore'
 import { useAuthStore } from '../store/authStore'
 import { useAuth } from '../hooks/useAuth'
-import { cn } from '../lib/cn'
-import type { AppMode } from '../types'
 
-// ── Mode switcher ─────────────────────────────────────────────────────────────
+// ── Page title resolver ─────────────────────────────────────────────────────────
 
-const MODES: AppMode[] = ['personal', 'business', 'investment']
-const MODE_LABELS: Record<AppMode, string> = {
-  personal: 'Personal',
-  business: 'Business',
-  investment: 'Investment',
+const PAGE_TITLES: Record<string, string> = {
+  '/': 'Dashboard',
+  '/transactions': 'Transactions',
+  '/budgets': 'Budgets',
+  '/bills': 'Bills',
+  '/net-worth': 'Net Worth',
+  '/advisor': 'AI Advisor',
+  '/settings': 'Settings',
+  '/settings/profile': 'Profile',
+  // Legacy mode-prefixed routes
+  '/personal': 'Dashboard',
+  '/personal/transactions': 'Transactions',
+  '/personal/budgets': 'Budgets',
+  '/personal/goals': 'Goals',
+  '/personal/bills': 'Bills',
+  '/personal/debts': 'Debts',
+  '/personal/net-worth': 'Net Worth',
+  '/business': 'Dashboard',
+  '/business/clients': 'Clients',
+  '/business/invoices': 'Invoices',
+  '/business/expenses': 'Expenses',
+  '/business/mileage': 'Mileage',
+  '/business/tax': 'Tax',
+  '/investment': 'Dashboard',
+  '/investment/portfolio': 'Portfolio',
+  '/investment/transactions': 'Transactions',
+  '/investment/watchlist': 'Watchlist',
 }
-const MODE_ACTIVE_PILL: Record<AppMode, string> = {
-  personal:   'bg-brand/15 text-brand ring-1 ring-inset ring-brand/30',
-  business:   'bg-business/15 text-business ring-1 ring-inset ring-business/30',
-  investment: 'bg-investment/15 text-investment ring-1 ring-inset ring-investment/30',
-}
-const MODE_ROOTS: Record<AppMode, string> = {
-  personal:   '/personal',
-  business:   '/business',
-  investment: '/investment',
+
+function resolvePageTitle(pathname: string): string {
+  const exact = PAGE_TITLES[pathname]
+  if (exact) return exact
+  // Fallback: title-case the last non-empty path segment
+  const segment = pathname.split('/').filter(Boolean).pop() ?? ''
+  if (!segment) return 'Dashboard'
+  return segment
+    .split('-')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ')
 }
 
-function ModeSwitcher() {
-  const { mode, setMode } = useAppStore()
-  const navigate = useNavigate()
+function timeGreeting(): string {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Good morning'
+  if (hour < 17) return 'Good afternoon'
+  return 'Good evening'
+}
 
-  const handleSwitch = (m: AppMode) => {
-    setMode(m)
-    navigate(MODE_ROOTS[m])
-  }
+// ── Currency pill ───────────────────────────────────────────────────────────────
+
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  EUR: '€', USD: '$', GBP: '£', JPY: '¥',
+}
+
+function CurrencyPill() {
+  const profile = useAuthStore((s) => s.profile)
+  const currency = profile?.currency ?? 'EUR'
+  const symbol = CURRENCY_SYMBOLS[currency] ?? ''
 
   return (
-    <div className="flex items-center gap-1 p-1 bg-bg-primary rounded-lg">
-      {MODES.map((m) => (
-        <button
-          key={m}
-          onClick={() => handleSwitch(m)}
-          className={cn(
-            'px-3 py-1 rounded-md text-sm font-medium transition-all',
-            mode === m
-              ? MODE_ACTIVE_PILL[m]
-              : 'text-text-secondary hover:text-text-primary hover:bg-white/5'
-          )}
-        >
-          {MODE_LABELS[m]}
-        </button>
-      ))}
-    </div>
+    <button
+      type="button"
+      className="hidden md:inline-flex h-7 items-center rounded-full bg-bg-elevated px-2 text-[12px] font-medium text-text-secondary"
+      style={{ transition: 'var(--transition-fast)' }}
+      aria-label={`Currency: ${currency}`}
+    >
+      {symbol} {currency}
+    </button>
   )
 }
 
@@ -59,35 +82,36 @@ function ModeSwitcher() {
 
 function NotificationBell() {
   const { notificationCount } = useAppStore()
+  const hasAlerts = notificationCount > 0
 
   return (
     <button
-      className="relative h-9 w-9 flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
-      aria-label={`Notifications${notificationCount > 0 ? ` (${notificationCount} unread)` : ''}`}
+      className="relative flex h-8 w-8 items-center justify-center rounded-md text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
+      style={{ transition: 'var(--transition-fast)' }}
+      aria-label={`Notifications${hasAlerts ? ` (${notificationCount} unread)` : ''}`}
     >
-      <Bell className="h-5 w-5" />
-      {notificationCount > 0 && (
+      <Bell className="h-[18px] w-[18px]" />
+      {hasAlerts && (
         <span
-          className="absolute top-1 right-1 h-4 w-4 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center leading-none"
+          className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[var(--color-danger)]"
           aria-hidden
-        >
-          {notificationCount > 9 ? '9+' : notificationCount}
-        </span>
+        />
       )}
     </button>
   )
 }
 
-// ── Currency badge ────────────────────────────────────────────────────────────
+// ── Sync indicator ──────────────────────────────────────────────────────────────
 
-function CurrencyBadge() {
-  const profile = useAuthStore((s) => s.profile)
-  const currency = profile?.currency ?? 'EUR'
-
+function SyncIndicator() {
   return (
-    <span className="hidden sm:inline-flex items-center px-2.5 py-1 rounded-md bg-bg-primary border border-border text-text-secondary text-xs font-medium tracking-wide">
-      {currency}
-    </span>
+    <div
+      className="hidden md:flex items-center gap-1.5 px-1.5"
+      title="Data is stored locally"
+    >
+      <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-success)]" aria-hidden />
+      <span className="text-[12px] text-text-muted">Local</span>
+    </div>
   )
 }
 
@@ -95,7 +119,7 @@ function CurrencyBadge() {
 
 function UserMenu() {
   const profile = useAuthStore((s) => s.profile)
-  const user    = useAuthStore((s) => s.user)
+  const user = useAuthStore((s) => s.user)
   const { signOut } = useAuth()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
@@ -104,9 +128,7 @@ function UserMenu() {
   // Close on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
     }
     if (open) document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
@@ -121,11 +143,13 @@ function UserMenu() {
     return () => document.removeEventListener('keydown', handleKey)
   }, [open])
 
-  const displayName = profile?.full_name ?? user?.email ?? 'User'
-  const email       = user?.email ?? ''
-  const initials    = profile?.full_name
+  const displayName = profile?.full_name ?? user?.email ?? null
+  const email = user?.email ?? ''
+  const initials = profile?.full_name
     ? profile.full_name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
-    : (user?.email?.[0] ?? 'U').toUpperCase()
+    : user?.email
+      ? user.email[0].toUpperCase()
+      : 'V'
 
   const handleSignOut = async () => {
     setOpen(false)
@@ -137,39 +161,35 @@ function UserMenu() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 h-9 px-1.5 rounded-lg hover:bg-white/5 transition-colors"
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-elevated text-[13px] font-semibold text-[var(--color-accent)]"
+        style={{ transition: 'var(--transition-fast)' }}
         aria-haspopup="menu"
         aria-expanded={open}
+        aria-label="Account menu"
       >
-        {/* Avatar circle */}
-        <div className="h-7 w-7 rounded-full bg-brand/20 border border-brand/40 flex items-center justify-center text-brand text-xs font-semibold flex-shrink-0">
-          {initials}
-        </div>
-        <ChevronDown
-          className={cn(
-            'h-3.5 w-3.5 text-text-secondary transition-transform duration-150',
-            open && 'rotate-180'
-          )}
-        />
+        {initials}
       </button>
 
-      {/* Dropdown */}
       {open && (
         <div
-          className="absolute right-0 top-full mt-1.5 w-56 rounded-xl bg-bg-card border border-border shadow-xl z-50 py-1.5 overflow-hidden"
+          className="absolute right-0 top-full z-50 mt-2 w-52 overflow-hidden rounded-lg border border-default bg-bg-elevated py-1.5 shadow-xl"
           role="menu"
         >
-          {/* User info header */}
-          <div className="px-3 py-2.5 border-b border-border mb-1">
-            <p className="text-text-primary text-sm font-medium leading-tight truncate">
-              {displayName}
-            </p>
-            <p className="text-text-secondary text-xs truncate mt-0.5">{email}</p>
-          </div>
+          {displayName && (
+            <div className="mb-1 border-b border-subtle px-3 py-2.5">
+              <p className="truncate text-[13px] font-medium leading-tight text-text-primary">
+                {displayName}
+              </p>
+              {email && (
+                <p className="mt-0.5 truncate text-[11px] text-text-secondary">{email}</p>
+              )}
+            </div>
+          )}
 
           <button
             onClick={() => { navigate('/settings/profile'); setOpen(false) }}
-            className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
+            className="flex w-full items-center gap-2.5 px-3 py-2 text-[13px] text-text-secondary hover:bg-bg-card hover:text-text-primary"
+            style={{ transition: 'var(--transition-fast)' }}
             role="menuitem"
           >
             <User className="h-4 w-4" />
@@ -178,18 +198,20 @@ function UserMenu() {
 
           <button
             onClick={() => { navigate('/settings'); setOpen(false) }}
-            className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
+            className="flex w-full items-center gap-2.5 px-3 py-2 text-[13px] text-text-secondary hover:bg-bg-card hover:text-text-primary"
+            style={{ transition: 'var(--transition-fast)' }}
             role="menuitem"
           >
             <Settings className="h-4 w-4" />
             Settings
           </button>
 
-          <div className="my-1 border-t border-border" />
+          <div className="my-1 border-t border-subtle" />
 
           <button
             onClick={handleSignOut}
-            className="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
+            className="flex w-full items-center gap-2.5 px-3 py-2 text-[13px] text-[var(--color-danger)] hover:bg-[var(--color-danger-muted)]"
+            style={{ transition: 'var(--transition-fast)' }}
             role="menuitem"
           >
             <LogOut className="h-4 w-4" />
@@ -208,28 +230,39 @@ interface TopBarProps {
 }
 
 export function TopBar({ onMenuClick }: TopBarProps) {
+  const location = useLocation()
+  const title = resolvePageTitle(location.pathname)
+  const isDashboard = title === 'Dashboard'
+
   return (
-    <header className="h-14 flex items-center justify-between gap-4 px-4 bg-bg-secondary border-b border-border flex-shrink-0 z-10">
-      {/* Left: hamburger (mobile) */}
-      <div className="flex items-center gap-3 min-w-0">
+    <header
+      className="sticky top-0 z-40 flex h-14 flex-shrink-0 items-center justify-between gap-4 border-b border-subtle bg-bg-secondary px-4"
+    >
+      {/* Left: hamburger (mobile) + page title */}
+      <div className="flex min-w-0 items-center gap-3">
         <button
           onClick={onMenuClick}
-          className="md:hidden h-9 w-9 flex items-center justify-center rounded-lg text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors flex-shrink-0"
+          className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-text-secondary hover:bg-bg-elevated hover:text-text-primary md:hidden"
+          style={{ transition: 'var(--transition-fast)' }}
           aria-label="Open navigation"
         >
           <Menu className="h-5 w-5" />
         </button>
-
-        {/* Mode switcher (center-ish, hidden on very small screens) */}
-        <div className="hidden sm:block">
-          <ModeSwitcher />
-        </div>
+        <h1 className="truncate text-[16px] font-semibold text-text-primary">{title}</h1>
       </div>
 
-      {/* Right: currency + bell + user */}
-      <div className="flex items-center gap-1.5 flex-shrink-0">
-        <CurrencyBadge />
+      {/* Center: time-based greeting (desktop, dashboard only) */}
+      {isDashboard && (
+        <div className="hidden flex-1 justify-center md:flex">
+          <span className="text-[14px] text-text-secondary">{timeGreeting()}</span>
+        </div>
+      )}
+
+      {/* Right: currency + bell + sync + avatar */}
+      <div className="flex flex-shrink-0 items-center gap-2">
+        <CurrencyPill />
         <NotificationBell />
+        <SyncIndicator />
         <UserMenu />
       </div>
     </header>
