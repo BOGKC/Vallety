@@ -78,7 +78,7 @@ function MetricCard({
   children?: React.ReactNode
 }) {
   return (
-    <div className="rounded-lg bg-bg-card p-4">
+    <div className="rounded-lg bg-bg-card p-3 sm:p-4">
       <div className="flex items-center gap-2">
         <span style={{ color: iconColor }}>{icon}</span>
         <span className="text-[12px] text-text-muted">{label}</span>
@@ -120,7 +120,7 @@ export function PersonalDashboard() {
   })()
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6">
+    <div className="mx-auto flex max-w-6xl flex-col gap-4 sm:gap-6">
       {/* SECTION 1 — Greeting / welcome ─────────────────────────────────────── */}
       {hasData ? (
         <div>
@@ -136,7 +136,7 @@ export function PersonalDashboard() {
             Start by adding your first transaction, setting a budget, or creating a
             savings goal.
           </p>
-          <div className="mt-5 flex flex-wrap gap-3">
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             {[
               { label: 'Add transaction', to: '/transactions' },
               { label: 'Set a budget', to: '/budgets' },
@@ -145,7 +145,7 @@ export function PersonalDashboard() {
               <Link
                 key={cta.to}
                 to={cta.to}
-                className="rounded-md text-[14px] font-medium text-white"
+                className="flex min-h-[44px] items-center justify-center rounded-md text-center text-[14px] font-medium text-white sm:min-h-0"
                 style={{
                   backgroundColor: 'var(--color-accent)',
                   padding: '12px 20px',
@@ -161,8 +161,8 @@ export function PersonalDashboard() {
 
       {/* SECTION 2 — Safe-to-spend hero ─────────────────────────────────────── */}
       <div className="rounded-lg bg-bg-card p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 text-center sm:text-left">
             <p
               className="text-[12px] font-medium uppercase text-text-muted"
               style={{ letterSpacing: '0.08em' }}
@@ -170,7 +170,7 @@ export function PersonalDashboard() {
               Safe to spend
             </p>
             <p
-              className="mt-1 text-[52px] font-bold leading-none"
+              className="mt-1 text-[40px] font-bold leading-none sm:text-[52px]"
               style={{ color: safeColor }}
             >
               {safeToSpend.hasIncome ? formatEuro(safeToSpend.amount) : '€—'}
@@ -182,7 +182,7 @@ export function PersonalDashboard() {
 
           <button
             onClick={() => setShowBreakdown((v) => !v)}
-            className="flex flex-shrink-0 items-center gap-1 text-[12px] text-text-muted hover:text-text-secondary"
+            className="flex min-h-[44px] flex-shrink-0 items-center justify-center gap-1 self-center text-[12px] text-text-muted hover:text-text-secondary sm:min-h-0 sm:self-auto"
             style={{ transition: 'var(--transition-fast)' }}
             aria-expanded={showBreakdown}
           >
@@ -223,7 +223,7 @@ export function PersonalDashboard() {
       </div>
 
       {/* SECTION 3 — Metric cards ───────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <MetricCard
           icon={<ArrowDownLeft className="h-4 w-4" />}
           iconColor="var(--color-success)"
@@ -272,7 +272,8 @@ export function PersonalDashboard() {
         </div>
 
         {hasCashflow ? (
-          <ResponsiveContainer width="100%" height={180}>
+          <div className="h-40 w-full sm:h-44">
+          <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={cashflow} margin={{ top: 6, right: 4, bottom: 0, left: 4 }}>
               <defs>
                 <linearGradient id="incomeFill" x1="0" y1="0" x2="0" y2="1">
@@ -303,8 +304,9 @@ export function PersonalDashboard() {
               />
             </AreaChart>
           </ResponsiveContainer>
+          </div>
         ) : (
-          <div className="flex h-[180px] items-center justify-center">
+          <div className="flex h-40 items-center justify-center sm:h-44">
             <p className="text-[13px] text-text-muted">
               Add transactions to see your cash flow
             </p>
@@ -318,7 +320,10 @@ export function PersonalDashboard() {
         {upcomingBills.length === 0 ? (
           <p className="text-[12px] text-text-muted">No bills due this week</p>
         ) : (
-          <div className="flex gap-2 overflow-x-auto pb-1">
+          <div
+            className="no-scrollbar flex gap-2 overflow-x-auto pb-1"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
             {upcomingBills.map((bill, i) => (
               <div
                 key={`${bill.name}-${i}`}
