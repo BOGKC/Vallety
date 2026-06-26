@@ -4,6 +4,7 @@ import {
 } from 'lucide-react'
 import { Modal } from '../../shared/components/Modal'
 import { AddTransactionDrawer } from './AddTransactionDrawer'
+import { CsvImportModal } from './CsvImportModal'
 import { formatEuro } from '../../shared/lib/formatters'
 import { cn } from '../../shared/lib/cn'
 import {
@@ -542,14 +543,11 @@ export function TransactionsPage() {
         Receipt scanning is coming soon. Use Import CSV or add manually in the meantime.
       </Modal>
 
-      <Modal
+      <CsvImportModal
         open={modal === 'csv'}
         onClose={() => setModal(null)}
-        title="Import CSV"
-        footer={<GhostButton onClick={() => setModal(null)}>Close</GhostButton>}
-      >
-        CSV import coming in the next update. Add transactions manually for now.
-      </Modal>
+        onImported={setTxns}
+      />
 
       {/* ADD DRAWER (2-step) */}
       <AddTransactionDrawer
