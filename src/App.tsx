@@ -10,6 +10,7 @@ import { SignupPage } from './pages/auth/SignupPage'
 import { LoginPage } from './pages/auth/LoginPage'
 import { OnboardingPage } from './pages/auth/OnboardingPage'
 import { PersonalDashboard } from './modes/personal/PersonalDashboard'
+import { TransactionsPage } from './modes/personal/TransactionsPage'
 import { BusinessDashboard } from './modes/business/BusinessDashboard'
 import { InvestmentDashboard } from './modes/investment/InvestmentDashboard'
 
@@ -36,9 +37,12 @@ export default function App() {
 
                 <Route index element={<Navigate to="/personal" replace />} />
 
+                {/* Flat routes (new IA) ───────────────────────────────────── */}
+                <Route path="/transactions"            element={<TransactionsPage />} />
+
                 {/* Personal ───────────────────────────────────────────────── */}
                 <Route path="/personal"                element={<PersonalDashboard />} />
-                <Route path="/personal/transactions"   element={<ComingSoon title="Transactions" />} />
+                <Route path="/personal/transactions"   element={<TransactionsPage />} />
                 <Route path="/personal/budgets"        element={<ComingSoon title="Budgets" />} />
                 <Route path="/personal/goals"          element={<ComingSoon title="Goals" />} />
                 <Route path="/personal/bills"          element={<ComingSoon title="Bills" />} />
