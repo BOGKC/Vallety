@@ -1,6 +1,6 @@
 import {
-  ShoppingCart, Utensils, Car, ShoppingBag, Receipt, Film, HeartPulse,
-  Home, Plane, Briefcase, Zap, Circle, type LucideIcon,
+  ShoppingCart, Utensils, Car, ShoppingBag, Receipt, Tv, Heart,
+  Home, Plane, TrendingUp, Zap, MoreHorizontal, type LucideIcon,
 } from 'lucide-react'
 import {
   format, isToday, isYesterday, isThisWeek, startOfMonth, endOfMonth,
@@ -100,19 +100,21 @@ export const CATEGORIES: Record<string, CategoryMeta> = {
   Groceries: { color: '#22C55E', icon: ShoppingCart },
   Dining: { color: '#F59E0B', icon: Utensils },
   Transport: { color: '#3B82F6', icon: Car },
-  Shopping: { color: '#EC4899', icon: ShoppingBag },
+  Housing: { color: '#9333EA', icon: Home },
+  Healthcare: { color: '#EF4444', icon: Heart },
+  Entertainment: { color: '#EC4899', icon: Tv },
+  Shopping: { color: '#F97316', icon: ShoppingBag },
+  Utilities: { color: '#6366F1', icon: Zap },
+  Income: { color: '#22C55E', icon: TrendingUp },
+  Other: { color: '#64748B', icon: MoreHorizontal },
+  // Extra aliases tolerated from imported / legacy data
   Bills: { color: '#EF4444', icon: Receipt },
-  Utilities: { color: '#06B6D4', icon: Zap },
-  Entertainment: { color: '#A855F7', icon: Film },
-  Health: { color: '#14B8A6', icon: HeartPulse },
-  Housing: { color: '#F97316', icon: Home },
+  Health: { color: '#EF4444', icon: Heart },
   Travel: { color: '#6366F1', icon: Plane },
-  Income: { color: '#22C55E', icon: Briefcase },
-  Salary: { color: '#22C55E', icon: Briefcase },
-  Other: { color: '#94A3B8', icon: Circle },
+  Salary: { color: '#22C55E', icon: TrendingUp },
 }
 
-const FALLBACK: CategoryMeta = { color: '#94A3B8', icon: Circle }
+const FALLBACK: CategoryMeta = { color: '#64748B', icon: MoreHorizontal }
 
 export const PRESET_CATEGORIES = Object.keys(CATEGORIES)
 
@@ -125,6 +127,50 @@ export function allCategories(txns: Txn[]): string[] {
   const set = new Set<string>(PRESET_CATEGORIES)
   txns.forEach((t) => set.add(t.category))
   return Array.from(set)
+}
+
+/** Distinct past merchants matching a query, most-recent first, capped. */
+export function getMerchantSuggestions(query: string, txns: Txn[], limit = 5): string[] {
+  const q = query.trim().toLowerCase()
+  if (!q) return []
+  const seen = new Set<string>()
+  const out: string[] = []
+  for (const t of txns) {
+    const name = t.merchant
+    const key = name.toLowerCase()
+    if (key === q) continue // exact match needs no suggestion
+    if (key.includes(q) && !seen.has(key)) {
+      seen.add(key)
+      out.push(name)
+      if (out.length >= limit) break
+    }
+  }
+  return out
+}
+
+/** Keyword → category, used to auto-suggest a category from a merchant name. */
+const MERCHANT_CATEGORY_KEYWORDS: { match: string[]; category: string }[] = [
+  { match: ['tesco', 'lidl', 'aldi', 'supervalu', 'spar', 'grocery', 'supermarket', 'market'], category: 'Groceries' },
+  { match: ['restaurant', 'cafe', 'coffee', 'starbucks', 'mcdonald', 'burger', 'pizza', 'deliveroo', 'bar', 'pub'], category: 'Dining' },
+  { match: ['uber', 'taxi', 'bus', 'train', 'rail', 'fuel', 'petrol', 'shell', 'parking', 'transport'], category: 'Transport' },
+  { match: ['rent', 'mortgage', 'landlord', 'housing'], category: 'Housing' },
+  { match: ['pharmacy', 'doctor', 'clinic', 'hospital', 'dental', 'health'], category: 'Healthcare' },
+  { match: ['netflix', 'spotify', 'cinema', 'disney', 'game', 'steam', 'concert'], category: 'Entertainment' },
+  { match: ['amazon', 'zara', 'shop', 'store', 'ikea'], category: 'Shopping' },
+  { match: ['electric', 'gas', 'water', 'broadband', 'phone', 'mobile', 'utility', 'energy'], category: 'Utilities' },
+  { match: ['salary', 'payroll', 'wage', 'refund', 'invoice', 'freelance', 'dividend'], category: 'Income' },
+]
+
+/** Suggest a category: first match a known past merchant, then keyword rules. */
+export function suggestCategory(merchant: string, txns: Txn[]): string {
+  const name = merchant.trim().toLowerCase()
+  if (!name) return 'Other'
+  const prior = txns.find((t) => t.merchant.toLowerCase() === name)
+  if (prior) return prior.category
+  for (const rule of MERCHANT_CATEGORY_KEYWORDS) {
+    if (rule.match.some((kw) => name.includes(kw))) return rule.category
+  }
+  return 'Other'
 }
 
 export function hexToRgba(hex: string, alpha: number): string {

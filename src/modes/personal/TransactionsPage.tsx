@@ -3,6 +3,7 @@ import {
   Camera, Upload, Plus, Search, ChevronRight, ArrowLeftRight, X, Trash2,
 } from 'lucide-react'
 import { Modal } from '../../shared/components/Modal'
+import { AddTransactionDrawer } from './AddTransactionDrawer'
 import { formatEuro } from '../../shared/lib/formatters'
 import { cn } from '../../shared/lib/cn'
 import {
@@ -351,8 +352,9 @@ export function TransactionsPage() {
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
   const [modal, setModal] = useState<'receipt' | 'csv' | null>(null)
 
+  const [addOpen, setAddOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [drawerMode, setDrawerMode] = useState<'add' | 'edit'>('add')
+  const [drawerMode, setDrawerMode] = useState<'add' | 'edit'>('edit')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draft, setDraft] = useState<Draft>(blankDraft())
 
@@ -365,9 +367,7 @@ export function TransactionsPage() {
   const hasResults = filtered.length > 0
 
   // Drawer controls
-  const openAdd = () => {
-    setDrawerMode('add'); setEditingId(null); setDraft(blankDraft()); setDrawerOpen(true)
-  }
+  const openAdd = () => setAddOpen(true)
   const openEdit = (t: Txn) => {
     setDrawerMode('edit'); setEditingId(t.id); setDraft(draftFromTxn(t)); setDrawerOpen(true)
   }
@@ -551,7 +551,14 @@ export function TransactionsPage() {
         CSV import coming in the next update. Add transactions manually for now.
       </Modal>
 
-      {/* DRAWER */}
+      {/* ADD DRAWER (2-step) */}
+      <AddTransactionDrawer
+        open={addOpen}
+        onClose={() => setAddOpen(false)}
+        onAdded={setTxns}
+      />
+
+      {/* EDIT DRAWER */}
       <TransactionDrawer
         open={drawerOpen}
         mode={drawerMode}
