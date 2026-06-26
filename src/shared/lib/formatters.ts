@@ -14,3 +14,16 @@ export const formatPercent = (value: number, decimals = 2): string =>
 
 export const formatNumber = (value: number): string =>
   new Intl.NumberFormat('en-US').format(value)
+
+/**
+ * Compact euro formatting for dashboard metrics. Renders the sign before the
+ * symbol (e.g. "-€1,200") and rounds to whole euros by default.
+ */
+export const formatEuro = (value: number, decimals = 0): string => {
+  const sign = value < 0 ? '-' : ''
+  const abs = new Intl.NumberFormat('en-IE', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(Math.abs(value))
+  return `${sign}€${abs}`
+}
