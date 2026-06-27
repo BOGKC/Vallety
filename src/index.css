@@ -216,3 +216,32 @@ textarea,
 .paid-pop {
   animation: paid-pop 0.25s ease-out;
 }
+
+/* AI Advisor — typing indicator + streaming caret */
+@keyframes advisor-dot {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.advisor-dot {
+  animation: advisor-dot 1.2s infinite ease-in-out;
+}
+
+@keyframes advisor-caret {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.advisor-caret {
+  animation: advisor-caret 1s steps(1) infinite;
+}

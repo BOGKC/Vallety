@@ -16,6 +16,7 @@ import { BillsPage } from './modes/personal/BillsPage'
 import { SubscriptionsPage } from './modes/personal/SubscriptionsPage'
 import { NetWorthPage } from './modes/personal/NetWorthPage'
 import { HouseholdPage } from './modes/personal/HouseholdPage'
+import { AdvisorPage } from './modes/personal/AdvisorPage'
 import { BusinessDashboard } from './modes/business/BusinessDashboard'
 import { InvestmentDashboard } from './modes/investment/InvestmentDashboard'
 
@@ -78,7 +79,7 @@ export default function App() {
                 {/* Shared ─────────────────────────────────────────────────── */}
                 <Route path="/settings"                element={<ComingSoon title="Settings" />} />
                 <Route path="/settings/profile"        element={<ComingSoon title="Profile" />} />
-                <Route path="/advisor"                 element={<ComingSoon title="AI Advisor" />} />
+                <Route path="/advisor"                 element={<AdvisorPage />} />
 
               </Route>
             </Route>
