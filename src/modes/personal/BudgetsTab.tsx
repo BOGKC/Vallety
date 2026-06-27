@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Target } from 'lucide-react'
 import { formatEuro } from '../../shared/lib/formatters'
 import { getCategoryMeta, hexToRgba } from '../../shared/lib/transactions'
 import {
-  readBudgets, computeBudgets, usageColor, BUDGET_SUGGESTIONS,
+  readBudgets, computeBudgets, usageColor,
   type Budget, type BudgetView,
 } from '../../shared/lib/budgets'
-import { BudgetDrawer, type BudgetPrefill } from './BudgetDrawer'
+import { BudgetDrawer } from './BudgetDrawer'
+import { EmptyState } from '../../components/EmptyState'
 
 function SummaryCard({
   value, valueColor, label,
@@ -75,49 +76,9 @@ function BudgetCard({ view, daysLeft }: { view: BudgetView; daysLeft: number }) 
   )
 }
 
-function QuickStart({ onPick }: { onPick: (p: BudgetPrefill) => void }) {
-  return (
-    <div>
-      <p className="mb-3 text-[14px] font-medium text-text-secondary">
-        Get started with common budgets
-      </p>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {BUDGET_SUGGESTIONS.map((s) => {
-          const meta = getCategoryMeta(s.category)
-          const Icon = meta.icon
-          return (
-            <div
-              key={s.category}
-              className="flex flex-col items-center gap-2 rounded-lg p-4 text-center"
-              style={{ border: '1px dashed var(--border-default)' }}
-            >
-              <span
-                className="flex h-9 w-9 items-center justify-center rounded-full"
-                style={{ backgroundColor: hexToRgba(meta.color, 0.15) }}
-              >
-                <Icon className="h-4 w-4" style={{ color: meta.color }} />
-              </span>
-              <span className="text-[13px] font-medium text-text-primary">{s.category}</span>
-              <span className="text-[11px] text-text-muted">{formatEuro(s.amount)} / month suggested</span>
-              <button
-                onClick={() => onPick({ category: s.category, amount: s.amount })}
-                className="mt-1 text-[12px] font-medium"
-                style={{ color: 'var(--color-accent)' }}
-              >
-                + Create
-              </button>
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
 export function BudgetsTab() {
   const [budgets, setBudgets] = useState<Budget[]>(() => readBudgets())
   const [drawerOpen, setDrawerOpen] = useState(false)
-  const [prefill, setPrefill] = useState<BudgetPrefill | null>(null)
 
   const now = useMemo(() => new Date(), [])
   const summary = useMemo(() => computeBudgets(budgets, now), [budgets, now])
@@ -125,8 +86,7 @@ export function BudgetsTab() {
   const hasBudgets = budgets.length > 0
   const spentColor = summary.totalSpent > summary.totalBudgeted ? '#EF4444' : '#22C55E'
 
-  const openNew = () => { setPrefill(null); setDrawerOpen(true) }
-  const openPrefilled = (p: BudgetPrefill) => { setPrefill(p); setDrawerOpen(true) }
+  const openNew = () => setDrawerOpen(true)
 
   return (
     <div>
@@ -141,33 +101,35 @@ export function BudgetsTab() {
         </button>
       </div>
 
-      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <SummaryCard value={formatEuro(summary.totalBudgeted)} label="Budgeted this month" />
-        <SummaryCard
-          value={formatEuro(summary.totalSpent)}
-          valueColor={hasBudgets ? spentColor : undefined}
-          label="Spent so far"
-        />
-        <SummaryCard
-          value={`${Math.round(summary.overallPct)}%`}
-          valueColor={hasBudgets ? usageColor(summary.overallPct) : undefined}
-          label={`of budget used · ${summary.daysLeft} day${summary.daysLeft === 1 ? '' : 's'} left`}
-        />
-      </div>
-
       {hasBudgets ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {summary.views.map((v) => (
-            <BudgetCard key={v.id} view={v} daysLeft={summary.daysLeft} />
-          ))}
-        </div>
+        <>
+          <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <SummaryCard value={formatEuro(summary.totalBudgeted)} label="Budgeted this month" />
+            <SummaryCard value={formatEuro(summary.totalSpent)} valueColor={spentColor} label="Spent so far" />
+            <SummaryCard
+              value={`${Math.round(summary.overallPct)}%`}
+              valueColor={usageColor(summary.overallPct)}
+              label={`of budget used · ${summary.daysLeft} day${summary.daysLeft === 1 ? '' : 's'} left`}
+            />
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {summary.views.map((v) => (
+              <BudgetCard key={v.id} view={v} daysLeft={summary.daysLeft} />
+            ))}
+          </div>
+        </>
       ) : (
-        <QuickStart onPick={openPrefilled} />
+        <EmptyState
+          icon={Target}
+          title="No budgets set"
+          description="Set spending limits for each category to stay on track this month."
+          primaryAction={{ label: 'Create a budget', icon: Plus, onClick: openNew }}
+        />
       )}
 
       <BudgetDrawer
         open={drawerOpen}
-        prefill={prefill}
+        prefill={null}
         onClose={() => setDrawerOpen(false)}
         onCreated={setBudgets}
       />

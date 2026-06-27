@@ -12,6 +12,7 @@ import {
   type Bill,
 } from '../../shared/lib/bills'
 import { BillDrawer } from './BillDrawer'
+import { EmptyState } from '../../components/EmptyState'
 
 function dueLabel(bill: Bill, now: Date): { text: string; color: string; bold: boolean } {
   const d = daysUntilDue(bill, now)
@@ -273,21 +274,12 @@ export function BillsPage() {
           </div>
         </>
       ) : (
-        <div className="flex flex-col items-center gap-3 rounded-lg bg-bg-card px-6 py-14 text-center">
-          <CalendarDays className="h-10 w-10 text-text-muted" />
-          <h2 className="text-[16px] font-semibold text-text-primary">No bills scheduled</h2>
-          <p className="max-w-md text-[14px] text-text-secondary">
-            Add your recurring bills — rent, subscriptions, utilities — and we'll remind you before
-            each one is due.
-          </p>
-          <button
-            onClick={openAdd}
-            className="mt-1 inline-flex h-11 items-center gap-1.5 rounded-md px-5 text-[14px] font-semibold text-white"
-            style={{ backgroundColor: 'var(--color-accent)' }}
-          >
-            <Plus className="h-4 w-4" /> Add your first bill
-          </button>
-        </div>
+        <EmptyState
+          icon={CalendarDays}
+          title="No bills scheduled"
+          description="Add recurring bills and we'll remind you 3 days before each one is due."
+          primaryAction={{ label: 'Add your first bill', icon: Plus, onClick: openAdd }}
+        />
       )}
 
       <BillDrawer

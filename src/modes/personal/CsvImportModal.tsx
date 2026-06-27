@@ -345,7 +345,7 @@ function PreviewView({
       )}
 
       {/* Summary */}
-      {mappingReady && (
+      {mappingReady && rows.length > 0 && (
         <p className="px-5 pt-3 text-[13px] text-text-secondary">
           {rows.length} transaction{rows.length === 1 ? '' : 's'} found
           {duplicateCount > 0 && ` · ${duplicateCount} duplicate${duplicateCount === 1 ? '' : 's'} detected (will be skipped)`}

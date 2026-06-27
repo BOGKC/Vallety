@@ -3,6 +3,7 @@ import {
   Camera, Upload, Plus, Search, ChevronRight, ArrowLeftRight, X, Trash2,
 } from 'lucide-react'
 import { Modal } from '../../shared/components/Modal'
+import { EmptyState } from '../../components/EmptyState'
 import { AddTransactionDrawer } from './AddTransactionDrawer'
 import { CsvImportModal } from './CsvImportModal'
 import { formatEuro } from '../../shared/lib/formatters'
@@ -486,23 +487,21 @@ export function TransactionsPage() {
       <div className="py-4">
         {!hasAny ? (
           // Condition 1: no data at all
-          <div className="mx-auto flex max-w-md flex-col items-center gap-3 rounded-lg bg-bg-card px-6 py-12 text-center">
-            <ArrowLeftRight className="h-10 w-10 text-text-muted" />
-            <h2 className="text-[16px] font-semibold text-text-primary">No transactions yet</h2>
-            <p className="text-[14px] text-text-secondary">
-              Add one manually, import a bank CSV, or scan a receipt to get started.
-            </p>
-            <div className="mt-2 flex flex-wrap justify-center gap-2">
-              <AccentButton onClick={openAdd}>Add transaction</AccentButton>
-              <GhostButton onClick={() => setModal('csv')}>Import CSV</GhostButton>
-            </div>
-          </div>
+          <EmptyState
+            icon={ArrowLeftRight}
+            title="No transactions yet"
+            description="Add one manually, import a bank CSV, or scan a receipt to get started."
+            primaryAction={{ label: 'Add transaction', icon: Plus, onClick: openAdd }}
+            secondaryAction={{ label: 'Import CSV', onClick: () => setModal('csv') }}
+          />
         ) : !hasResults ? (
           // Condition 2: data exists but filters exclude everything
-          <div className="mx-auto flex max-w-md flex-col items-center gap-3 py-12 text-center">
-            <p className="text-[14px] text-text-secondary">No transactions match your filters</p>
-            <GhostButton onClick={() => setFilters(DEFAULT_FILTERS)}>Clear filters</GhostButton>
-          </div>
+          <EmptyState
+            icon={Search}
+            title="No transactions match your filters"
+            description="Try adjusting your search or filters to find what you're looking for."
+            primaryAction={{ label: 'Clear filters', onClick: () => setFilters(DEFAULT_FILTERS) }}
+          />
         ) : (
           <div className="flex flex-col gap-4">
             {groups.map((group) => (

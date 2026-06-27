@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
-import { Plus, CalendarDays } from 'lucide-react'
+import { Plus, CalendarDays, Star } from 'lucide-react'
 import { Modal } from '../../shared/components/Modal'
+import { EmptyState } from '../../components/EmptyState'
 import { formatEuro } from '../../shared/lib/formatters'
 import { cn } from '../../shared/lib/cn'
 import {
@@ -106,7 +107,7 @@ export function GoalsTab() {
       <div className="mb-3 flex items-center justify-between">
         <p className="text-[13px] text-text-secondary">
           {hasGoals
-            ? `${summary.count} goal${summary.count === 1 ? '' : 's'} · Total target ${formatEuro(summary.totalTarget)} · On track: ${summary.onTrackCount}`
+            ? `${summary.count} goal${summary.count === 1 ? '' : 's'} · Total target ${formatEuro(summary.totalTarget)}${summary.onTrackCount > 0 ? ` · On track: ${summary.onTrackCount}` : ''}`
             : 'Track progress toward what matters.'}
         </p>
         <button
@@ -130,16 +131,12 @@ export function GoalsTab() {
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center gap-4 rounded-lg bg-bg-card px-6 py-14 text-center">
-          <p className="text-[14px] text-text-secondary">No goals yet. Create your first savings goal.</p>
-          <button
-            onClick={openAdd}
-            className="inline-flex h-11 items-center gap-1.5 rounded-md px-5 text-[14px] font-semibold text-white"
-            style={{ backgroundColor: 'var(--color-accent)' }}
-          >
-            <Plus className="h-4 w-4" /> New goal
-          </button>
-        </div>
+        <EmptyState
+          icon={Star}
+          title="No savings goals"
+          description="Create a goal for anything — a house, a trip, an emergency fund."
+          primaryAction={{ label: 'Create a goal', icon: Plus, onClick: openAdd }}
+        />
       )}
 
       <GoalDrawer

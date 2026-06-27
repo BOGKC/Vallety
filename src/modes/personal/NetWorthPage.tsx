@@ -13,6 +13,7 @@ import {
   type Account, type Snapshot,
 } from '../../shared/lib/netWorth'
 import { AccountDrawer } from './AccountDrawer'
+import { EmptyState } from '../../components/EmptyState'
 
 interface ChartTooltipProps {
   active?: boolean
@@ -114,20 +115,12 @@ export function NetWorthPage() {
       </div>
 
       {!hasAccounts ? (
-        <div className="flex flex-col items-center gap-3 rounded-lg bg-bg-card px-6 py-14 text-center">
-          <Landmark className="h-10 w-10 text-text-muted" />
-          <h2 className="text-[16px] font-semibold text-text-primary">No accounts tracked yet</h2>
-          <p className="max-w-md text-[14px] text-text-secondary">
-            Add your bank accounts, investments, and loans to see your complete financial picture.
-          </p>
-          <button
-            onClick={openAdd}
-            className="mt-1 inline-flex h-11 items-center gap-1.5 rounded-md px-5 text-[14px] font-semibold text-white"
-            style={{ backgroundColor: 'var(--color-accent)' }}
-          >
-            <Plus className="h-4 w-4" /> Add account
-          </button>
-        </div>
+        <EmptyState
+          icon={Landmark}
+          title="No accounts tracked"
+          description="Add your bank accounts, investments, and loans to see your complete financial picture."
+          primaryAction={{ label: 'Add account', icon: Plus, onClick: openAdd }}
+        />
       ) : (
         <>
           {/* Hero */}

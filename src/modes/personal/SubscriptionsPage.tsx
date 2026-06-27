@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import {
   Plus, RefreshCw, MoreVertical, Pencil, EyeOff, Eye, XCircle, Trash2, Bell,
 } from 'lucide-react'
+import { EmptyState } from '../../components/EmptyState'
 import toast from 'react-hot-toast'
 import { formatEuro } from '../../shared/lib/formatters'
 import { cn } from '../../shared/lib/cn'
@@ -174,6 +175,7 @@ function SubCard({
 // ── Page ────────────────────────────────────────────────────────────────────
 
 export function SubscriptionsPage() {
+  const navigate = useNavigate()
   const [manualSubs, setManualSubs] = useState<ManualSub[]>(() => readManualSubs())
   const [overrides, setOverrides] = useState<OverrideMap>(() => readOverrides())
   const [tab, setTab] = useState<Tab>('active')
@@ -306,9 +308,11 @@ export function SubscriptionsPage() {
       {/* Total banner */}
       <div className="mb-5 rounded-lg border border-default bg-bg-card p-5">
         <p className="text-[28px] font-bold text-text-primary">{formatEuro(monthlyTotal)}/month</p>
-        <p className="mt-0.5 text-[14px] text-text-secondary">
-          across {active.length} active subscription{active.length === 1 ? '' : 's'}
-        </p>
+        {active.length > 0 && (
+          <p className="mt-0.5 text-[14px] text-text-secondary">
+            across {active.length} active subscription{active.length === 1 ? '' : 's'}
+          </p>
+        )}
       </div>
 
       {/* Tabs */}
@@ -366,20 +370,12 @@ export function SubscriptionsPage() {
             )}
           </div>
         ) : noSubsAtAll && transactions.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 rounded-lg bg-bg-card px-6 py-14 text-center">
-            <RefreshCw className="h-10 w-10 text-text-muted" />
-            <h2 className="text-[16px] font-semibold text-text-primary">No subscriptions detected yet</h2>
-            <p className="max-w-md text-[14px] text-text-secondary">
-              Add a few months of transactions manually and we'll automatically find your recurring charges.
-            </p>
-            <Link
-              to="/transactions"
-              className="mt-1 inline-flex h-11 items-center gap-1.5 rounded-md px-5 text-[14px] font-semibold text-white"
-              style={{ backgroundColor: 'var(--color-accent)' }}
-            >
-              <Plus className="h-4 w-4" /> Add transaction
-            </Link>
-          </div>
+          <EmptyState
+            icon={RefreshCw}
+            title="No subscriptions detected"
+            description="Add a few months of transactions and we'll automatically find your recurring charges."
+            primaryAction={{ label: 'Add transaction', icon: Plus, onClick: () => navigate('/transactions') }}
+          />
         ) : (
           <p className="py-6 text-center text-[13px] text-text-muted">No active subscriptions.</p>
         )

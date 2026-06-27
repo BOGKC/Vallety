@@ -1,15 +1,16 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
 } from 'recharts'
 import {
-  ArrowDownLeft, ArrowUpRight, Target, TrendingUp, ChevronDown,
+  ArrowDownLeft, ArrowUpRight, Target, TrendingUp, ChevronDown, LayoutDashboard, Plus,
 } from 'lucide-react'
 import { loadFinanceData } from '../../shared/lib/localData'
 import { computeDashboard } from '../../shared/lib/dashboardData'
 import { formatEuro } from '../../shared/lib/formatters'
 import { cn } from '../../shared/lib/cn'
+import { EmptyState } from '../../components/EmptyState'
 
 // ── Small utilities ─────────────────────────────────────────────────────────────
 
@@ -98,6 +99,7 @@ function MetricCard({
 
 export function PersonalDashboard() {
   const [showBreakdown, setShowBreakdown] = useState(false)
+  const navigate = useNavigate()
 
   const now = useMemo(() => new Date(), [])
   const metrics = useMemo(() => computeDashboard(loadFinanceData(), now), [now])
@@ -119,45 +121,31 @@ export function PersonalDashboard() {
     return 'var(--color-success)'
   })()
 
+  if (!hasData) {
+    return (
+      <div className="mx-auto max-w-6xl">
+        <div className="rounded-lg bg-bg-card">
+          <EmptyState
+            icon={LayoutDashboard}
+            title="Welcome to Vallety"
+            description="Add your first transaction to start seeing your financial picture."
+            primaryAction={{ label: 'Add transaction', icon: Plus, onClick: () => navigate('/transactions') }}
+            secondaryAction={{ label: 'Import CSV', onClick: () => navigate('/transactions') }}
+          />
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4 sm:gap-6">
-      {/* SECTION 1 — Greeting / welcome ─────────────────────────────────────── */}
-      {hasData ? (
-        <div>
-          <h1 className="text-[22px] font-semibold text-text-primary">{greeting}</h1>
-          <p className="mt-1 text-[14px] text-text-secondary">
-            Here's your financial snapshot for {monthLabel}
-          </p>
-        </div>
-      ) : (
-        <div className="rounded-lg bg-bg-card p-6">
-          <h1 className="text-[20px] font-semibold text-text-primary">Welcome to Vallety</h1>
-          <p className="mt-1.5 max-w-xl text-[14px] text-text-secondary">
-            Start by adding your first transaction, setting a budget, or creating a
-            savings goal.
-          </p>
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            {[
-              { label: 'Add transaction', to: '/transactions' },
-              { label: 'Set a budget', to: '/budgets' },
-              { label: 'Create a goal', to: '/goals' },
-            ].map((cta) => (
-              <Link
-                key={cta.to}
-                to={cta.to}
-                className="flex min-h-[44px] items-center justify-center rounded-md text-center text-[14px] font-medium text-white sm:min-h-0"
-                style={{
-                  backgroundColor: 'var(--color-accent)',
-                  padding: '12px 20px',
-                  transition: 'var(--transition-fast)',
-                }}
-              >
-                {cta.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* SECTION 1 — Greeting ──────────────────────────────────────────────── */}
+      <div>
+        <h1 className="text-[22px] font-semibold text-text-primary">{greeting}</h1>
+        <p className="mt-1 text-[14px] text-text-secondary">
+          Here's your financial snapshot for {monthLabel}
+        </p>
+      </div>
 
       {/* SECTION 2 — Safe-to-spend hero ─────────────────────────────────────── */}
       <div className="rounded-lg bg-bg-card p-6">

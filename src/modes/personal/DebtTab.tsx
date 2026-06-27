@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Snowflake, Flame, Crown, Plus } from 'lucide-react'
+import { Snowflake, Flame, Crown, Plus, CreditCard } from 'lucide-react'
 import { formatEuro } from '../../shared/lib/formatters'
 import { cn } from '../../shared/lib/cn'
 import {
@@ -7,6 +7,7 @@ import {
   type Debt, type Strategy,
 } from '../../shared/lib/debts'
 import { DebtDrawer } from './DebtDrawer'
+import { EmptyState } from '../../components/EmptyState'
 
 function monthYear(d: Date | null): string {
   if (!d) return '—'
@@ -68,26 +69,26 @@ export function DebtTab() {
         </button>
       </div>
 
-      {/* Strategy toggle */}
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row">
-        <StrategyButton
-          active={strategy === 'snowball'}
-          icon={<Snowflake className="h-5 w-5" />}
-          title="Snowball"
-          subtitle="Smallest balance first"
-          onClick={() => setStrategy('snowball')}
-        />
-        <StrategyButton
-          active={strategy === 'avalanche'}
-          icon={<Flame className="h-5 w-5" />}
-          title="Avalanche"
-          subtitle="Highest interest first"
-          onClick={() => setStrategy('avalanche')}
-        />
-      </div>
-
       {hasDebts ? (
         <>
+          {/* Strategy toggle */}
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row">
+            <StrategyButton
+              active={strategy === 'snowball'}
+              icon={<Snowflake className="h-5 w-5" />}
+              title="Snowball"
+              subtitle="Smallest balance first"
+              onClick={() => setStrategy('snowball')}
+            />
+            <StrategyButton
+              active={strategy === 'avalanche'}
+              icon={<Flame className="h-5 w-5" />}
+              title="Avalanche"
+              subtitle="Highest interest first"
+              onClick={() => setStrategy('avalanche')}
+            />
+          </div>
+
           {/* Debt-free callout */}
           <div
             className="mb-4 rounded-md p-4 text-[14px] font-medium text-text-primary"
@@ -156,16 +157,12 @@ export function DebtTab() {
           </div>
         </>
       ) : (
-        <div className="flex flex-col items-center gap-4 rounded-lg bg-bg-card px-6 py-14 text-center">
-          <p className="text-[14px] text-text-secondary">No debts yet. Add a debt to plan your payoff.</p>
-          <button
-            onClick={() => setDrawerOpen(true)}
-            className="inline-flex h-11 items-center gap-1.5 rounded-md px-5 text-[14px] font-semibold text-white"
-            style={{ backgroundColor: 'var(--color-accent)' }}
-          >
-            <Plus className="h-4 w-4" /> Add debt
-          </button>
-        </div>
+        <EmptyState
+          icon={CreditCard}
+          title="No debts tracked"
+          description="Add your loans, credit cards, or mortgage to create a payoff plan."
+          primaryAction={{ label: 'Add a debt', icon: Plus, onClick: () => setDrawerOpen(true) }}
+        />
       )}
 
       <DebtDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} onSaved={setDebts} />

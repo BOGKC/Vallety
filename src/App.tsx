@@ -17,6 +17,7 @@ import { SubscriptionsPage } from './modes/personal/SubscriptionsPage'
 import { NetWorthPage } from './modes/personal/NetWorthPage'
 import { HouseholdPage } from './modes/personal/HouseholdPage'
 import { AdvisorPage } from './modes/personal/AdvisorPage'
+import { ScenariosPage } from './modes/personal/ScenariosPage'
 import { BusinessDashboard } from './modes/business/BusinessDashboard'
 import { InvestmentDashboard } from './modes/investment/InvestmentDashboard'
 
@@ -52,6 +53,8 @@ export default function App() {
                 <Route path="/net-worth"               element={<NetWorthPage />} />
                 <Route path="/household"               element={<HouseholdPage />} />
                 <Route path="/personal/household"      element={<HouseholdPage />} />
+                <Route path="/scenarios"               element={<ScenariosPage />} />
+                <Route path="/personal/scenarios"      element={<ScenariosPage />} />
 
                 {/* Personal ───────────────────────────────────────────────── */}
                 <Route path="/personal"                element={<PersonalDashboard />} />
