@@ -14,6 +14,8 @@ const PAGE_TITLES: Record<string, string> = {
   '/bills': 'Bills & schedules',
   '/subscriptions': 'Subscriptions',
   '/personal/subscriptions': 'Subscriptions',
+  '/household': 'Household',
+  '/personal/household': 'Household',
   '/net-worth': 'Net Worth',
   '/advisor': 'AI Advisor',
   '/settings': 'Settings',

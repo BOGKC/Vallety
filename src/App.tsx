@@ -15,6 +15,7 @@ import { BudgetsPage } from './modes/personal/BudgetsPage'
 import { BillsPage } from './modes/personal/BillsPage'
 import { SubscriptionsPage } from './modes/personal/SubscriptionsPage'
 import { NetWorthPage } from './modes/personal/NetWorthPage'
+import { HouseholdPage } from './modes/personal/HouseholdPage'
 import { BusinessDashboard } from './modes/business/BusinessDashboard'
 import { InvestmentDashboard } from './modes/investment/InvestmentDashboard'
 
@@ -48,6 +49,8 @@ export default function App() {
                 <Route path="/subscriptions"           element={<SubscriptionsPage />} />
                 <Route path="/personal/subscriptions"  element={<SubscriptionsPage />} />
                 <Route path="/net-worth"               element={<NetWorthPage />} />
+                <Route path="/household"               element={<HouseholdPage />} />
+                <Route path="/personal/household"      element={<HouseholdPage />} />
 
                 {/* Personal ───────────────────────────────────────────────── */}
                 <Route path="/personal"                element={<PersonalDashboard />} />
