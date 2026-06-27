@@ -200,3 +200,19 @@ textarea,
 .goal-ring__arc {
   animation: goal-ring-draw 0.8s ease-out forwards;
 }
+
+/* Bill marked-paid pop */
+@keyframes paid-pop {
+  from {
+    transform: scale(0.96);
+    opacity: 0.4;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.paid-pop {
+  animation: paid-pop 0.25s ease-out;
+}

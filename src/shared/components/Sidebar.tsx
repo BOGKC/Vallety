@@ -34,7 +34,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Plan',
     items: [
       { label: 'Planning', icon: Target, to: '/budgets' },
-      { label: 'Bills & Schedules', icon: Calendar, to: '/bills' },
+      { label: 'Bills & schedules', icon: Calendar, to: '/bills' },
     ],
   },
   {
