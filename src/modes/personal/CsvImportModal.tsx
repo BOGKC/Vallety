@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Upload, FileText, X } from 'lucide-react'
-import toast from 'react-hot-toast'
+import toast from '../../components/Toast'
 import { cn } from '../../shared/lib/cn'
 import { formatEuro } from '../../shared/lib/formatters'
 import { PRESET_CATEGORIES, type Txn } from '../../shared/lib/transactions'

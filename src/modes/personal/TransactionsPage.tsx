@@ -175,7 +175,7 @@ function TransactionDrawer({
     <>
       <div
         className={cn(
-          'fixed inset-0 z-50 bg-black/60 transition-opacity duration-200',
+          'fixed inset-0 z-50 bg-black/70 transition-opacity duration-[220ms]',
           open ? 'opacity-100' : 'pointer-events-none opacity-0'
         )}
         onClick={onClose}
@@ -186,7 +186,7 @@ function TransactionDrawer({
         aria-modal="true"
         aria-label={mode === 'add' ? 'New transaction' : 'Transaction'}
         className={cn(
-          'fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-bg-secondary shadow-2xl transition-transform duration-200 ease-out sm:w-[400px]',
+          'fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-bg-secondary shadow-2xl transition-transform duration-[220ms] ease-[cubic-bezier(0.32,0.72,0,1)] sm:w-[400px]',
           open ? 'translate-x-0' : 'translate-x-full'
         )}
       >

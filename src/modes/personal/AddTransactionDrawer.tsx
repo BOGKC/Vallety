@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight, ChevronLeft, X } from 'lucide-react'
-import toast from 'react-hot-toast'
+import toast from '../../components/Toast'
 import { cn } from '../../shared/lib/cn'
 import {
   addTransaction, getCategoryMeta, getMerchantSuggestions, suggestCategory,
@@ -133,7 +133,7 @@ export function AddTransactionDrawer({ open, onClose, onAdded }: Props) {
     <>
       <div
         className={cn(
-          'fixed inset-0 z-50 bg-black/60 transition-opacity duration-200',
+          'fixed inset-0 z-50 bg-black/70 transition-opacity duration-[220ms]',
           open ? 'opacity-100' : 'pointer-events-none opacity-0'
         )}
         onClick={onClose}
@@ -144,7 +144,7 @@ export function AddTransactionDrawer({ open, onClose, onAdded }: Props) {
         aria-modal="true"
         aria-label="Add transaction"
         className={cn(
-          'fixed z-50 flex flex-col bg-bg-card shadow-2xl transition-transform duration-200 ease-out',
+          'fixed z-50 flex flex-col bg-bg-card shadow-2xl transition-transform duration-[220ms] ease-[cubic-bezier(0.32,0.72,0,1)]',
           'bottom-0 left-0 right-0 h-[85vh] rounded-t-2xl',
           'sm:inset-y-0 sm:left-auto sm:right-0 sm:h-full sm:w-[420px] sm:rounded-none',
           open

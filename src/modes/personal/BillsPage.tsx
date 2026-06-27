@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Plus, CalendarDays, CheckCircle, MoreVertical, Pencil, Pause, Play, Trash2,
 } from 'lucide-react'
-import toast from 'react-hot-toast'
+import toast from '../../components/Toast'
 import { formatEuro } from '../../shared/lib/formatters'
 import { getCategoryMeta, hexToRgba } from '../../shared/lib/transactions'
 import { cn } from '../../shared/lib/cn'

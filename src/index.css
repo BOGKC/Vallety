@@ -245,3 +245,92 @@ textarea,
 .advisor-caret {
   animation: advisor-caret 1s steps(1) infinite;
 }
+
+/* ============================================================
+   Micro-interaction & animation system
+   ============================================================ */
+
+/* Button interactions — global */
+button,
+[type='button'],
+[type='submit'] {
+  transition: filter 120ms ease, transform 80ms ease;
+}
+button:hover:not(:disabled),
+[type='button']:hover:not(:disabled),
+[type='submit']:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+button:active:not(:disabled),
+[type='button']:active:not(:disabled),
+[type='submit']:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Card hover */
+.card,
+[data-card] {
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+.card:hover,
+[data-card]:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-strong);
+}
+.card:active,
+[data-card]:active {
+  transform: translateY(0);
+}
+
+/* Page transition — incoming route content */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.page-enter {
+  animation: page-enter 200ms ease-out;
+}
+
+/* Progress bar fill */
+.progress-fill {
+  transition: width 600ms ease-out;
+}
+
+/* Loading skeleton shimmer */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-elevated),
+    var(--bg-card),
+    var(--bg-elevated)
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite linear;
+}
+
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import {
   PieChart, Users, Eye, Plus, UserPlus, ArrowRight, Lock, Copy, SplitSquareHorizontal,
 } from 'lucide-react'
-import toast from 'react-hot-toast'
+import toast from '../../components/Toast'
 import {
   readHousehold, createHousehold, inviteUrl, memberInitials, type Household,
 } from '../../shared/lib/household'

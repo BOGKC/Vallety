@@ -8,6 +8,7 @@ import {
 } from '../../shared/lib/budgets'
 import { BudgetDrawer } from './BudgetDrawer'
 import { EmptyState } from '../../components/EmptyState'
+import { ProgressBar } from '../../components/ProgressBar'
 
 function SummaryCard({
   value, valueColor, label,
@@ -25,7 +26,6 @@ function SummaryCard({
 function BudgetCard({ view, daysLeft }: { view: BudgetView; daysLeft: number }) {
   const meta = getCategoryMeta(view.category)
   const Icon = meta.icon
-  const barWidth = Math.min(100, Math.round(view.pct))
   const pctLabel = Math.round(view.pct)
 
   const daysChip =
@@ -49,16 +49,7 @@ function BudgetCard({ view, daysLeft }: { view: BudgetView; daysLeft: number }) 
         </span>
       </div>
 
-      <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-bg-elevated">
-        <div
-          className="budget-fill h-1.5 rounded-full"
-          style={{
-            ...({ '--target-w': `${barWidth}%` } as React.CSSProperties),
-            width: `${barWidth}%`,
-            backgroundColor: view.fillColor,
-          }}
-        />
-      </div>
+      <ProgressBar value={view.pct} color={view.fillColor} className="mt-3" />
 
       <div className="mt-2.5 flex items-center justify-between">
         <span className="text-[12px] font-medium" style={{ color: view.fillColor }}>{pctLabel}%</span>

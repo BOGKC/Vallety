@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import toast from 'react-hot-toast'
+import toast from '../../components/Toast'
 import Papa from 'papaparse'
 import {
   User, Briefcase, Building2, BarChart3,

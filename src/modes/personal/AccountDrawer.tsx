@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { X, Trash2 } from 'lucide-react'
-import toast from 'react-hot-toast'
+import toast from '../../components/Toast'
 import { cn } from '../../shared/lib/cn'
 import {
   addAccount, updateAccount, deleteAccount, ACCOUNT_TYPES,
@@ -86,7 +86,7 @@ export function AccountDrawer({ open, mode, account, onClose, onSaved }: Props) 
     <>
       <div
         className={cn(
-          'fixed inset-0 z-50 bg-black/60 transition-opacity duration-200',
+          'fixed inset-0 z-50 bg-black/70 transition-opacity duration-[220ms]',
           open ? 'opacity-100' : 'pointer-events-none opacity-0'
         )}
         onClick={onClose}
@@ -97,7 +97,7 @@ export function AccountDrawer({ open, mode, account, onClose, onSaved }: Props) 
         aria-modal="true"
         aria-label={mode === 'add' ? 'Add account' : 'Edit account'}
         className={cn(
-          'fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-bg-card shadow-2xl transition-transform duration-200 ease-out sm:w-[420px]',
+          'fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-bg-card shadow-2xl transition-transform duration-[220ms] ease-[cubic-bezier(0.32,0.72,0,1)] sm:w-[420px]',
           open ? 'translate-x-0' : 'translate-x-full'
         )}
       >

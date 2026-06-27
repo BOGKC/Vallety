@@ -11,6 +11,7 @@ import { computeDashboard } from '../../shared/lib/dashboardData'
 import { formatEuro } from '../../shared/lib/formatters'
 import { cn } from '../../shared/lib/cn'
 import { EmptyState } from '../../components/EmptyState'
+import { useCountUp } from '../../shared/hooks/useCountUp'
 
 // ── Small utilities ─────────────────────────────────────────────────────────────
 
@@ -68,18 +69,23 @@ function CashflowTooltip({ active, label, payload }: TooltipPayload) {
 
 // ── Metric card ─────────────────────────────────────────────────────────────────
 
+function AnimatedEuro({ value }: { value: number }) {
+  const animated = useCountUp(value)
+  return <>{formatEuro(animated)}</>
+}
+
 function MetricCard({
   icon, iconColor, label, value, valueColor, children,
 }: {
   icon: React.ReactNode
   iconColor: string
   label: string
-  value: string
+  value: React.ReactNode
   valueColor?: string
   children?: React.ReactNode
 }) {
   return (
-    <div className="rounded-lg bg-bg-card p-3 sm:p-4">
+    <div className="card rounded-lg border border-default bg-bg-card p-3 sm:p-4">
       <div className="flex items-center gap-2">
         <span style={{ color: iconColor }}>{icon}</span>
         <span className="text-[12px] text-text-muted">{label}</span>
@@ -216,7 +222,7 @@ export function PersonalDashboard() {
           icon={<ArrowDownLeft className="h-4 w-4" />}
           iconColor="var(--color-success)"
           label="Income"
-          value={formatEuro(income.value)}
+          value={<AnimatedEuro value={income.value} />}
         >
           <DeltaPill delta={income.delta} />
         </MetricCard>
@@ -225,7 +231,7 @@ export function PersonalDashboard() {
           icon={<ArrowUpRight className="h-4 w-4" />}
           iconColor="var(--color-danger)"
           label="Expenses"
-          value={formatEuro(expenses.value)}
+          value={<AnimatedEuro value={expenses.value} />}
         >
           <DeltaPill delta={expenses.delta} invert />
         </MetricCard>
@@ -245,7 +251,7 @@ export function PersonalDashboard() {
           icon={<TrendingUp className="h-4 w-4" />}
           iconColor={saved.value >= 0 ? 'var(--color-success)' : 'var(--color-danger)'}
           label="Saved"
-          value={formatEuro(saved.value)}
+          value={<AnimatedEuro value={saved.value} />}
           valueColor={saved.value >= 0 ? 'var(--color-success)' : 'var(--color-danger)'}
         >
           <DeltaPill delta={saved.delta} />

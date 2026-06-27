@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Sparkles, ArrowUp, ClipboardCopy, Info, Check } from 'lucide-react'
-import toast from 'react-hot-toast'
+import toast from '../../components/Toast'
 import { formatEuro } from '../../shared/lib/formatters'
 import {
   getApiKey, setApiKey, streamAdvisor, type ChatMessage,

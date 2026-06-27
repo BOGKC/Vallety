@@ -4,7 +4,7 @@ import {
   Plus, RefreshCw, MoreVertical, Pencil, EyeOff, Eye, XCircle, Trash2, Bell,
 } from 'lucide-react'
 import { EmptyState } from '../../components/EmptyState'
-import toast from 'react-hot-toast'
+import toast from '../../components/Toast'
 import { formatEuro } from '../../shared/lib/formatters'
 import { cn } from '../../shared/lib/cn'
 import { readTransactions } from '../../shared/lib/transactions'

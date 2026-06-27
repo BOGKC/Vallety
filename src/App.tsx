@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
-import { Toaster } from 'react-hot-toast'
+import { ToastViewport } from './components/Toast'
 import { queryClient } from './shared/lib/queryClient'
 import { AuthGuard } from './shared/components/AuthGuard'
 import { AppShell } from './shared/components/AppShell'
@@ -91,19 +91,7 @@ export default function App() {
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
 
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              style: {
-                background: 'var(--color-bg-card)',
-                color: 'var(--color-text-primary)',
-                border: '1px solid var(--color-border)',
-                fontSize: '14px',
-              },
-              success: { iconTheme: { primary: '#0F9D7A', secondary: '#fff' } },
-              error:   { iconTheme: { primary: '#f87171', secondary: '#fff' } },
-            }}
-          />
+          <ToastViewport />
         </AuthInit>
       </BrowserRouter>
     </QueryClientProvider>
