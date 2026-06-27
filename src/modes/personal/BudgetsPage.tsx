@@ -1,197 +1,62 @@
-import { useMemo, useState } from 'react'
-import { Plus } from 'lucide-react'
-import { formatEuro } from '../../shared/lib/formatters'
-import { getCategoryMeta, hexToRgba } from '../../shared/lib/transactions'
-import {
-  readBudgets, computeBudgets, usageColor, BUDGET_SUGGESTIONS,
-  type Budget, type BudgetView,
-} from '../../shared/lib/budgets'
-import { BudgetDrawer, type BudgetPrefill } from './BudgetDrawer'
+import { useEffect, useState } from 'react'
+import { cn } from '../../shared/lib/cn'
+import { BudgetsTab } from './BudgetsTab'
+import { GoalsTab } from './GoalsTab'
+import { DebtTab } from './DebtTab'
 
-// ── Summary metric card ─────────────────────────────────────────────────────
+type Tab = 'budgets' | 'goals' | 'debt'
 
-function SummaryCard({
-  value, valueColor, label,
-}: { value: string; valueColor?: string; label: string }) {
-  return (
-    <div className="rounded-lg border border-default bg-bg-card p-4">
-      <p className="text-[20px] font-semibold" style={{ color: valueColor ?? 'var(--text-primary)' }}>
-        {value}
-      </p>
-      <p className="mt-0.5 text-[12px] text-text-muted">{label}</p>
-    </div>
-  )
+const TABS: { value: Tab; label: string }[] = [
+  { value: 'budgets', label: 'Budgets' },
+  { value: 'goals', label: 'Goals' },
+  { value: 'debt', label: 'Debt' },
+]
+
+function hashToTab(hash: string): Tab {
+  const h = hash.replace('#', '')
+  return h === 'goals' || h === 'debt' ? h : 'budgets'
 }
-
-// ── Budget card ─────────────────────────────────────────────────────────────
-
-function BudgetCard({ view, daysLeft }: { view: BudgetView; daysLeft: number }) {
-  const meta = getCategoryMeta(view.category)
-  const Icon = meta.icon
-  const barWidth = Math.min(100, Math.round(view.pct))
-  const pctLabel = Math.round(view.pct)
-
-  const daysChip =
-    daysLeft === 0 ? 'Month ends today' : `${daysLeft} day${daysLeft === 1 ? '' : 's'} left`
-  const daysWarning = daysLeft <= 7
-
-  return (
-    <div
-      className="rounded-lg border border-default bg-bg-card p-4 transition-transform duration-150 hover:scale-[1.01] hover:bg-bg-elevated"
-    >
-      {/* Top */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <span
-            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
-            style={{ backgroundColor: hexToRgba(meta.color, 0.15) }}
-          >
-            <Icon className="h-4 w-4" style={{ color: meta.color }} />
-          </span>
-          <span className="truncate text-[14px] font-medium text-text-primary">{view.category}</span>
-        </div>
-        <span className="flex-shrink-0 text-[13px] text-text-secondary">
-          {formatEuro(view.spent)} / {formatEuro(view.amount)}
-        </span>
-      </div>
-
-      {/* Progress */}
-      <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-bg-elevated">
-        <div
-          className="budget-fill h-1.5 rounded-full"
-          style={{
-            ...({ '--target-w': `${barWidth}%` } as React.CSSProperties),
-            width: `${barWidth}%`,
-            backgroundColor: view.fillColor,
-          }}
-        />
-      </div>
-
-      {/* Bottom */}
-      <div className="mt-2.5 flex items-center justify-between">
-        <span className="text-[12px] font-medium" style={{ color: view.fillColor }}>
-          {pctLabel}%
-        </span>
-        <span
-          className="rounded-full px-2 py-0.5 text-[11px]"
-          style={{
-            backgroundColor: daysWarning ? 'var(--color-warning-muted)' : 'var(--bg-elevated)',
-            color: daysWarning ? 'var(--color-warning)' : 'var(--text-muted)',
-          }}
-        >
-          {daysChip}
-        </span>
-      </div>
-    </div>
-  )
-}
-
-// ── Empty state quick-start ─────────────────────────────────────────────────
-
-function QuickStart({ onPick }: { onPick: (p: BudgetPrefill) => void }) {
-  return (
-    <div>
-      <p className="mb-3 text-[14px] font-medium text-text-secondary">
-        Get started with common budgets
-      </p>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {BUDGET_SUGGESTIONS.map((s) => {
-          const meta = getCategoryMeta(s.category)
-          const Icon = meta.icon
-          return (
-            <div
-              key={s.category}
-              className="flex flex-col items-center gap-2 rounded-lg p-4 text-center"
-              style={{ border: '1px dashed var(--border-default)' }}
-            >
-              <span
-                className="flex h-9 w-9 items-center justify-center rounded-full"
-                style={{ backgroundColor: hexToRgba(meta.color, 0.15) }}
-              >
-                <Icon className="h-4 w-4" style={{ color: meta.color }} />
-              </span>
-              <span className="text-[13px] font-medium text-text-primary">{s.category}</span>
-              <span className="text-[11px] text-text-muted">
-                {formatEuro(s.amount)} / month suggested
-              </span>
-              <button
-                onClick={() => onPick({ category: s.category, amount: s.amount })}
-                className="mt-1 text-[12px] font-medium"
-                style={{ color: 'var(--color-accent)' }}
-              >
-                + Create
-              </button>
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-// ── Page ────────────────────────────────────────────────────────────────────
 
 export function BudgetsPage() {
-  const [budgets, setBudgets] = useState<Budget[]>(() => readBudgets())
-  const [drawerOpen, setDrawerOpen] = useState(false)
-  const [prefill, setPrefill] = useState<BudgetPrefill | null>(null)
+  const [tab, setTab] = useState<Tab>(() => hashToTab(window.location.hash))
 
-  const now = useMemo(() => new Date(), [])
-  const summary = useMemo(() => computeBudgets(budgets, now), [budgets, now])
+  // Keep tab in sync with browser back/forward hash changes.
+  useEffect(() => {
+    const onHash = () => setTab(hashToTab(window.location.hash))
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
 
-  const hasBudgets = budgets.length > 0
-  const spentColor = summary.totalSpent > summary.totalBudgeted ? '#EF4444' : '#22C55E'
-
-  const openNew = () => { setPrefill(null); setDrawerOpen(true) }
-  const openPrefilled = (p: BudgetPrefill) => { setPrefill(p); setDrawerOpen(true) }
+  const selectTab = (t: Tab) => {
+    setTab(t)
+    window.history.replaceState(null, '', `#${t}`)
+  }
 
   return (
     <div className="mx-auto max-w-4xl">
-      {/* Header */}
-      <div className="mb-5 flex items-center justify-between">
-        <h1 className="text-[18px] font-semibold text-text-primary">Budgets</h1>
-        <button
-          onClick={openNew}
-          className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-[13px] font-medium text-white"
-          style={{ backgroundColor: 'var(--color-accent)', transition: 'var(--transition-fast)' }}
-        >
-          <Plus className="h-4 w-4" /> New budget
-        </button>
+      {/* Tab bar */}
+      <div className="mb-5 inline-flex items-center gap-1 rounded-full bg-bg-elevated p-1">
+        {TABS.map((t) => {
+          const active = tab === t.value
+          return (
+            <button
+              key={t.value}
+              onClick={() => selectTab(t.value)}
+              className={cn(
+                'h-9 rounded-full px-4 text-[13px] font-medium',
+                active ? 'text-white' : 'text-text-muted hover:text-text-secondary'
+              )}
+              style={active ? { backgroundColor: 'var(--color-accent)', transition: 'var(--transition-fast)' } : { transition: 'var(--transition-fast)' }}
+            >
+              {t.label}
+            </button>
+          )
+        })}
       </div>
 
-      {/* Summary row */}
-      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <SummaryCard value={formatEuro(summary.totalBudgeted)} label="Budgeted this month" />
-        <SummaryCard
-          value={formatEuro(summary.totalSpent)}
-          valueColor={hasBudgets ? spentColor : undefined}
-          label="Spent so far"
-        />
-        <SummaryCard
-          value={`${Math.round(summary.overallPct)}%`}
-          valueColor={hasBudgets ? usageColor(summary.overallPct) : undefined}
-          label={`of budget used · ${summary.daysLeft} day${summary.daysLeft === 1 ? '' : 's'} left`}
-        />
-      </div>
-
-      {/* Body */}
-      {hasBudgets ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {summary.views.map((v) => (
-            <BudgetCard key={v.id} view={v} daysLeft={summary.daysLeft} />
-          ))}
-        </div>
-      ) : (
-        <QuickStart onPick={openPrefilled} />
-      )}
-
-      {/* Drawer */}
-      <BudgetDrawer
-        open={drawerOpen}
-        prefill={prefill}
-        onClose={() => setDrawerOpen(false)}
-        onCreated={setBudgets}
-      />
+      {tab === 'budgets' && <BudgetsTab />}
+      {tab === 'goals' && <GoalsTab />}
+      {tab === 'debt' && <DebtTab />}
     </div>
   )
 }

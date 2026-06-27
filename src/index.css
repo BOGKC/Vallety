@@ -186,3 +186,17 @@ textarea,
 .budget-fill {
   animation: budget-grow 0.6s ease-out forwards;
 }
+
+/* Goal progress ring — draw the arc on mount */
+@keyframes goal-ring-draw {
+  from {
+    stroke-dashoffset: var(--ring-circ, 0);
+  }
+  to {
+    stroke-dashoffset: var(--ring-offset, 0);
+  }
+}
+
+.goal-ring__arc {
+  animation: goal-ring-draw 0.8s ease-out forwards;
+}
