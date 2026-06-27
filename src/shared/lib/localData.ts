@@ -8,10 +8,10 @@ import type { Transaction, Budget, Goal, Bill } from '../../supabase/types'
  */
 
 export const STORAGE_KEYS = {
-  transactions: 'vallety:transactions',
-  budgets: 'vallety:budgets',
-  goals: 'vallety:goals',
-  bills: 'vallety:bills',
+  transactions: 'vallety_transactions',
+  budgets: 'vallety_budgets',
+  goals: 'vallety_goals',
+  bills: 'vallety_bills',
 } as const
 
 function readArray<T>(key: string): T[] {
