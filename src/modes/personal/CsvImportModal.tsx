@@ -121,7 +121,7 @@ export function CsvImportModal({ open, onClose, onImported }: Props) {
   const onOverlayClick = () => { if (step === 'upload') onClose() }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Import transactions">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Import transactions">
       <div
         className="absolute inset-0 bg-black/70"
         style={{ backdropFilter: 'blur(4px)' }}
@@ -297,7 +297,7 @@ function PreviewView({
 
       {/* Table */}
       {mappingReady && rows.length > 0 ? (
-        <div className="mt-3 overflow-auto px-5" style={{ maxHeight: 280 }}>
+        <div className="mt-3 overflow-auto px-5" style={{ maxHeight: 280, WebkitOverflowScrolling: 'touch' }}>
           <table className="w-full border-collapse text-[13px]">
             <thead className="sticky top-0 bg-bg-card">
               <tr className="text-left text-[11px] uppercase text-text-muted">

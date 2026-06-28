@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { X, Trash2 } from 'lucide-react'
 import toast from '../../components/Toast'
 import { cn } from '../../shared/lib/cn'
+import { Drawer } from '../../components/Drawer'
 import { getCategoryMeta } from '../../shared/lib/transactions'
 import {
   addBill, updateBill, deleteBill, defaultDueDate, FREQUENCY_LABELS,
@@ -99,24 +100,7 @@ export function BillDrawer({ open, mode, bill, onClose, onSaved }: Props) {
   }
 
   return (
-    <>
-      <div
-        className={cn(
-          'fixed inset-0 z-50 bg-black/70 transition-opacity duration-[220ms]',
-          open ? 'opacity-100' : 'pointer-events-none opacity-0'
-        )}
-        onClick={onClose}
-        aria-hidden
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={mode === 'add' ? 'New bill' : 'Edit bill'}
-        className={cn(
-          'fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-bg-card shadow-2xl transition-transform duration-[220ms] ease-[cubic-bezier(0.32,0.72,0,1)] sm:w-[420px]',
-          open ? 'translate-x-0' : 'translate-x-full'
-        )}
-      >
+    <Drawer open={open} onClose={onClose} ariaLabel={mode === 'add' ? 'New bill' : 'Edit bill'}>
         <div className="flex items-center justify-between border-b border-subtle px-5 py-3.5">
           <h2 className="text-[16px] font-semibold text-text-primary">
             {mode === 'add' ? 'New bill' : 'Edit bill'}
@@ -254,7 +238,6 @@ export function BillDrawer({ open, mode, bill, onClose, onSaved }: Props) {
             </button>
           )}
         </div>
-      </div>
-    </>
+    </Drawer>
   )
 }

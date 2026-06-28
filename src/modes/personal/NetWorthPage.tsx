@@ -173,7 +173,8 @@ export function NetWorthPage() {
               </div>
             ) : (
               <>
-                <ResponsiveContainer width="100%" height={200}>
+                <div className="h-40 w-full sm:h-52">
+                <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData} margin={{ top: 6, right: 4, bottom: 0, left: 4 }}>
                     <defs>
                       <linearGradient id="nwFill" x1="0" y1="0" x2="0" y2="1">
@@ -194,6 +195,7 @@ export function NetWorthPage() {
                     />
                   </AreaChart>
                 </ResponsiveContainer>
+                </div>
                 <p className="mt-2 text-[11px] text-text-muted">
                   Tracking since {format(new Date(snapshots[0].date), 'MMM yyyy')}
                 </p>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight, ChevronLeft, X } from 'lucide-react'
 import toast from '../../components/Toast'
 import { cn } from '../../shared/lib/cn'
+import { Drawer } from '../../components/Drawer'
 import {
   addTransaction, getCategoryMeta, getMerchantSuggestions, suggestCategory,
   readTransactions, type Txn, type TxnType,
@@ -130,31 +131,10 @@ export function AddTransactionDrawer({ open, onClose, onAdded }: Props) {
   const pillBase = 'h-9 rounded-full px-3 text-[13px] font-medium'
 
   return (
-    <>
-      <div
-        className={cn(
-          'fixed inset-0 z-50 bg-black/70 transition-opacity duration-[220ms]',
-          open ? 'opacity-100' : 'pointer-events-none opacity-0'
-        )}
-        onClick={onClose}
-        aria-hidden
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Add transaction"
-        className={cn(
-          'fixed z-50 flex flex-col bg-bg-card shadow-2xl transition-transform duration-[220ms] ease-[cubic-bezier(0.32,0.72,0,1)]',
-          'bottom-0 left-0 right-0 h-[85vh] rounded-t-2xl',
-          'sm:inset-y-0 sm:left-auto sm:right-0 sm:h-full sm:w-[420px] sm:rounded-none',
-          open
-            ? 'translate-y-0 sm:translate-x-0'
-            : 'translate-y-full sm:translate-y-0 sm:translate-x-full'
-        )}
-      >
+    <Drawer open={open} onClose={onClose} ariaLabel="Add transaction">
         {step === 1 ? (
           // ── STEP 1: type ──
-          <div className="flex h-full flex-col">
+          <div className="flex min-h-0 flex-1 flex-col">
             <div className="flex items-center justify-end px-4 pt-4">
               <button
                 onClick={onClose}
@@ -207,7 +187,7 @@ export function AddTransactionDrawer({ open, onClose, onAdded }: Props) {
           </div>
         ) : (
           // ── STEP 2: details ──
-          <div className="flex h-full flex-col">
+          <div className="flex min-h-0 flex-1 flex-col">
             <div className="flex items-center gap-2 px-4 py-3.5">
               <button
                 onClick={() => setStep(1)}
@@ -363,7 +343,6 @@ export function AddTransactionDrawer({ open, onClose, onAdded }: Props) {
             </div>
           </div>
         )}
-      </div>
-    </>
+    </Drawer>
   )
 }

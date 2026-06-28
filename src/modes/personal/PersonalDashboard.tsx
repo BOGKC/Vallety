@@ -164,8 +164,8 @@ export function PersonalDashboard() {
               Safe to spend
             </p>
             <p
-              className="mt-1 text-[40px] font-bold leading-none sm:text-[52px]"
-              style={{ color: safeColor }}
+              className="mt-1 font-bold leading-none"
+              style={{ color: safeColor, fontSize: 'clamp(32px, 8vw, 52px)' }}
             >
               {safeToSpend.hasIncome ? formatEuro(safeToSpend.amount) : '€—'}
             </p>

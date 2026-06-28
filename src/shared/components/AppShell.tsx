@@ -4,6 +4,7 @@ import { X } from 'lucide-react'
 import { Sidebar } from './Sidebar'
 import { TopBar } from './TopBar'
 import { ModeSwitcher } from './ModeSwitcherMobile'
+import { BottomTabBar } from '../../components/BottomTabBar'
 
 // ── Mobile bottom-sheet drawer ────────────────────────────────────────────────
 
@@ -28,7 +29,7 @@ function MobileDrawer({ open, onClose }: MobileDrawerProps) {
       {/* Backdrop */}
       <div
         onClick={onClose}
-        className={`fixed inset-0 z-40 bg-black/70 transition-opacity duration-[220ms] md:hidden ${
+        className={`fixed inset-0 z-[60] bg-black/70 transition-opacity duration-[220ms] md:hidden ${
           open ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         aria-hidden
@@ -39,7 +40,7 @@ function MobileDrawer({ open, onClose }: MobileDrawerProps) {
         role="dialog"
         aria-modal="true"
         aria-label="Navigation"
-        className={`fixed bottom-0 left-0 right-0 z-50 bg-bg-secondary border-t border-border rounded-t-2xl transition-transform duration-[250ms] ease-[cubic-bezier(0.32,0.72,0,1)] md:hidden ${
+        className={`fixed bottom-0 left-0 right-0 z-[60] bg-bg-secondary border-t border-border rounded-t-2xl transition-transform duration-[250ms] ease-[cubic-bezier(0.32,0.72,0,1)] md:hidden ${
           open ? 'translate-y-0' : 'translate-y-full'
         }`}
       >
@@ -96,15 +97,22 @@ export function AppShell() {
         <TopBar onMenuClick={() => setDrawerOpen(true)} />
 
         <main className="flex-1 overflow-y-auto">
-          {/* key on pathname so the incoming route fades + slides up on change */}
-          <div key={location.pathname} className="page-enter p-6">
+          {/* key on pathname so the incoming route fades + slides up on change.
+              Extra bottom padding on mobile clears the fixed bottom tab bar. */}
+          <div
+            key={location.pathname}
+            className="page-enter px-6 pt-6 pb-[calc(72px+env(safe-area-inset-bottom))] md:pb-6"
+          >
             <Outlet />
           </div>
         </main>
       </div>
 
-      {/* Mobile drawer */}
+      {/* Mobile drawer (full nav via hamburger) */}
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+
+      {/* Mobile bottom tab bar */}
+      <BottomTabBar />
     </div>
   )
 }

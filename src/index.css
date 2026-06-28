@@ -334,3 +334,42 @@ button:active:not(:disabled),
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ============================================================
+   Mobile responsiveness
+   ============================================================ */
+
+/* Touch targets — comfortable hit areas on small screens */
+@media (max-width: 768px) {
+  button,
+  [role='button'],
+  a,
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+  }
+  .nav-item {
+    min-height: 48px;
+  }
+}
+
+/* Safe-area inset at the bottom of the viewport */
+body {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Right-fade overlay to hint horizontal scroll on wrapped tables */
+.scroll-fade {
+  position: relative;
+}
+.scroll-fade::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 28px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--bg-card));
+}

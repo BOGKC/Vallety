@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  Camera, Upload, Plus, Search, ChevronRight, ArrowLeftRight, X, Trash2,
+  Camera, Upload, Plus, Search, ChevronRight, ArrowLeftRight, X, Trash2, SlidersHorizontal,
 } from 'lucide-react'
 import { Modal } from '../../shared/components/Modal'
 import { EmptyState } from '../../components/EmptyState'
+import { Drawer } from '../../components/Drawer'
 import { AddTransactionDrawer } from './AddTransactionDrawer'
 import { CsvImportModal } from './CsvImportModal'
 import { formatEuro } from '../../shared/lib/formatters'
@@ -118,7 +119,7 @@ function TransactionRow({ txn, onClick }: { txn: Txn; onClick: () => void }) {
         <span className="hidden w-12 text-right text-[12px] text-text-muted sm:block">
           {rowTimeLabel(txn.date)}
         </span>
-        <ChevronRight className="h-4 w-4 text-text-muted opacity-0 transition-opacity group-hover:opacity-100" />
+        <ChevronRight className="hidden h-4 w-4 text-text-muted opacity-0 transition-opacity group-hover:opacity-100 sm:block" />
       </span>
     </button>
   )
@@ -172,24 +173,7 @@ function TransactionDrawer({
   const isIncome = draft.type === 'income'
 
   return (
-    <>
-      <div
-        className={cn(
-          'fixed inset-0 z-50 bg-black/70 transition-opacity duration-[220ms]',
-          open ? 'opacity-100' : 'pointer-events-none opacity-0'
-        )}
-        onClick={onClose}
-        aria-hidden
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={mode === 'add' ? 'New transaction' : 'Transaction'}
-        className={cn(
-          'fixed right-0 top-0 z-50 flex h-full w-full flex-col bg-bg-secondary shadow-2xl transition-transform duration-[220ms] ease-[cubic-bezier(0.32,0.72,0,1)] sm:w-[400px]',
-          open ? 'translate-x-0' : 'translate-x-full'
-        )}
-      >
+    <Drawer open={open} onClose={onClose} ariaLabel={mode === 'add' ? 'New transaction' : 'Transaction'}>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-subtle px-5 py-3.5">
           <h2 className="text-[16px] font-semibold text-text-primary">
@@ -321,8 +305,7 @@ function TransactionDrawer({
             </button>
           )}
         </div>
-      </div>
-    </>
+    </Drawer>
   )
 }
 
@@ -353,6 +336,7 @@ export function TransactionsPage() {
   const [txns, setTxns] = useState<Txn[]>(() => readTransactions())
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
   const [modal, setModal] = useState<'receipt' | 'csv' | null>(null)
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   const [addOpen, setAddOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -431,7 +415,7 @@ export function TransactionsPage() {
           <select
             value={filters.category}
             onChange={(e) => setFilters((f) => ({ ...f, category: e.target.value }))}
-            className="h-9 rounded-md border border-default bg-bg-input px-2 text-[13px] text-text-primary focus:border-accent"
+            className="hidden h-9 rounded-md border border-default bg-bg-input px-2 text-[13px] text-text-primary focus:border-accent sm:block"
           >
             <option value="all">All categories</option>
             {Array.from(new Set([...PRESET_CATEGORIES, ...categoryOptions])).map((c) => (
@@ -442,7 +426,7 @@ export function TransactionsPage() {
           <select
             value={filters.datePreset}
             onChange={(e) => setFilters((f) => ({ ...f, datePreset: e.target.value as DatePreset }))}
-            className="h-9 rounded-md border border-default bg-bg-input px-2 text-[13px] text-text-primary focus:border-accent"
+            className="hidden h-9 rounded-md border border-default bg-bg-input px-2 text-[13px] text-text-primary focus:border-accent sm:block"
           >
             {DATE_PRESETS.map((p) => (
               <option key={p.value} value={p.value}>{p.label}</option>
@@ -471,10 +455,18 @@ export function TransactionsPage() {
             ))}
           </div>
 
+          <button
+            onClick={() => setFiltersOpen(true)}
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md border border-default text-text-secondary hover:text-text-primary sm:hidden"
+            aria-label="Filters"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+          </button>
+
           <select
             value={filters.sort}
             onChange={(e) => setFilters((f) => ({ ...f, sort: e.target.value as SortKey }))}
-            className="h-9 rounded-md border border-default bg-bg-input px-2 text-[13px] text-text-primary focus:border-accent"
+            className="hidden h-9 rounded-md border border-default bg-bg-input px-2 text-[13px] text-text-primary focus:border-accent sm:block"
           >
             {SORT_OPTIONS.map((s) => (
               <option key={s.value} value={s.value}>{s.label}</option>
@@ -547,6 +539,54 @@ export function TransactionsPage() {
         onClose={() => setModal(null)}
         onImported={setTxns}
       />
+
+      {/* Mobile filters sheet */}
+      <Modal
+        open={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        title="Filters"
+        footer={<GhostButton onClick={() => setFiltersOpen(false)}>Done</GhostButton>}
+      >
+        <div className="flex flex-col gap-4">
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[12px] text-text-muted">Category</span>
+            <select
+              value={filters.category}
+              onChange={(e) => setFilters((f) => ({ ...f, category: e.target.value }))}
+              className={fieldClass}
+            >
+              <option value="all">All categories</option>
+              {Array.from(new Set([...PRESET_CATEGORIES, ...categoryOptions])).map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[12px] text-text-muted">Date range</span>
+            <select
+              value={filters.datePreset}
+              onChange={(e) => setFilters((f) => ({ ...f, datePreset: e.target.value as DatePreset }))}
+              className={fieldClass}
+            >
+              {DATE_PRESETS.map((p) => (
+                <option key={p.value} value={p.value}>{p.label}</option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[12px] text-text-muted">Sort by</span>
+            <select
+              value={filters.sort}
+              onChange={(e) => setFilters((f) => ({ ...f, sort: e.target.value as SortKey }))}
+              className={fieldClass}
+            >
+              {SORT_OPTIONS.map((s) => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </Modal>
 
       {/* ADD DRAWER (2-step) */}
       <AddTransactionDrawer
