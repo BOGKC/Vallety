@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { X, Trash2 } from 'lucide-react'
 import toast from '../../components/Toast'
 import { cn } from '../../shared/lib/cn'
 import { Drawer } from '../../components/Drawer'
+import { FieldError, RequiredMark } from '../../shared/components/FormField'
+import { useShake } from '../../shared/hooks/useShake'
+import { billSchema, type BillFormValues } from '../../shared/lib/formSchemas'
 import { getCategoryMeta } from '../../shared/lib/transactions'
 import {
   addBill, updateBill, deleteBill, defaultDueDate, FREQUENCY_LABELS,
@@ -28,8 +33,6 @@ interface Props {
 }
 
 export function BillDrawer({ open, mode, bill, onClose, onSaved }: Props) {
-  const [name, setName] = useState('')
-  const [amount, setAmount] = useState('')
   const [frequency, setFrequency] = useState<Frequency>('monthly')
   const [dueDate, setDueDate] = useState('')
   const [category, setCategory] = useState('Bills')
@@ -37,24 +40,40 @@ export function BillDrawer({ open, mode, bill, onClose, onSaved }: Props) {
   const [trialEndsOn, setTrialEndsOn] = useState('')
   const [wasOpen, setWasOpen] = useState(false)
 
+  const {
+    register, handleSubmit, reset, formState: { errors },
+  } = useForm<BillFormValues>({
+    resolver: zodResolver(billSchema),
+    mode: 'onBlur',
+    defaultValues: { name: '', amount: '' },
+  })
+  const { shaking, triggerShake, shakeProps } = useShake()
+
   if (open && !wasOpen) {
     setWasOpen(true)
     if (mode === 'edit' && bill) {
-      setName(bill.name)
-      setAmount(String(bill.amount))
       setFrequency(bill.frequency)
       setDueDate(bill.nextDue.slice(0, 10))
       setCategory(bill.category)
       setIsTrial(Boolean(bill.isTrial))
       setTrialEndsOn(bill.trialEndsOn ? bill.trialEndsOn.slice(0, 10) : '')
     } else {
-      setName(''); setAmount(''); setFrequency('monthly')
+      setFrequency('monthly')
       setDueDate(defaultDueDate(new Date())); setCategory('Bills')
       setIsTrial(false); setTrialEndsOn('')
     }
   } else if (!open && wasOpen) {
     setWasOpen(false)
   }
+
+  useEffect(() => {
+    if (!open) return
+    reset(
+      mode === 'edit' && bill
+        ? { name: bill.name, amount: String(bill.amount) }
+        : { name: '', amount: '' }
+    )
+  }, [open, mode, bill, reset])
 
   useEffect(() => {
     if (!open) return
@@ -67,14 +86,10 @@ export function BillDrawer({ open, mode, bill, onClose, onSaved }: Props) {
     }
   }, [open, onClose])
 
-  const amountNum = Number(amount)
-  const canSave = name.trim() !== '' && Number.isFinite(amountNum) && amountNum > 0
-
-  const handleSave = () => {
-    if (!canSave) return
+  const onValid = (values: BillFormValues) => {
     const payload = {
-      name: name.trim(),
-      amount: amountNum,
+      name: values.name.trim(),
+      amount: Number(values.amount),
       frequency,
       nextDue: new Date(dueDate || defaultDueDate(new Date())).toISOString(),
       category,
@@ -117,23 +132,23 @@ export function BillDrawer({ open, mode, bill, onClose, onSaved }: Props) {
         <div className="flex-1 overflow-y-auto px-5 py-4">
           <div className="flex flex-col gap-4">
             <label className="flex flex-col gap-1.5">
-              <span className="text-[12px] text-text-muted">Bill name</span>
-              <input className={fieldClass} value={name} placeholder="e.g. Rent"
-                onChange={(e) => setName(e.target.value)} />
+              <span className="text-[12px] text-text-muted">Bill name<RequiredMark /></span>
+              <input className={fieldClass} placeholder="e.g. Rent" {...register('name')} />
+              <FieldError message={errors.name?.message} />
             </label>
 
             <div>
-              <span className="text-[12px] text-text-muted">Amount</span>
+              <span className="text-[12px] text-text-muted">Amount<RequiredMark /></span>
               <div className="mt-1 flex items-end gap-2 border-b-2 border-default py-1.5 focus-within:border-accent">
                 <span className="text-[24px] font-medium leading-none text-text-muted">€</span>
                 <input
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
                   inputMode="decimal"
                   placeholder="0"
                   className="w-full border-0 bg-transparent p-0 text-[32px] font-bold leading-none text-text-primary outline-none placeholder:text-text-muted"
+                  {...register('amount')}
                 />
               </div>
+              <FieldError message={errors.amount?.message} />
             </div>
 
             <div>
@@ -144,6 +159,7 @@ export function BillDrawer({ open, mode, bill, onClose, onSaved }: Props) {
                   return (
                     <button
                       key={f}
+                      type="button"
                       onClick={() => setFrequency(f)}
                       className={cn(
                         'h-9 rounded-full px-3 text-[13px] font-medium',
@@ -174,6 +190,7 @@ export function BillDrawer({ open, mode, bill, onClose, onSaved }: Props) {
                   return (
                     <button
                       key={c}
+                      type="button"
                       onClick={() => setCategory(c)}
                       className="flex aspect-square flex-col items-center justify-center gap-1 rounded-md border"
                       style={{
@@ -216,20 +233,20 @@ export function BillDrawer({ open, mode, bill, onClose, onSaved }: Props) {
 
         <div className="flex flex-col gap-2 border-t border-subtle p-4">
           <button
-            onClick={handleSave}
-            disabled={!canSave}
-            className="flex h-11 w-full items-center justify-center rounded-md text-[14px] font-semibold text-white"
-            style={{
-              backgroundColor: 'var(--color-accent)',
-              opacity: canSave ? 1 : 0.4,
-              cursor: canSave ? 'pointer' : 'not-allowed',
-              transition: 'var(--transition-fast)',
-            }}
+            type="button"
+            onClick={handleSubmit(onValid, triggerShake)}
+            className={cn(
+              'flex h-11 w-full items-center justify-center rounded-md text-[14px] font-semibold text-white',
+              shaking && 'shake'
+            )}
+            style={{ backgroundColor: 'var(--color-accent)', transition: 'var(--transition-fast)' }}
+            {...shakeProps}
           >
             Save bill
           </button>
           {mode === 'edit' && (
             <button
+              type="button"
               onClick={handleDelete}
               className="flex items-center justify-center gap-1.5 py-1.5 text-[14px] font-medium"
               style={{ color: 'var(--color-danger)' }}

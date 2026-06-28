@@ -324,6 +324,89 @@ button:active:not(:disabled),
   animation: skeleton-shimmer 1.5s infinite linear;
 }
 
+/* Inline form-field error — fade in on appear */
+@keyframes field-error-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.field-error {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--color-danger);
+  animation: field-error-in 150ms ease-out;
+}
+
+/* Submit-button shake on invalid submit — 3 cycles over 300ms */
+@keyframes form-shake {
+  0% {
+    transform: translateX(0);
+  }
+  16% {
+    transform: translateX(-4px);
+  }
+  33% {
+    transform: translateX(4px);
+  }
+  50% {
+    transform: translateX(-4px);
+  }
+  66% {
+    transform: translateX(4px);
+  }
+  83% {
+    transform: translateX(-4px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.shake {
+  animation: form-shake 300ms ease-in-out;
+}
+
+/* Indeterminate linear progress (e.g. CSV parsing) */
+@keyframes indeterminate-progress {
+  0% {
+    left: -40%;
+    width: 40%;
+  }
+  50% {
+    left: 25%;
+    width: 50%;
+  }
+  100% {
+    left: 100%;
+    width: 40%;
+  }
+}
+
+.progress-indeterminate {
+  position: relative;
+  width: 100%;
+  height: 3px;
+  overflow: hidden;
+  background: var(--color-accent-muted);
+  border-radius: var(--radius-full);
+}
+
+.progress-indeterminate::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--color-accent);
+  animation: indeterminate-progress 1.1s ease-in-out infinite;
+}
+
 /* Respect reduced-motion preference */
 @media (prefers-reduced-motion: reduce) {
   *,

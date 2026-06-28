@@ -4,6 +4,7 @@ import {
 } from 'lucide-react'
 import { Modal } from '../../shared/components/Modal'
 import { EmptyState } from '../../components/EmptyState'
+import { SkeletonTransactionRow } from '../../components/SkeletonLoader'
 import { Drawer } from '../../components/Drawer'
 import { AddTransactionDrawer } from './AddTransactionDrawer'
 import { CsvImportModal } from './CsvImportModal'
@@ -337,6 +338,14 @@ export function TransactionsPage() {
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
   const [modal, setModal] = useState<'receipt' | 'csv' | null>(null)
   const [filtersOpen, setFiltersOpen] = useState(false)
+  // Briefly show skeletons on first paint. A 150ms floor prevents a flash on
+  // fast localStorage reads while still feeling instant.
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const id = window.setTimeout(() => setLoading(false), 150)
+    return () => window.clearTimeout(id)
+  }, [])
 
   const [addOpen, setAddOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -477,7 +486,13 @@ export function TransactionsPage() {
 
       {/* BODY */}
       <div className="py-4">
-        {!hasAny ? (
+        {loading ? (
+          <div className="flex flex-col">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <SkeletonTransactionRow key={i} />
+            ))}
+          </div>
+        ) : !hasAny ? (
           // Condition 1: no data at all
           <EmptyState
             icon={ArrowLeftRight}

@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ToastViewport } from './components/Toast'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { queryClient } from './shared/lib/queryClient'
 import { AuthGuard } from './shared/components/AuthGuard'
 import { AppShell } from './shared/components/AppShell'
@@ -32,6 +33,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthInit>
+          <ErrorBoundary>
           <Routes>
             {/* ── Public routes ──────────────────────────────────────────── */}
             <Route path="/signup"     element={<SignupPage />} />
@@ -90,6 +92,7 @@ export default function App() {
             {/* ── Catch-all ──────────────────────────────────────────────── */}
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
+          </ErrorBoundary>
 
           <ToastViewport />
         </AuthInit>

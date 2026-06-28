@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { X, Trash2 } from 'lucide-react'
 import toast from '../../components/Toast'
+import { cn } from '../../shared/lib/cn'
 import { Drawer } from '../../components/Drawer'
+import { FieldError, RequiredMark } from '../../shared/components/FormField'
+import { useShake } from '../../shared/hooks/useShake'
+import { accountSchema, type AccountFormValues } from '../../shared/lib/formSchemas'
 import {
   addAccount, updateAccount, deleteAccount, ACCOUNT_TYPES,
   type Account, type AccountType,
@@ -21,25 +27,41 @@ interface Props {
 }
 
 export function AccountDrawer({ open, mode, account, onClose, onSaved }: Props) {
-  const [name, setName] = useState('')
   const [type, setType] = useState<AccountType>('checking')
   const [institution, setInstitution] = useState('')
-  const [balance, setBalance] = useState('')
   const [currency, setCurrency] = useState('EUR')
   const [wasOpen, setWasOpen] = useState(false)
+
+  const {
+    register, handleSubmit, reset, formState: { errors },
+  } = useForm<AccountFormValues>({
+    resolver: zodResolver(accountSchema),
+    mode: 'onBlur',
+    defaultValues: { name: '', balance: '' },
+  })
+  const { shaking, triggerShake, shakeProps } = useShake()
 
   if (open && !wasOpen) {
     setWasOpen(true)
     if (mode === 'edit' && account) {
-      setName(account.name); setType(account.type)
-      setInstitution(account.institution ?? ''); setBalance(String(account.balance))
+      setType(account.type)
+      setInstitution(account.institution ?? '')
       setCurrency(account.currency)
     } else {
-      setName(''); setType('checking'); setInstitution(''); setBalance(''); setCurrency('EUR')
+      setType('checking'); setInstitution(''); setCurrency('EUR')
     }
   } else if (!open && wasOpen) {
     setWasOpen(false)
   }
+
+  useEffect(() => {
+    if (!open) return
+    reset(
+      mode === 'edit' && account
+        ? { name: account.name, balance: String(account.balance) }
+        : { name: '', balance: '' }
+    )
+  }, [open, mode, account, reset])
 
   useEffect(() => {
     if (!open) return
@@ -52,16 +74,12 @@ export function AccountDrawer({ open, mode, account, onClose, onSaved }: Props) 
     }
   }, [open, onClose])
 
-  const balanceNum = Number(balance)
-  const canSave = name.trim() !== '' && Number.isFinite(balanceNum) && balanceNum >= 0
-
-  const handleSave = () => {
-    if (!canSave) return
+  const onValid = (values: AccountFormValues) => {
     const payload = {
-      name: name.trim(),
+      name: values.name.trim(),
       type,
       institution: institution.trim() || undefined,
-      balance: balanceNum,
+      balance: Number(values.balance),
       currency,
     }
     if (mode === 'edit' && account) {
@@ -100,9 +118,9 @@ export function AccountDrawer({ open, mode, account, onClose, onSaved }: Props) 
         <div className="flex-1 overflow-y-auto px-5 py-4">
           <div className="flex flex-col gap-4">
             <label className="flex flex-col gap-1.5">
-              <span className="text-[12px] text-text-muted">Account name</span>
-              <input className={fieldClass} value={name} placeholder="e.g. Main current account"
-                onChange={(e) => setName(e.target.value)} />
+              <span className="text-[12px] text-text-muted">Account name<RequiredMark /></span>
+              <input className={fieldClass} placeholder="e.g. Main current account" {...register('name')} />
+              <FieldError message={errors.name?.message} />
             </label>
 
             <div>
@@ -114,6 +132,7 @@ export function AccountDrawer({ open, mode, account, onClose, onSaved }: Props) 
                   return (
                     <button
                       key={t.type}
+                      type="button"
                       onClick={() => setType(t.type)}
                       className="flex aspect-square flex-col items-center justify-center gap-1 rounded-md border"
                       style={{
@@ -139,17 +158,17 @@ export function AccountDrawer({ open, mode, account, onClose, onSaved }: Props) 
 
             <div className="flex gap-3">
               <div className="flex-1">
-                <span className="text-[12px] text-text-muted">Current balance</span>
+                <span className="text-[12px] text-text-muted">Current balance<RequiredMark /></span>
                 <div className="mt-1 flex items-end gap-2 border-b-2 border-default py-1.5 focus-within:border-accent">
                   <span className="text-[20px] font-medium leading-none text-text-muted">€</span>
                   <input
-                    value={balance}
-                    onChange={(e) => setBalance(e.target.value)}
                     inputMode="decimal"
                     placeholder="0"
                     className="w-full border-0 bg-transparent p-0 text-[28px] font-bold leading-none text-text-primary outline-none placeholder:text-text-muted"
+                    {...register('balance')}
                   />
                 </div>
+                <FieldError message={errors.balance?.message} />
               </div>
               <label className="flex w-24 flex-col gap-1.5">
                 <span className="text-[12px] text-text-muted">Currency</span>
@@ -163,20 +182,20 @@ export function AccountDrawer({ open, mode, account, onClose, onSaved }: Props) 
 
         <div className="flex flex-col gap-2 border-t border-subtle p-4">
           <button
-            onClick={handleSave}
-            disabled={!canSave}
-            className="flex h-11 w-full items-center justify-center rounded-md text-[14px] font-semibold text-white"
-            style={{
-              backgroundColor: 'var(--color-accent)',
-              opacity: canSave ? 1 : 0.4,
-              cursor: canSave ? 'pointer' : 'not-allowed',
-              transition: 'var(--transition-fast)',
-            }}
+            type="button"
+            onClick={handleSubmit(onValid, triggerShake)}
+            className={cn(
+              'flex h-11 w-full items-center justify-center rounded-md text-[14px] font-semibold text-white',
+              shaking && 'shake'
+            )}
+            style={{ backgroundColor: 'var(--color-accent)', transition: 'var(--transition-fast)' }}
+            {...shakeProps}
           >
             {mode === 'add' ? 'Add account' : 'Save changes'}
           </button>
           {mode === 'edit' && (
             <button
+              type="button"
               onClick={handleDelete}
               className="flex items-center justify-center gap-1.5 py-1.5 text-[14px] font-medium"
               style={{ color: 'var(--color-danger)' }}

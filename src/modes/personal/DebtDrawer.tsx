@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { X } from 'lucide-react'
 import toast from '../../components/Toast'
+import { cn } from '../../shared/lib/cn'
 import { Drawer } from '../../components/Drawer'
+import { FieldError, RequiredMark } from '../../shared/components/FormField'
+import { useShake } from '../../shared/hooks/useShake'
+import { debtSchema, type DebtFormValues } from '../../shared/lib/formSchemas'
 import { addDebt, DEBT_TYPE_LABELS, type Debt, type DebtType } from '../../shared/lib/debts'
 
 const fieldClass =
@@ -14,19 +20,31 @@ interface Props {
 }
 
 export function DebtDrawer({ open, onClose, onSaved }: Props) {
-  const [name, setName] = useState('')
   const [type, setType] = useState<DebtType>('credit_card')
-  const [balance, setBalance] = useState('')
   const [rate, setRate] = useState('')
   const [minPayment, setMinPayment] = useState('')
   const [wasOpen, setWasOpen] = useState(false)
 
+  const {
+    register, handleSubmit, reset, formState: { errors },
+  } = useForm<DebtFormValues>({
+    resolver: zodResolver(debtSchema),
+    mode: 'onBlur',
+    defaultValues: { name: '', balance: '' },
+  })
+  const { shaking, triggerShake, shakeProps } = useShake()
+
   if (open && !wasOpen) {
     setWasOpen(true)
-    setName(''); setType('credit_card'); setBalance(''); setRate(''); setMinPayment('')
+    setType('credit_card'); setRate(''); setMinPayment('')
   } else if (!open && wasOpen) {
     setWasOpen(false)
   }
+
+  useEffect(() => {
+    if (!open) return
+    reset({ name: '', balance: '' })
+  }, [open, reset])
 
   useEffect(() => {
     if (!open) return
@@ -39,15 +57,11 @@ export function DebtDrawer({ open, onClose, onSaved }: Props) {
     }
   }, [open, onClose])
 
-  const balanceNum = Number(balance)
-  const canSave = name.trim() !== '' && Number.isFinite(balanceNum) && balanceNum > 0
-
-  const handleSave = () => {
-    if (!canSave) return
+  const onValid = (values: DebtFormValues) => {
     onSaved(addDebt({
-      name: name.trim(),
+      name: values.name.trim(),
       type,
-      balance: balanceNum,
+      balance: Number(values.balance),
       rate: Math.max(0, Number(rate) || 0),
       minPayment: Math.max(0, Number(minPayment) || 0),
     }))
@@ -71,9 +85,9 @@ export function DebtDrawer({ open, onClose, onSaved }: Props) {
         <div className="flex-1 overflow-y-auto px-5 py-4">
           <div className="flex flex-col gap-4">
             <label className="flex flex-col gap-1.5">
-              <span className="text-[12px] text-text-muted">Name</span>
-              <input className={fieldClass} value={name} placeholder="e.g. Visa card"
-                onChange={(e) => setName(e.target.value)} />
+              <span className="text-[12px] text-text-muted">Name<RequiredMark /></span>
+              <input className={fieldClass} placeholder="e.g. Visa card" {...register('name')} />
+              <FieldError message={errors.name?.message} />
             </label>
 
             <label className="flex flex-col gap-1.5">
@@ -87,9 +101,10 @@ export function DebtDrawer({ open, onClose, onSaved }: Props) {
             </label>
 
             <label className="flex flex-col gap-1.5">
-              <span className="text-[12px] text-text-muted">Current balance (€)</span>
-              <input className={fieldClass} type="number" min="0" step="0.01" value={balance}
-                placeholder="0.00" onChange={(e) => setBalance(e.target.value)} />
+              <span className="text-[12px] text-text-muted">Current balance (€)<RequiredMark /></span>
+              <input className={fieldClass} type="number" min="0" step="0.01"
+                placeholder="0.00" {...register('balance')} />
+              <FieldError message={errors.balance?.message} />
             </label>
 
             <div className="flex gap-3">
@@ -109,15 +124,14 @@ export function DebtDrawer({ open, onClose, onSaved }: Props) {
 
         <div className="border-t border-subtle p-4">
           <button
-            onClick={handleSave}
-            disabled={!canSave}
-            className="flex h-11 w-full items-center justify-center rounded-md text-[14px] font-semibold text-white"
-            style={{
-              backgroundColor: 'var(--color-accent)',
-              opacity: canSave ? 1 : 0.4,
-              cursor: canSave ? 'pointer' : 'not-allowed',
-              transition: 'var(--transition-fast)',
-            }}
+            type="button"
+            onClick={handleSubmit(onValid, triggerShake)}
+            className={cn(
+              'flex h-11 w-full items-center justify-center rounded-md text-[14px] font-semibold text-white',
+              shaking && 'shake'
+            )}
+            style={{ backgroundColor: 'var(--color-accent)', transition: 'var(--transition-fast)' }}
+            {...shakeProps}
           >
             Add debt
           </button>

@@ -28,6 +28,7 @@ export function CsvImportModal({ open, onClose, onImported }: Props) {
   const [error, setError] = useState('')
   const [manualMap, setManualMap] = useState<Partial<ColumnMapping>>({})
   const [counts, setCounts] = useState({ added: 0, skipped: 0 })
+  const [parsing, setParsing] = useState(false)
   const [wasOpen, setWasOpen] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -36,6 +37,7 @@ export function CsvImportModal({ open, onClose, onImported }: Props) {
     setWasOpen(true)
     setStep('upload'); setDragOver(false); setFileName(''); setResult(null)
     setRows([]); setError(''); setManualMap({}); setCounts({ added: 0, skipped: 0 })
+    setParsing(false)
   } else if (!open && wasOpen) {
     setWasOpen(false)
   }
@@ -71,6 +73,7 @@ export function CsvImportModal({ open, onClose, onImported }: Props) {
     }
     setError('')
     setFileName(file.name)
+    setParsing(true)
     parseCsvFile(file)
       .then((res) => {
         setResult(res)
@@ -78,6 +81,7 @@ export function CsvImportModal({ open, onClose, onImported }: Props) {
         setStep('preview')
       })
       .catch(() => setError('Could not read that file. Please check it is a valid CSV.'))
+      .finally(() => setParsing(false))
   }
 
   const onDrop = (e: React.DragEvent) => {
@@ -165,6 +169,7 @@ export function CsvImportModal({ open, onClose, onImported }: Props) {
               <UploadView
                 dragOver={dragOver}
                 error={error}
+                parsing={parsing}
                 onBrowse={() => inputRef.current?.click()}
                 onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
                 onDragLeave={() => setDragOver(false)}
@@ -200,10 +205,11 @@ export function CsvImportModal({ open, onClose, onImported }: Props) {
 // ── Upload step ─────────────────────────────────────────────────────────────
 
 function UploadView({
-  dragOver, error, onBrowse, onDragOver, onDragLeave, onDrop, inputRef, onFile,
+  dragOver, error, parsing, onBrowse, onDragOver, onDragLeave, onDrop, inputRef, onFile,
 }: {
   dragOver: boolean
   error: string
+  parsing: boolean
   onBrowse: () => void
   onDragOver: (e: React.DragEvent) => void
   onDragLeave: () => void
@@ -243,6 +249,9 @@ function UploadView({
           e.target.value = ''
         }}
       />
+
+      {/* Indeterminate progress while the file is being parsed */}
+      {parsing && <div className="progress-indeterminate mt-4" aria-label="Parsing file" role="progressbar" />}
 
       {error && <p className="mt-3 text-[13px]" style={{ color: 'var(--color-danger)' }}>{error}</p>}
 

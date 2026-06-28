@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { ChevronLeft, X } from 'lucide-react'
 import toast from '../../components/Toast'
 import { cn } from '../../shared/lib/cn'
 import { Drawer } from '../../components/Drawer'
+import { FieldError, RequiredMark } from '../../shared/components/FormField'
+import { useShake } from '../../shared/hooks/useShake'
+import { budgetSchema, type BudgetFormValues } from '../../shared/lib/formSchemas'
 import { getCategoryMeta } from '../../shared/lib/transactions'
 import { addBudget, type Budget, type BudgetPeriod } from '../../shared/lib/budgets'
 
@@ -37,26 +42,38 @@ interface Props {
 export function BudgetDrawer({ open, prefill, onClose, onCreated }: Props) {
   const [step, setStep] = useState<1 | 2>(1)
   const [category, setCategory] = useState('Groceries')
-  const [amount, setAmount] = useState('')
   const [period, setPeriod] = useState<BudgetPeriod>('monthly')
   const [color, setColor] = useState<string>(COLOR_SWATCHES[0])
   const [wasOpen, setWasOpen] = useState(false)
+
+  const {
+    register, handleSubmit, reset, formState: { errors },
+  } = useForm<BudgetFormValues>({
+    resolver: zodResolver(budgetSchema),
+    mode: 'onBlur',
+    defaultValues: { amount: '' },
+  })
+  const { shaking, triggerShake, shakeProps } = useShake()
 
   // Reset on open (render-time prop-change pattern; avoids set-state-in-effect).
   if (open && !wasOpen) {
     setWasOpen(true)
     if (prefill) {
       setCategory(prefill.category)
-      setAmount(String(prefill.amount))
       setColor(getCategoryMeta(prefill.category).color)
       setStep(2)
     } else {
-      setCategory('Groceries'); setAmount(''); setColor(COLOR_SWATCHES[0]); setStep(1)
+      setCategory('Groceries'); setColor(COLOR_SWATCHES[0]); setStep(1)
     }
     setPeriod('monthly')
   } else if (!open && wasOpen) {
     setWasOpen(false)
   }
+
+  useEffect(() => {
+    if (!open) return
+    reset({ amount: prefill ? String(prefill.amount) : '' })
+  }, [open, prefill, reset])
 
   useEffect(() => {
     if (!open) return
@@ -69,12 +86,8 @@ export function BudgetDrawer({ open, prefill, onClose, onCreated }: Props) {
     }
   }, [open, onClose])
 
-  const amountNum = Number(amount)
-  const canSave = !!category && Number.isFinite(amountNum) && amountNum > 0
-
-  const handleSave = () => {
-    if (!canSave) return
-    const next = addBudget({ category, amount: amountNum, period, color })
+  const onValid = (values: BudgetFormValues) => {
+    const next = addBudget({ category, amount: Number(values.amount), period, color })
     onCreated(next)
     toast.success('Budget created')
     onClose()
@@ -115,6 +128,7 @@ export function BudgetDrawer({ open, prefill, onClose, onCreated }: Props) {
                 return (
                   <button
                     key={c}
+                    type="button"
                     onClick={() => { setCategory(c); setColor(meta.color); setStep(2) }}
                     className="flex aspect-square flex-col items-center justify-center gap-1 rounded-md border"
                     style={{
@@ -150,16 +164,19 @@ export function BudgetDrawer({ open, prefill, onClose, onCreated }: Props) {
               </div>
 
               {/* Amount */}
-              <div className="flex items-end gap-2 border-b-2 border-default py-2 focus-within:border-accent">
-                <span className="text-[28px] font-medium leading-none text-text-muted">€</span>
-                <input
-                  autoFocus
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  inputMode="decimal"
-                  placeholder="0"
-                  className="w-full border-0 bg-transparent p-0 text-[36px] font-bold leading-none text-text-primary outline-none placeholder:text-text-muted"
-                />
+              <div>
+                <span className="text-[12px] text-text-muted">Amount<RequiredMark /></span>
+                <div className="mt-1 flex items-end gap-2 border-b-2 border-default py-2 focus-within:border-accent">
+                  <span className="text-[28px] font-medium leading-none text-text-muted">€</span>
+                  <input
+                    autoFocus
+                    inputMode="decimal"
+                    placeholder="0"
+                    className="w-full border-0 bg-transparent p-0 text-[36px] font-bold leading-none text-text-primary outline-none placeholder:text-text-muted"
+                    {...register('amount')}
+                  />
+                </div>
+                <FieldError message={errors.amount?.message} />
               </div>
 
               {/* Period */}
@@ -171,6 +188,7 @@ export function BudgetDrawer({ open, prefill, onClose, onCreated }: Props) {
                     return (
                       <button
                         key={p.value}
+                        type="button"
                         onClick={() => setPeriod(p.value)}
                         className={cn(
                           'h-9 rounded-md px-3 text-[13px] font-medium',
@@ -192,6 +210,7 @@ export function BudgetDrawer({ open, prefill, onClose, onCreated }: Props) {
                   {COLOR_SWATCHES.map((c) => (
                     <button
                       key={c}
+                      type="button"
                       onClick={() => setColor(c)}
                       aria-label={`Colour ${c}`}
                       className="h-7 w-7 rounded-full"
@@ -212,15 +231,14 @@ export function BudgetDrawer({ open, prefill, onClose, onCreated }: Props) {
         {step === 2 && (
           <div className="border-t border-subtle p-4">
             <button
-              onClick={handleSave}
-              disabled={!canSave}
-              className="flex h-11 w-full items-center justify-center rounded-md text-[14px] font-semibold text-white"
-              style={{
-                backgroundColor: 'var(--color-accent)',
-                opacity: canSave ? 1 : 0.4,
-                cursor: canSave ? 'pointer' : 'not-allowed',
-                transition: 'var(--transition-fast)',
-              }}
+              type="button"
+              onClick={handleSubmit(onValid, triggerShake)}
+              className={cn(
+                'flex h-11 w-full items-center justify-center rounded-md text-[14px] font-semibold text-white',
+                shaking && 'shake'
+              )}
+              style={{ backgroundColor: 'var(--color-accent)', transition: 'var(--transition-fast)' }}
+              {...shakeProps}
             >
               Create budget
             </button>

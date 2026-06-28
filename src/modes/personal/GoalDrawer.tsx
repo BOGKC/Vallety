@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { X, Trash2 } from 'lucide-react'
 import toast from '../../components/Toast'
+import { cn } from '../../shared/lib/cn'
 import { Drawer } from '../../components/Drawer'
+import { FieldError, RequiredMark } from '../../shared/components/FormField'
+import { useShake } from '../../shared/hooks/useShake'
+import { goalSchema, type GoalFormValues } from '../../shared/lib/formSchemas'
 import {
   addGoal, updateGoal, deleteGoal, GOAL_CATEGORIES, type Goal,
 } from '../../shared/lib/goals'
@@ -18,27 +24,43 @@ interface Props {
 }
 
 export function GoalDrawer({ open, mode, goal, onClose, onSaved }: Props) {
-  const [name, setName] = useState('')
-  const [target, setTarget] = useState('')
   const [targetDate, setTargetDate] = useState('')
   const [saved, setSaved] = useState('')
   const [category, setCategory] = useState('House')
   const [wasOpen, setWasOpen] = useState(false)
 
+  const {
+    register, handleSubmit, reset, formState: { errors },
+  } = useForm<GoalFormValues>({
+    resolver: zodResolver(goalSchema),
+    mode: 'onBlur',
+    defaultValues: { name: '', target: '' },
+  })
+  const { shaking, triggerShake, shakeProps } = useShake()
+
+  // Reset the custom (non-RHF) selectors during render via the prev-value flag.
   if (open && !wasOpen) {
     setWasOpen(true)
     if (mode === 'edit' && goal) {
-      setName(goal.name)
-      setTarget(String(goal.target))
       setTargetDate(goal.targetDate ? goal.targetDate.slice(0, 10) : '')
       setSaved(String(goal.saved))
       setCategory(goal.category)
     } else {
-      setName(''); setTarget(''); setTargetDate(''); setSaved(''); setCategory('House')
+      setTargetDate(''); setSaved(''); setCategory('House')
     }
   } else if (!open && wasOpen) {
     setWasOpen(false)
   }
+
+  // Reset the RHF-managed fields whenever the drawer opens.
+  useEffect(() => {
+    if (!open) return
+    reset(
+      mode === 'edit' && goal
+        ? { name: goal.name, target: String(goal.target) }
+        : { name: '', target: '' }
+    )
+  }, [open, mode, goal, reset])
 
   useEffect(() => {
     if (!open) return
@@ -51,14 +73,10 @@ export function GoalDrawer({ open, mode, goal, onClose, onSaved }: Props) {
     }
   }, [open, onClose])
 
-  const targetNum = Number(target)
-  const canSave = name.trim() !== '' && Number.isFinite(targetNum) && targetNum > 0
-
-  const handleSave = () => {
-    if (!canSave) return
+  const onValid = (values: GoalFormValues) => {
     const payload = {
-      name: name.trim(),
-      target: targetNum,
+      name: values.name.trim(),
+      target: Number(values.target),
       saved: Math.max(0, Number(saved) || 0),
       targetDate: targetDate ? new Date(targetDate).toISOString() : '',
       category,
@@ -99,23 +117,23 @@ export function GoalDrawer({ open, mode, goal, onClose, onSaved }: Props) {
         <div className="flex-1 overflow-y-auto px-5 py-4">
           <div className="flex flex-col gap-4">
             <label className="flex flex-col gap-1.5">
-              <span className="text-[12px] text-text-muted">Goal name</span>
-              <input className={fieldClass} value={name} placeholder="e.g. Emergency fund"
-                onChange={(e) => setName(e.target.value)} />
+              <span className="text-[12px] text-text-muted">Goal name<RequiredMark /></span>
+              <input className={fieldClass} placeholder="e.g. Emergency fund" {...register('name')} />
+              <FieldError message={errors.name?.message} />
             </label>
 
             <div>
-              <span className="text-[12px] text-text-muted">Target amount</span>
+              <span className="text-[12px] text-text-muted">Target amount<RequiredMark /></span>
               <div className="mt-1 flex items-end gap-2 border-b-2 border-default py-1.5 focus-within:border-accent">
                 <span className="text-[24px] font-medium leading-none text-text-muted">€</span>
                 <input
-                  value={target}
-                  onChange={(e) => setTarget(e.target.value)}
                   inputMode="decimal"
                   placeholder="0"
                   className="w-full border-0 bg-transparent p-0 text-[32px] font-bold leading-none text-text-primary outline-none placeholder:text-text-muted"
+                  {...register('target')}
                 />
               </div>
+              <FieldError message={errors.target?.message} />
             </div>
 
             <label className="flex flex-col gap-1.5">
@@ -139,6 +157,7 @@ export function GoalDrawer({ open, mode, goal, onClose, onSaved }: Props) {
                   return (
                     <button
                       key={c.name}
+                      type="button"
                       onClick={() => setCategory(c.name)}
                       className="flex aspect-square flex-col items-center justify-center gap-1 rounded-md border"
                       style={{
@@ -160,20 +179,20 @@ export function GoalDrawer({ open, mode, goal, onClose, onSaved }: Props) {
 
         <div className="flex flex-col gap-2 border-t border-subtle p-4">
           <button
-            onClick={handleSave}
-            disabled={!canSave}
-            className="flex h-11 w-full items-center justify-center rounded-md text-[14px] font-semibold text-white"
-            style={{
-              backgroundColor: 'var(--color-accent)',
-              opacity: canSave ? 1 : 0.4,
-              cursor: canSave ? 'pointer' : 'not-allowed',
-              transition: 'var(--transition-fast)',
-            }}
+            type="button"
+            onClick={handleSubmit(onValid, triggerShake)}
+            className={cn(
+              'flex h-11 w-full items-center justify-center rounded-md text-[14px] font-semibold text-white',
+              shaking && 'shake'
+            )}
+            style={{ backgroundColor: 'var(--color-accent)', transition: 'var(--transition-fast)' }}
+            {...shakeProps}
           >
             {mode === 'add' ? 'Create goal' : 'Save changes'}
           </button>
           {mode === 'edit' && (
             <button
+              type="button"
               onClick={handleDelete}
               className="flex items-center justify-center gap-1.5 py-1.5 text-[14px] font-medium"
               style={{ color: 'var(--color-danger)' }}

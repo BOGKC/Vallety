@@ -1,14 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowDownLeft, ArrowUpRight, ArrowLeftRight, ChevronLeft, X } from 'lucide-react'
+import { useForm, useWatch } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import {
+  ArrowDownLeft, ArrowUpRight, ArrowLeftRight, ChevronLeft, X, Loader2, Check,
+} from 'lucide-react'
 import toast from '../../components/Toast'
 import { cn } from '../../shared/lib/cn'
 import { Drawer } from '../../components/Drawer'
+import { FieldError, RequiredMark } from '../../shared/components/FormField'
+import { useShake } from '../../shared/hooks/useShake'
+import { transactionSchema, type TransactionFormValues } from '../../shared/lib/formSchemas'
 import {
   addTransaction, getCategoryMeta, getMerchantSuggestions, suggestCategory,
   readTransactions, type Txn, type TxnType,
 } from '../../shared/lib/transactions'
 
 type StepType = TxnType | 'transfer'
+type SaveState = 'idle' | 'saving' | 'done'
 
 const TYPE_CARDS: {
   value: StepType
@@ -53,8 +61,6 @@ interface Props {
 export function AddTransactionDrawer({ open, onClose, onAdded }: Props) {
   const [step, setStep] = useState<1 | 2>(1)
   const [type, setType] = useState<StepType>('expense')
-  const [amount, setAmount] = useState('')
-  const [merchant, setMerchant] = useState('')
   const [merchantFocused, setMerchantFocused] = useState(false)
   const [dateMode, setDateMode] = useState<'today' | 'yesterday' | 'pick'>('today')
   const [pickedDate, setPickedDate] = useState(() => new Date().toISOString().slice(0, 10))
@@ -62,24 +68,42 @@ export function AddTransactionDrawer({ open, onClose, onAdded }: Props) {
   const [categoryTouched, setCategoryTouched] = useState(false)
   const [notesOpen, setNotesOpen] = useState(false)
   const [notes, setNotes] = useState('')
+  const [saveState, setSaveState] = useState<SaveState>('idle')
 
   const amountRef = useRef<HTMLInputElement>(null)
   const [pastTxns, setPastTxns] = useState<Txn[]>([])
   const [wasOpen, setWasOpen] = useState(false)
 
-  // Reset to a clean state the moment the drawer opens. Adjusting state during
-  // render (guarded by a previous-value flag) is React's recommended pattern
-  // for reacting to a prop change without a cascading effect.
+  const {
+    register, handleSubmit, reset, setValue, control, formState: { errors },
+  } = useForm<TransactionFormValues>({
+    resolver: zodResolver(transactionSchema),
+    mode: 'onBlur',
+    defaultValues: { merchant: '', amount: '' },
+  })
+  const { shaking, triggerShake, shakeProps } = useShake()
+
+  const merchant = useWatch({ control, name: 'merchant' }) ?? ''
+
+  // Reset the custom (non-RHF) state the moment the drawer opens. Adjusting
+  // state during render (guarded by a previous-value flag) is React's
+  // recommended pattern for reacting to a prop change without a cascading effect.
   if (open && !wasOpen) {
     setWasOpen(true)
     setPastTxns(readTransactions())
-    setStep(1); setType('expense'); setAmount(''); setMerchant('')
+    setStep(1); setType('expense')
     setMerchantFocused(false); setDateMode('today')
     setPickedDate(new Date().toISOString().slice(0, 10))
     setCategory('Other'); setCategoryTouched(false); setNotesOpen(false); setNotes('')
+    setSaveState('idle')
   } else if (!open && wasOpen) {
     setWasOpen(false)
   }
+
+  // Reset the RHF-managed fields when the drawer opens.
+  useEffect(() => {
+    if (open) reset({ merchant: '', amount: '' })
+  }, [open, reset])
 
   // Close on Escape + lock body scroll while open.
   useEffect(() => {
@@ -101,30 +125,37 @@ export function AddTransactionDrawer({ open, onClose, onAdded }: Props) {
     }
   }, [open, step])
 
+  const merchantReg = register('merchant')
+  const amountReg = register('amount')
+
   // Auto-suggest category from merchant unless the user picked one.
-  const onMerchantChange = (value: string) => {
-    setMerchant(value)
+  const applyMerchant = (value: string) => {
     if (!categoryTouched) setCategory(suggestCategory(value, pastTxns))
   }
 
   const suggestions = merchantFocused ? getMerchantSuggestions(merchant, pastTxns) : []
-  const amountNum = Number(amount)
-  const canSave = merchant.trim() !== '' && Number.isFinite(amountNum) && amountNum > 0
 
-  const handleSave = () => {
-    if (!canSave) return
+  const onValid = (values: TransactionFormValues) => {
+    if (saveState !== 'idle') return
+    setSaveState('saving')
     const next = addTransaction({
       type: type === 'transfer' ? 'expense' : type,
-      amount: amountNum,
-      merchant: merchant.trim(),
+      amount: Number(values.amount),
+      merchant: values.merchant.trim(),
       category,
       date: isoForMode(dateMode, pickedDate),
       notes: notes.trim() || undefined,
       account: 'Manual entry',
     })
-    onAdded(next)
-    toast.success('Transaction added')
-    onClose()
+    // Show "Saving…", then a brief success state, then close.
+    window.setTimeout(() => {
+      onAdded(next)
+      setSaveState('done')
+      window.setTimeout(() => {
+        toast.success('Transaction added')
+        onClose()
+      }, 500)
+    }, 400)
   }
 
   const typeLabel = type.charAt(0).toUpperCase() + type.slice(1)
@@ -156,6 +187,7 @@ export function AddTransactionDrawer({ open, onClose, onAdded }: Props) {
                 return (
                   <button
                     key={card.value}
+                    type="button"
                     onClick={() => setType(card.value)}
                     className="flex h-[72px] items-center gap-3 rounded-lg border px-4 text-left"
                     style={{
@@ -177,6 +209,7 @@ export function AddTransactionDrawer({ open, onClose, onAdded }: Props) {
 
             <div className="mt-auto p-6">
               <button
+                type="button"
                 onClick={() => setStep(2)}
                 className="flex h-11 w-full items-center justify-center rounded-md text-[14px] font-medium text-white"
                 style={{ backgroundColor: 'var(--color-accent)', transition: 'var(--transition-fast)' }}
@@ -190,6 +223,7 @@ export function AddTransactionDrawer({ open, onClose, onAdded }: Props) {
           <div className="flex min-h-0 flex-1 flex-col">
             <div className="flex items-center gap-2 px-4 py-3.5">
               <button
+                type="button"
                 onClick={() => setStep(1)}
                 className="flex h-8 w-8 items-center justify-center rounded-md text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
                 aria-label="Back"
@@ -201,27 +235,29 @@ export function AddTransactionDrawer({ open, onClose, onAdded }: Props) {
 
             <div className="flex-1 overflow-y-auto px-5 pb-4">
               {/* AMOUNT */}
-              <div className="flex items-end gap-2 border-b-2 border-default py-3 focus-within:border-accent">
-                <span className="text-[32px] font-medium leading-none text-text-muted">€</span>
-                <input
-                  ref={amountRef}
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  inputMode="decimal"
-                  placeholder="0.00"
-                  className="w-full border-0 bg-transparent p-0 text-[40px] font-bold leading-none text-text-primary outline-none placeholder:text-text-muted"
-                  style={{ appearance: 'textfield' }}
-                />
+              <div>
+                <div className="flex items-end gap-2 border-b-2 border-default py-3 focus-within:border-accent">
+                  <span className="text-[32px] font-medium leading-none text-text-muted">€</span>
+                  <input
+                    {...amountReg}
+                    ref={(el) => { amountReg.ref(el); amountRef.current = el }}
+                    inputMode="decimal"
+                    placeholder="0.00"
+                    className="w-full border-0 bg-transparent p-0 text-[40px] font-bold leading-none text-text-primary outline-none placeholder:text-text-muted"
+                    style={{ appearance: 'textfield' }}
+                  />
+                </div>
+                <FieldError message={errors.amount?.message} />
               </div>
 
               {/* MERCHANT */}
               <div className="relative mt-5">
-                <label className="text-[12px] text-text-muted">Merchant / Description</label>
+                <label className="text-[12px] text-text-muted">Merchant / Description<RequiredMark /></label>
                 <input
-                  value={merchant}
-                  onChange={(e) => onMerchantChange(e.target.value)}
+                  {...merchantReg}
+                  onChange={(e) => { merchantReg.onChange(e); applyMerchant(e.target.value) }}
                   onFocus={() => setMerchantFocused(true)}
-                  onBlur={() => window.setTimeout(() => setMerchantFocused(false), 120)}
+                  onBlur={(e) => { merchantReg.onBlur(e); window.setTimeout(() => setMerchantFocused(false), 120) }}
                   placeholder="e.g. Tesco"
                   className="mt-1 h-11 w-full rounded-md border border-default bg-bg-input px-3 text-[14px] text-text-primary placeholder:text-text-muted focus:border-accent"
                 />
@@ -230,8 +266,13 @@ export function AddTransactionDrawer({ open, onClose, onAdded }: Props) {
                     {suggestions.map((s) => (
                       <button
                         key={s}
+                        type="button"
                         onMouseDown={(e) => e.preventDefault()}
-                        onClick={() => { onMerchantChange(s); setMerchantFocused(false) }}
+                        onClick={() => {
+                          setValue('merchant', s, { shouldValidate: true })
+                          applyMerchant(s)
+                          setMerchantFocused(false)
+                        }}
                         className="flex h-10 w-full items-center px-3 text-left text-[13px] text-text-primary hover:bg-bg-card"
                       >
                         {s}
@@ -239,6 +280,7 @@ export function AddTransactionDrawer({ open, onClose, onAdded }: Props) {
                     ))}
                   </div>
                 )}
+                <FieldError message={errors.merchant?.message} />
               </div>
 
               {/* DATE */}
@@ -251,6 +293,7 @@ export function AddTransactionDrawer({ open, onClose, onAdded }: Props) {
                     return (
                       <button
                         key={m}
+                        type="button"
                         onClick={() => setDateMode(m)}
                         className={cn(pillBase, active ? 'text-white' : 'border border-default text-text-secondary hover:text-text-primary')}
                         style={active ? { backgroundColor: 'var(--color-accent)' } : undefined}
@@ -281,6 +324,7 @@ export function AddTransactionDrawer({ open, onClose, onAdded }: Props) {
                     return (
                       <button
                         key={c}
+                        type="button"
                         onClick={() => { setCategory(c); setCategoryTouched(true) }}
                         className="flex aspect-square flex-col items-center justify-center gap-1 rounded-md border"
                         style={{
@@ -313,6 +357,7 @@ export function AddTransactionDrawer({ open, onClose, onAdded }: Props) {
                   </div>
                 ) : (
                   <button
+                    type="button"
                     onClick={() => setNotesOpen(true)}
                     className="text-[13px] font-medium"
                     style={{ color: 'var(--color-accent)' }}
@@ -326,19 +371,23 @@ export function AddTransactionDrawer({ open, onClose, onAdded }: Props) {
             {/* FOOTER */}
             <div className="border-t border-subtle p-4">
               <button
-                onClick={handleSave}
-                disabled={!canSave}
+                type="button"
+                onClick={handleSubmit(onValid, triggerShake)}
+                disabled={saveState !== 'idle'}
                 className={cn(
-                  'flex h-12 w-full items-center justify-center rounded-md text-[15px] font-semibold text-white',
-                  !canSave && 'cursor-not-allowed'
+                  'flex h-12 w-full items-center justify-center gap-2 rounded-md text-[15px] font-semibold text-white',
+                  shaking && 'shake'
                 )}
-                style={{
-                  backgroundColor: 'var(--color-accent)',
-                  opacity: canSave ? 1 : 0.4,
-                  transition: 'var(--transition-fast)',
-                }}
+                style={{ backgroundColor: 'var(--color-accent)', transition: 'var(--transition-fast)' }}
+                {...shakeProps}
               >
-                Add transaction
+                {saveState === 'saving' ? (
+                  <><Loader2 className="h-4 w-4 animate-spin" /> Saving…</>
+                ) : saveState === 'done' ? (
+                  <><Check className="h-4 w-4" /> Added</>
+                ) : (
+                  'Add transaction'
+                )}
               </button>
             </div>
           </div>
