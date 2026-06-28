@@ -373,7 +373,7 @@ export function SubscriptionsPage() {
           <EmptyState
             icon={RefreshCw}
             title="No subscriptions detected"
-            description="Add a few months of transactions and we'll automatically find your recurring charges."
+            description="Add a few months of transactions manually and we'll automatically detect your recurring subscriptions."
             primaryAction={{ label: 'Add transaction', icon: Plus, onClick: () => navigate('/transactions') }}
           />
         ) : (

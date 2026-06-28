@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -270,8 +270,14 @@ function ForgotPanel({ onBack }: { onBack: () => void }) {
 export function LoginPage() {
   const [panel, setPanel] = useState<Panel>('password')
 
+  // Time-aware greeting for the sign-in panel (replaces the old static title).
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours()
+    return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+  }, [])
+
   const titles: Record<Panel, string> = {
-    password: 'Welcome back',
+    password: greeting,
     magic: 'Magic link',
     forgot: 'Reset password',
   }

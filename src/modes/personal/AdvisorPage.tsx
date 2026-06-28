@@ -218,20 +218,22 @@ export function AdvisorPage() {
           <Sparkles className="h-5 w-5" style={{ color: 'var(--color-accent)' }} />
           <h1 className="text-[18px] font-semibold text-text-primary">AI Advisor</h1>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-lg border border-default bg-bg-card p-3">
-            <p className="text-[16px] font-semibold" style={{ color: 'var(--color-success)' }}>
-              {formatEuro(totals.income)}
-            </p>
-            <p className="text-[12px] text-text-muted">Income (mo)</p>
+        {!noData && (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-lg border border-default bg-bg-card p-3">
+              <p className="text-[16px] font-semibold" style={{ color: 'var(--color-success)' }}>
+                {formatEuro(totals.income)}
+              </p>
+              <p className="text-[12px] text-text-muted">Income (mo)</p>
+            </div>
+            <div className="rounded-lg border border-default bg-bg-card p-3">
+              <p className="text-[16px] font-semibold" style={{ color: 'var(--color-danger)' }}>
+                {formatEuro(totals.expenses)}
+              </p>
+              <p className="text-[12px] text-text-muted">Expenses (mo)</p>
+            </div>
           </div>
-          <div className="rounded-lg border border-default bg-bg-card p-3">
-            <p className="text-[16px] font-semibold" style={{ color: 'var(--color-danger)' }}>
-              {formatEuro(totals.expenses)}
-            </p>
-            <p className="text-[12px] text-text-muted">Expenses (mo)</p>
-          </div>
-        </div>
+        )}
 
         {noData && (
           <div
