@@ -6,9 +6,18 @@ import {
   readBudgets, computeBudgets, usageColor,
   type Budget, type BudgetView,
 } from '../../shared/lib/budgets'
-import { BudgetDrawer } from './BudgetDrawer'
-import { EmptyState } from '../../components/EmptyState'
+import { BudgetDrawer, type BudgetPrefill } from './BudgetDrawer'
 import { ProgressBar } from '../../components/ProgressBar'
+
+// Sensible starter budgets so the empty state is a quick-start, not a dead end.
+const SUGGESTED_BUDGETS: { category: string; amount: number }[] = [
+  { category: 'Groceries', amount: 400 },
+  { category: 'Dining', amount: 150 },
+  { category: 'Transport', amount: 100 },
+  { category: 'Entertainment', amount: 80 },
+  { category: 'Shopping', amount: 120 },
+  { category: 'Utilities', amount: 150 },
+]
 
 function SummaryCard({
   value, valueColor, label,
@@ -70,6 +79,7 @@ function BudgetCard({ view, daysLeft }: { view: BudgetView; daysLeft: number }) 
 export function BudgetsTab() {
   const [budgets, setBudgets] = useState<Budget[]>(() => readBudgets())
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [prefill, setPrefill] = useState<BudgetPrefill | null>(null)
 
   const now = useMemo(() => new Date(), [])
   const summary = useMemo(() => computeBudgets(budgets, now), [budgets, now])
@@ -77,7 +87,8 @@ export function BudgetsTab() {
   const hasBudgets = budgets.length > 0
   const spentColor = summary.totalSpent > summary.totalBudgeted ? '#EF4444' : '#22C55E'
 
-  const openNew = () => setDrawerOpen(true)
+  const openNew = () => { setPrefill(null); setDrawerOpen(true) }
+  const openSuggested = (s: BudgetPrefill) => { setPrefill(s); setDrawerOpen(true) }
 
   return (
     <div>
@@ -110,17 +121,54 @@ export function BudgetsTab() {
           </div>
         </>
       ) : (
-        <EmptyState
-          icon={Target}
-          title="No budgets set"
-          description="Set spending limits for each category to stay on track this month."
-          primaryAction={{ label: 'Create a budget', icon: Plus, onClick: openNew }}
-        />
+        <div className="rounded-lg border border-default bg-bg-card p-6 text-center">
+          <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-bg-elevated">
+            <Target className="h-5 w-5" style={{ color: 'var(--color-accent)' }} />
+          </span>
+          <h3 className="mt-3 text-[15px] font-semibold text-text-primary">No budgets yet</h3>
+          <p className="mx-auto mt-1 max-w-sm text-[13px] text-text-secondary">
+            Start with a suggested category below, or create your own. Tap one to set the amount.
+          </p>
+
+          <div className="mx-auto mt-5 grid max-w-md grid-cols-2 gap-2 sm:grid-cols-3">
+            {SUGGESTED_BUDGETS.map((s) => {
+              const meta = getCategoryMeta(s.category)
+              const Icon = meta.icon
+              return (
+                <button
+                  key={s.category}
+                  onClick={() => openSuggested(s)}
+                  className="flex items-center gap-2 rounded-lg border border-default bg-bg-elevated px-3 py-2.5 text-left hover:border-strong"
+                  style={{ transition: 'var(--transition-fast)' }}
+                >
+                  <span
+                    className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full"
+                    style={{ backgroundColor: hexToRgba(meta.color, 0.15) }}
+                  >
+                    <Icon className="h-4 w-4" style={{ color: meta.color }} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-[13px] font-medium text-text-primary">{s.category}</span>
+                    <span className="block text-[11px] text-text-muted">{formatEuro(s.amount)}/mo</span>
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          <button
+            onClick={openNew}
+            className="mt-5 inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-[13px] font-medium text-white"
+            style={{ backgroundColor: 'var(--color-accent)', transition: 'var(--transition-fast)' }}
+          >
+            <Plus className="h-4 w-4" /> Create custom budget
+          </button>
+        </div>
       )}
 
       <BudgetDrawer
         open={drawerOpen}
-        prefill={null}
+        prefill={prefill}
         onClose={() => setDrawerOpen(false)}
         onCreated={setBudgets}
       />

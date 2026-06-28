@@ -7,6 +7,7 @@ import { ModeSwitcher } from './ModeSwitcherMobile'
 import { BottomTabBar } from '../../components/BottomTabBar'
 import { OfflineBanner } from '../../components/OfflineBanner'
 import { ErrorBoundary } from '../../components/ErrorBoundary'
+import { resolvePageTitle } from '../lib/pageTitles'
 
 // ── Mobile bottom-sheet drawer ────────────────────────────────────────────────
 
@@ -87,6 +88,11 @@ export function AppShell() {
   useEffect(() => {
     const id = requestAnimationFrame(() => setDrawerOpen(false))
     return () => cancelAnimationFrame(id)
+  }, [location.pathname])
+
+  // Keep the browser tab title in sync with the current route.
+  useEffect(() => {
+    document.title = `${resolvePageTitle(location.pathname)} — Vallety`
   }, [location.pathname])
 
   return (

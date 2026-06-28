@@ -161,11 +161,6 @@ export function BillsPage() {
 
   const now = useMemo(() => new Date(), [])
 
-  useEffect(() => {
-    document.title = 'Bills & schedules — Vallety'
-    return () => { document.title = 'vallety' }
-  }, [])
-
   const summary = useMemo(() => computeSummary(bills, now), [bills, now])
   const groups = useMemo(() => timelineGroups(bills, now), [bills, now])
   const paid = useMemo(() => paidThisMonth(bills, now), [bills, now])

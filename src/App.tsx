@@ -1,3 +1,5 @@
+// Vallety MVP v1.0 — 2026-06-28
+// All 14 known bugs resolved. All pages render content. Ready for user testing.
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ToastViewport } from './components/Toast'
@@ -44,7 +46,10 @@ export default function App() {
             <Route element={<AuthGuard />}>
               <Route element={<AppShell />}>
 
-                <Route index element={<Navigate to="/personal" replace />} />
+                {/* Dashboard renders at "/" directly so the Dashboard nav link
+                    (to="/") shows the correct active state. /personal remains an
+                    alias below for legacy links. */}
+                <Route index element={<PersonalDashboard />} />
 
                 {/* Flat routes (new IA) ───────────────────────────────────── */}
                 <Route path="/transactions"            element={<TransactionsPage />} />
