@@ -3,21 +3,11 @@ import { Plus, Target } from 'lucide-react'
 import { formatEuro } from '../../shared/lib/formatters'
 import { getCategoryMeta, hexToRgba } from '../../shared/lib/transactions'
 import {
-  readBudgets, computeBudgets, usageColor,
+  readBudgets, computeBudgets, usageColor, BUDGET_SUGGESTIONS,
   type Budget, type BudgetView,
 } from '../../shared/lib/budgets'
 import { BudgetDrawer, type BudgetPrefill } from './BudgetDrawer'
 import { ProgressBar } from '../../components/ProgressBar'
-
-// Sensible starter budgets so the empty state is a quick-start, not a dead end.
-const SUGGESTED_BUDGETS: { category: string; amount: number }[] = [
-  { category: 'Groceries', amount: 400 },
-  { category: 'Dining', amount: 150 },
-  { category: 'Transport', amount: 100 },
-  { category: 'Entertainment', amount: 80 },
-  { category: 'Shopping', amount: 120 },
-  { category: 'Utilities', amount: 150 },
-]
 
 function SummaryCard({
   value, valueColor, label,
@@ -131,7 +121,7 @@ export function BudgetsTab() {
           </p>
 
           <div className="mx-auto mt-5 grid max-w-md grid-cols-2 gap-2 sm:grid-cols-3">
-            {SUGGESTED_BUDGETS.map((s) => {
+            {BUDGET_SUGGESTIONS.map((s) => {
               const meta = getCategoryMeta(s.category)
               const Icon = meta.icon
               return (

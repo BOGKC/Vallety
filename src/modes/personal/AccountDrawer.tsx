@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { X, Trash2 } from 'lucide-react'
@@ -7,6 +7,7 @@ import { cn } from '../../shared/lib/cn'
 import { Drawer } from '../../components/Drawer'
 import { FieldError, RequiredMark } from '../../shared/components/FormField'
 import { useShake } from '../../shared/hooks/useShake'
+import { parseAmount } from '../../shared/lib/formatters'
 import { accountSchema, type AccountFormValues } from '../../shared/lib/formSchemas'
 import {
   addAccount, updateAccount, deleteAccount, ACCOUNT_TYPES,
@@ -40,6 +41,7 @@ export function AccountDrawer({ open, mode, account, onClose, onSaved }: Props) 
     defaultValues: { name: '', balance: '' },
   })
   const { shaking, triggerShake, shakeProps } = useShake()
+  const submittingRef = useRef(false)
 
   if (open && !wasOpen) {
     setWasOpen(true)
@@ -61,6 +63,7 @@ export function AccountDrawer({ open, mode, account, onClose, onSaved }: Props) 
         ? { name: account.name, balance: String(account.balance) }
         : { name: '', balance: '' }
     )
+    submittingRef.current = false
   }, [open, mode, account, reset])
 
   useEffect(() => {
@@ -79,7 +82,7 @@ export function AccountDrawer({ open, mode, account, onClose, onSaved }: Props) 
       name: values.name.trim(),
       type,
       institution: institution.trim() || undefined,
-      balance: Number(values.balance),
+      balance: parseAmount(values.balance),
       currency,
     }
     if (mode === 'edit' && account) {
@@ -90,6 +93,16 @@ export function AccountDrawer({ open, mode, account, onClose, onSaved }: Props) 
       toast.success('Account added')
     }
     onClose()
+  }
+
+  // Guard against double-submit (ref accessed only in this event handler).
+  const handleSave = () => {
+    if (submittingRef.current) return
+    submittingRef.current = true
+    handleSubmit(onValid, () => {
+      submittingRef.current = false
+      triggerShake()
+    })()
   }
 
   const handleDelete = () => {
@@ -183,7 +196,7 @@ export function AccountDrawer({ open, mode, account, onClose, onSaved }: Props) 
         <div className="flex flex-col gap-2 border-t border-subtle p-4">
           <button
             type="button"
-            onClick={handleSubmit(onValid, triggerShake)}
+            onClick={handleSave}
             className={cn(
               'flex h-11 w-full items-center justify-center rounded-md text-[14px] font-semibold text-white',
               shaking && 'shake'

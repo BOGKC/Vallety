@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ChevronLeft, X } from 'lucide-react'
@@ -7,6 +7,7 @@ import { cn } from '../../shared/lib/cn'
 import { Drawer } from '../../components/Drawer'
 import { FieldError, RequiredMark } from '../../shared/components/FormField'
 import { useShake } from '../../shared/hooks/useShake'
+import { parseAmount } from '../../shared/lib/formatters'
 import { budgetSchema, type BudgetFormValues } from '../../shared/lib/formSchemas'
 import { getCategoryMeta } from '../../shared/lib/transactions'
 import { addBudget, type Budget, type BudgetPeriod } from '../../shared/lib/budgets'
@@ -54,6 +55,7 @@ export function BudgetDrawer({ open, prefill, onClose, onCreated }: Props) {
     defaultValues: { amount: '' },
   })
   const { shaking, triggerShake, shakeProps } = useShake()
+  const submittingRef = useRef(false)
 
   // Reset on open (render-time prop-change pattern; avoids set-state-in-effect).
   if (open && !wasOpen) {
@@ -73,6 +75,7 @@ export function BudgetDrawer({ open, prefill, onClose, onCreated }: Props) {
   useEffect(() => {
     if (!open) return
     reset({ amount: prefill ? String(prefill.amount) : '' })
+    submittingRef.current = false
   }, [open, prefill, reset])
 
   useEffect(() => {
@@ -87,10 +90,20 @@ export function BudgetDrawer({ open, prefill, onClose, onCreated }: Props) {
   }, [open, onClose])
 
   const onValid = (values: BudgetFormValues) => {
-    const next = addBudget({ category, amount: Number(values.amount), period, color })
+    const next = addBudget({ category, amount: parseAmount(values.amount), period, color })
     onCreated(next)
     toast.success('Budget created')
     onClose()
+  }
+
+  // Guard against double-submit (ref accessed only in this event handler).
+  const handleSave = () => {
+    if (submittingRef.current) return
+    submittingRef.current = true
+    handleSubmit(onValid, () => {
+      submittingRef.current = false
+      triggerShake()
+    })()
   }
 
   return (
@@ -232,7 +245,7 @@ export function BudgetDrawer({ open, prefill, onClose, onCreated }: Props) {
           <div className="border-t border-subtle p-4">
             <button
               type="button"
-              onClick={handleSubmit(onValid, triggerShake)}
+              onClick={handleSave}
               className={cn(
                 'flex h-11 w-full items-center justify-center rounded-md text-[14px] font-semibold text-white',
                 shaking && 'shake'

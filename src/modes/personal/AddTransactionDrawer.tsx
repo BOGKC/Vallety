@@ -9,6 +9,7 @@ import { cn } from '../../shared/lib/cn'
 import { Drawer } from '../../components/Drawer'
 import { FieldError, RequiredMark } from '../../shared/components/FormField'
 import { useShake } from '../../shared/hooks/useShake'
+import { parseAmount } from '../../shared/lib/formatters'
 import { transactionSchema, type TransactionFormValues } from '../../shared/lib/formSchemas'
 import {
   addTransaction, getCategoryMeta, getMerchantSuggestions, suggestCategory,
@@ -71,6 +72,7 @@ export function AddTransactionDrawer({ open, onClose, onAdded }: Props) {
   const [saveState, setSaveState] = useState<SaveState>('idle')
 
   const amountRef = useRef<HTMLInputElement>(null)
+  const saveTimers = useRef<number[]>([])
   const [pastTxns, setPastTxns] = useState<Txn[]>([])
   const [wasOpen, setWasOpen] = useState(false)
 
@@ -104,6 +106,15 @@ export function AddTransactionDrawer({ open, onClose, onAdded }: Props) {
   useEffect(() => {
     if (open) reset({ merchant: '', amount: '' })
   }, [open, reset])
+
+  // Cancel any pending save timers when the drawer closes or unmounts, so a
+  // stale timer can't fire onClose/setSaveState against a reopened session.
+  useEffect(() => {
+    return () => {
+      saveTimers.current.forEach((id) => window.clearTimeout(id))
+      saveTimers.current = []
+    }
+  }, [open])
 
   // Close on Escape + lock body scroll while open.
   useEffect(() => {
@@ -140,23 +151,30 @@ export function AddTransactionDrawer({ open, onClose, onAdded }: Props) {
     setSaveState('saving')
     const next = addTransaction({
       type: type === 'transfer' ? 'expense' : type,
-      amount: Number(values.amount),
+      amount: parseAmount(values.amount),
       merchant: values.merchant.trim(),
       category,
       date: isoForMode(dateMode, pickedDate),
       notes: notes.trim() || undefined,
       account: 'Manual entry',
     })
-    // Show "Saving…", then a brief success state, then close.
-    window.setTimeout(() => {
+    // Show "Saving…", then a brief success state, then close. Timer ids are
+    // tracked so they can be cancelled if the drawer closes mid-sequence.
+    const t1 = window.setTimeout(() => {
       onAdded(next)
       setSaveState('done')
-      window.setTimeout(() => {
+      const t2 = window.setTimeout(() => {
         toast.success('Transaction added')
         onClose()
       }, 500)
+      saveTimers.current.push(t2)
     }, 400)
+    saveTimers.current.push(t1)
   }
+
+  // Wrap submit so handleSubmit (and onValid's ref access) runs in an event
+  // handler rather than during render.
+  const handleSave = () => handleSubmit(onValid, triggerShake)()
 
   const typeLabel = type.charAt(0).toUpperCase() + type.slice(1)
   const pillBase = 'h-9 rounded-full px-3 text-[13px] font-medium'
@@ -372,7 +390,7 @@ export function AddTransactionDrawer({ open, onClose, onAdded }: Props) {
             <div className="border-t border-subtle p-4">
               <button
                 type="button"
-                onClick={handleSubmit(onValid, triggerShake)}
+                onClick={handleSave}
                 disabled={saveState !== 'idle'}
                 className={cn(
                   'flex h-12 w-full items-center justify-center gap-2 rounded-md text-[15px] font-semibold text-white',

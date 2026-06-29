@@ -192,7 +192,11 @@ export function AdvisorPage() {
           setStreamingText(acc)
         },
       })
-      setMessages((prev) => [...prev, { id: nextId('a'), role: 'assistant', content: acc }])
+      if (acc.trim()) {
+        setMessages((prev) => [...prev, { id: nextId('a'), role: 'assistant', content: acc }])
+      } else {
+        setError('The assistant returned an empty response. Please try again.')
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong. Check your API key and try again.')
     } finally {

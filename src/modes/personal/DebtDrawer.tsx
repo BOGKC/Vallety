@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { X } from 'lucide-react'
@@ -7,6 +7,7 @@ import { cn } from '../../shared/lib/cn'
 import { Drawer } from '../../components/Drawer'
 import { FieldError, RequiredMark } from '../../shared/components/FormField'
 import { useShake } from '../../shared/hooks/useShake'
+import { parseAmount } from '../../shared/lib/formatters'
 import { debtSchema, type DebtFormValues } from '../../shared/lib/formSchemas'
 import { addDebt, DEBT_TYPE_LABELS, type Debt, type DebtType } from '../../shared/lib/debts'
 
@@ -33,6 +34,7 @@ export function DebtDrawer({ open, onClose, onSaved }: Props) {
     defaultValues: { name: '', balance: '' },
   })
   const { shaking, triggerShake, shakeProps } = useShake()
+  const submittingRef = useRef(false)
 
   if (open && !wasOpen) {
     setWasOpen(true)
@@ -44,6 +46,7 @@ export function DebtDrawer({ open, onClose, onSaved }: Props) {
   useEffect(() => {
     if (!open) return
     reset({ name: '', balance: '' })
+    submittingRef.current = false
   }, [open, reset])
 
   useEffect(() => {
@@ -61,12 +64,22 @@ export function DebtDrawer({ open, onClose, onSaved }: Props) {
     onSaved(addDebt({
       name: values.name.trim(),
       type,
-      balance: Number(values.balance),
+      balance: parseAmount(values.balance),
       rate: Math.max(0, Number(rate) || 0),
       minPayment: Math.max(0, Number(minPayment) || 0),
     }))
     toast.success('Debt added')
     onClose()
+  }
+
+  // Guard against double-submit (ref accessed only in this event handler).
+  const handleSave = () => {
+    if (submittingRef.current) return
+    submittingRef.current = true
+    handleSubmit(onValid, () => {
+      submittingRef.current = false
+      triggerShake()
+    })()
   }
 
   return (
@@ -125,7 +138,7 @@ export function DebtDrawer({ open, onClose, onSaved }: Props) {
         <div className="border-t border-subtle p-4">
           <button
             type="button"
-            onClick={handleSubmit(onValid, triggerShake)}
+            onClick={handleSave}
             className={cn(
               'flex h-11 w-full items-center justify-center rounded-md text-[14px] font-semibold text-white',
               shaking && 'shake'

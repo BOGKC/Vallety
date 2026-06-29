@@ -83,13 +83,22 @@ export async function streamAdvisor({ apiKey, system, messages, onText, signal }
       if (!trimmed.startsWith('data:')) continue
       const data = trimmed.slice(5).trim()
       if (!data || data === '[DONE]') continue
+      let evt: {
+        type?: string
+        delta?: { type?: string; text?: string }
+        error?: { message?: string }
+      }
       try {
-        const evt = JSON.parse(data)
-        if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
-          onText(evt.delta.text as string)
-        }
+        evt = JSON.parse(data)
       } catch {
-        /* ignore non-JSON keepalive lines */
+        continue // non-JSON keepalive line
+      }
+      // Surface mid-stream error events instead of ending with an empty reply.
+      if (evt.type === 'error') {
+        throw new Error(evt.error?.message || 'The model returned an error. Please try again.')
+      }
+      if (evt.type === 'content_block_delta' && evt.delta?.type === 'text_delta') {
+        onText(evt.delta.text as string)
       }
     }
   }

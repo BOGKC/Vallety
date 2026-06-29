@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { X, Trash2 } from 'lucide-react'
@@ -7,6 +7,7 @@ import { cn } from '../../shared/lib/cn'
 import { Drawer } from '../../components/Drawer'
 import { FieldError, RequiredMark } from '../../shared/components/FormField'
 import { useShake } from '../../shared/hooks/useShake'
+import { parseAmount } from '../../shared/lib/formatters'
 import { billSchema, type BillFormValues } from '../../shared/lib/formSchemas'
 import { getCategoryMeta } from '../../shared/lib/transactions'
 import {
@@ -48,6 +49,7 @@ export function BillDrawer({ open, mode, bill, onClose, onSaved }: Props) {
     defaultValues: { name: '', amount: '' },
   })
   const { shaking, triggerShake, shakeProps } = useShake()
+  const submittingRef = useRef(false)
 
   if (open && !wasOpen) {
     setWasOpen(true)
@@ -73,6 +75,7 @@ export function BillDrawer({ open, mode, bill, onClose, onSaved }: Props) {
         ? { name: bill.name, amount: String(bill.amount) }
         : { name: '', amount: '' }
     )
+    submittingRef.current = false
   }, [open, mode, bill, reset])
 
   useEffect(() => {
@@ -89,7 +92,7 @@ export function BillDrawer({ open, mode, bill, onClose, onSaved }: Props) {
   const onValid = (values: BillFormValues) => {
     const payload = {
       name: values.name.trim(),
-      amount: Number(values.amount),
+      amount: parseAmount(values.amount),
       frequency,
       nextDue: new Date(dueDate || defaultDueDate(new Date())).toISOString(),
       category,
@@ -104,6 +107,16 @@ export function BillDrawer({ open, mode, bill, onClose, onSaved }: Props) {
       toast.success('Bill saved')
     }
     onClose()
+  }
+
+  // Guard against double-submit (ref accessed only in this event handler).
+  const handleSave = () => {
+    if (submittingRef.current) return
+    submittingRef.current = true
+    handleSubmit(onValid, () => {
+      submittingRef.current = false
+      triggerShake()
+    })()
   }
 
   const handleDelete = () => {
@@ -234,7 +247,7 @@ export function BillDrawer({ open, mode, bill, onClose, onSaved }: Props) {
         <div className="flex flex-col gap-2 border-t border-subtle p-4">
           <button
             type="button"
-            onClick={handleSubmit(onValid, triggerShake)}
+            onClick={handleSave}
             className={cn(
               'flex h-11 w-full items-center justify-center rounded-md text-[14px] font-semibold text-white',
               shaking && 'shake'

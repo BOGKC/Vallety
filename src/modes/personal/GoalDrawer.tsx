@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { X, Trash2 } from 'lucide-react'
@@ -7,6 +7,7 @@ import { cn } from '../../shared/lib/cn'
 import { Drawer } from '../../components/Drawer'
 import { FieldError, RequiredMark } from '../../shared/components/FormField'
 import { useShake } from '../../shared/hooks/useShake'
+import { parseAmount } from '../../shared/lib/formatters'
 import { goalSchema, type GoalFormValues } from '../../shared/lib/formSchemas'
 import {
   addGoal, updateGoal, deleteGoal, GOAL_CATEGORIES, type Goal,
@@ -37,6 +38,7 @@ export function GoalDrawer({ open, mode, goal, onClose, onSaved }: Props) {
     defaultValues: { name: '', target: '' },
   })
   const { shaking, triggerShake, shakeProps } = useShake()
+  const submittingRef = useRef(false)
 
   // Reset the custom (non-RHF) selectors during render via the prev-value flag.
   if (open && !wasOpen) {
@@ -60,6 +62,7 @@ export function GoalDrawer({ open, mode, goal, onClose, onSaved }: Props) {
         ? { name: goal.name, target: String(goal.target) }
         : { name: '', target: '' }
     )
+    submittingRef.current = false
   }, [open, mode, goal, reset])
 
   useEffect(() => {
@@ -76,7 +79,7 @@ export function GoalDrawer({ open, mode, goal, onClose, onSaved }: Props) {
   const onValid = (values: GoalFormValues) => {
     const payload = {
       name: values.name.trim(),
-      target: Number(values.target),
+      target: parseAmount(values.target),
       saved: Math.max(0, Number(saved) || 0),
       targetDate: targetDate ? new Date(targetDate).toISOString() : '',
       category,
@@ -89,6 +92,18 @@ export function GoalDrawer({ open, mode, goal, onClose, onSaved }: Props) {
       toast.success('Goal created')
     }
     onClose()
+  }
+
+  // Guard against double-submit: the ref is read/written only here (an event
+  // handler), never during render. onClose on success leaves it set; the open
+  // effect resets it on the next open.
+  const handleSave = () => {
+    if (submittingRef.current) return
+    submittingRef.current = true
+    handleSubmit(onValid, () => {
+      submittingRef.current = false
+      triggerShake()
+    })()
   }
 
   const handleDelete = () => {
@@ -180,7 +195,7 @@ export function GoalDrawer({ open, mode, goal, onClose, onSaved }: Props) {
         <div className="flex flex-col gap-2 border-t border-subtle p-4">
           <button
             type="button"
-            onClick={handleSubmit(onValid, triggerShake)}
+            onClick={handleSave}
             className={cn(
               'flex h-11 w-full items-center justify-center rounded-md text-[14px] font-semibold text-white',
               shaking && 'shake'

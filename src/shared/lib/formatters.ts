@@ -27,3 +27,11 @@ export const formatEuro = (value: number, decimals = 0): string => {
   }).format(Math.abs(value))
   return `${sign}€${abs}`
 }
+
+/**
+ * Parse a user-entered amount into a number, tolerating the comma decimal
+ * separator common on EU/Finnish keyboards (e.g. "12,50" → 12.5) and stray
+ * whitespace. Returns NaN for non-numeric input.
+ */
+export const parseAmount = (value: string): number =>
+  Number(String(value).replace(/\s/g, '').replace(',', '.'))

@@ -26,12 +26,23 @@ export function ProgressBar({ value, color, className }: ProgressBarProps) {
     }
     const el = ref.current
     if (!el) return
+
+    const reveal = () => {
+      if (hasAnimated.current) return
+      hasAnimated.current = true
+      requestAnimationFrame(() => setWidth(`${target}%`))
+    }
+
+    if (typeof IntersectionObserver === 'undefined') {
+      reveal()
+      return
+    }
+
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            hasAnimated.current = true
-            requestAnimationFrame(() => setWidth(`${target}%`))
+            reveal()
             observer.disconnect()
           }
         }
@@ -39,7 +50,16 @@ export function ProgressBar({ value, color, className }: ProgressBarProps) {
       { threshold: 0.1 }
     )
     observer.observe(el)
-    return () => observer.disconnect()
+    // Safety net: if the bar never intersects (e.g. inside a non-scrolling
+    // overflow container), reveal it anyway so it never stays stuck at 0%.
+    const fallback = window.setTimeout(() => {
+      reveal()
+      observer.disconnect()
+    }, 1200)
+    return () => {
+      observer.disconnect()
+      window.clearTimeout(fallback)
+    }
   }, [target])
 
   return (

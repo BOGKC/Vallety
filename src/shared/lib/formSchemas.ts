@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { parseAmount } from './formatters'
 
 /**
  * Zod schemas for the app's forms. Amounts are kept as strings (the inputs are
@@ -12,7 +13,7 @@ const positiveAmount = (msg = 'Enter an amount greater than 0') =>
     .trim()
     .min(1, 'Required')
     .refine((v) => {
-      const n = Number(v)
+      const n = parseAmount(v)
       return Number.isFinite(n) && n > 0
     }, msg)
 
@@ -22,7 +23,7 @@ const nonNegativeAmount = (msg = 'Enter a valid amount') =>
     .trim()
     .min(1, 'Required')
     .refine((v) => {
-      const n = Number(v)
+      const n = parseAmount(v)
       return Number.isFinite(n) && n >= 0
     }, msg)
 
