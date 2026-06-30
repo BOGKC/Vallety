@@ -1,8 +1,10 @@
+import { ComingSoon } from '../../shared/components/ComingSoon'
+
 export function InvestmentDashboard() {
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-semibold text-text-primary">Investment Dashboard</h1>
-      <p className="text-text-secondary">Monitor your portfolio.</p>
-    </div>
+    <ComingSoon
+      title="Investment"
+      description="Portfolio tracking and watchlists are coming soon."
+    />
   )
 }

@@ -372,13 +372,23 @@ export function SubscriptionsPage() {
             )}
           </div>
         ) : noSubsAtAll && transactions.length === 0 ? (
+          // No data at all yet.
           <EmptyState
             icon={RefreshCw}
             title="No subscriptions detected"
             description="Add a few months of transactions manually and we'll automatically detect your recurring subscriptions."
             primaryAction={{ label: 'Add transaction', icon: Plus, onClick: () => navigate('/transactions') }}
           />
+        ) : noSubsAtAll ? (
+          // Transactions exist, but nothing recurring was detected.
+          <EmptyState
+            icon={RefreshCw}
+            title="No recurring charges found"
+            description="We didn't spot any subscriptions in your transactions yet. Add one manually, or keep importing transactions and we'll detect them automatically."
+            primaryAction={{ label: 'Add manually', icon: Plus, onClick: () => setDrawer({ open: true, mode: 'add', sub: null, prefill: null }) }}
+          />
         ) : (
+          // Subscriptions exist, but none are currently active.
           <p className="py-6 text-center text-[13px] text-text-muted">No active subscriptions.</p>
         )
       )}

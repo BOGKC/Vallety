@@ -58,7 +58,7 @@ export function OfflineBanner() {
           }}
         >
           <WifiOff size={14} className="flex-shrink-0" />
-          <span>You're offline — changes are saved locally and will sync when you reconnect.</span>
+          <span>You're offline — your data is saved on this device and stays available.</span>
         </div>
       )}
     </div>

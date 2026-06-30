@@ -34,6 +34,7 @@ export function BudgetsPage() {
 
   return (
     <div className="mx-auto max-w-4xl">
+      <h1 className="sr-only">Budgets</h1>
       {/* Tab bar */}
       <div className="mb-5 inline-flex items-center gap-1 rounded-full bg-bg-elevated p-1">
         {TABS.map((t) => {

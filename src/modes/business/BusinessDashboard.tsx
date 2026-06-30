@@ -1,8 +1,10 @@
+import { ComingSoon } from '../../shared/components/ComingSoon'
+
 export function BusinessDashboard() {
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-semibold text-text-primary">Business Dashboard</h1>
-      <p className="text-text-secondary">Manage your business finances.</p>
-    </div>
+    <ComingSoon
+      title="Business"
+      description="Business tools — invoicing, expenses, and tax — are coming soon."
+    />
   )
 }

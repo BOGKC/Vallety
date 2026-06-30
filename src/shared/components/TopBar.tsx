@@ -212,7 +212,9 @@ export function TopBar({ onMenuClick }: TopBarProps) {
         >
           <Menu className="h-5 w-5" />
         </button>
-        <h1 className="truncate text-[16px] font-semibold text-text-primary">{title}</h1>
+        {/* Persistent chrome label, not the page's main heading — each page
+            owns its own <h1>, so this stays a non-heading to avoid two h1s. */}
+        <span className="truncate text-[16px] font-semibold text-text-primary">{title}</span>
       </div>
 
       {/* Center: time-based greeting (desktop, dashboard only) */}

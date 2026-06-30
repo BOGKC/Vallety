@@ -9,11 +9,11 @@ interface Tab {
 }
 
 const TABS: Tab[] = [
-  { label: 'Home', icon: LayoutDashboard, to: '/', end: true },
-  { label: 'Money', icon: ArrowLeftRight, to: '/transactions' },
-  { label: 'Plan', icon: Target, to: '/budgets' },
-  { label: 'Wealth', icon: TrendingUp, to: '/net-worth' },
-  { label: 'AI', icon: Sparkles, to: '/advisor' },
+  { label: 'Dashboard', icon: LayoutDashboard, to: '/', end: true },
+  { label: 'Transactions', icon: ArrowLeftRight, to: '/transactions' },
+  { label: 'Budgets', icon: Target, to: '/budgets' },
+  { label: 'Net worth', icon: TrendingUp, to: '/net-worth' },
+  { label: 'AI Advisor', icon: Sparkles, to: '/advisor' },
 ]
 
 /** Fixed bottom navigation, mobile only (hidden at md and up). */
@@ -31,13 +31,13 @@ export function BottomTabBar() {
             key={t.to}
             to={t.to}
             end={t.end}
-            className="nav-item flex flex-1 flex-col items-center justify-center gap-0.5"
+            className="nav-item flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 px-0.5"
             style={({ isActive }) => ({
-              color: isActive ? 'var(--color-accent)' : 'var(--text-muted)',
+              color: isActive ? 'var(--color-accent)' : 'var(--text-secondary)',
             })}
           >
             <Icon size={20} />
-            <span className="text-[10px]">{t.label}</span>
+            <span className="w-full truncate text-center text-[10px]">{t.label}</span>
           </NavLink>
         )
       })}

@@ -28,20 +28,20 @@ const NAV_GROUPS: NavGroup[] = [
     label: 'Manage',
     items: [
       { label: 'Dashboard', icon: LayoutDashboard, to: '/', end: true },
-      { label: 'Money', icon: ArrowLeftRight, to: '/transactions' },
+      { label: 'Transactions', icon: ArrowLeftRight, to: '/transactions' },
     ],
   },
   {
     label: 'Plan',
     items: [
-      { label: 'Planning', icon: Target, to: '/budgets' },
+      { label: 'Budgets', icon: Target, to: '/budgets' },
       { label: 'Bills & schedules', icon: Calendar, to: '/bills' },
     ],
   },
   {
     label: 'Grow',
     items: [
-      { label: 'Wealth', icon: TrendingUp, to: '/net-worth' },
+      { label: 'Net worth', icon: TrendingUp, to: '/net-worth' },
       { label: 'AI Advisor', icon: Sparkles, to: '/advisor', accent: true },
     ],
   },
