@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 
 /**
- * Animate a number from its previous value to `target` over `duration` ms
- * using requestAnimationFrame. Values below 10 (in magnitude) are not worth
- * animating and snap immediately. Honors prefers-reduced-motion.
+ * Animate a number to `target` over `duration` ms using requestAnimationFrame
+ * with a cubic ease-out. Counts up from 0 on first mount (initial page load)
+ * and from the previous value when `target` changes thereafter. Near-zero
+ * targets snap. Honors prefers-reduced-motion.
  */
-export function useCountUp(target: number, duration = 400): number {
-  const [value, setValue] = useState(target)
-  const fromRef = useRef(target)
+export function useCountUp(target: number, duration = 500): number {
+  const [value, setValue] = useState(0)
+  const fromRef = useRef(0)
   const rafRef = useRef<number | null>(null)
 
   useEffect(() => {
@@ -18,7 +19,7 @@ export function useCountUp(target: number, duration = 400): number {
       typeof window !== 'undefined' &&
       window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
 
-    if (reduce || Math.abs(target) < 10) {
+    if (reduce || Math.abs(target - from) < 1) {
       fromRef.current = target
       const id = requestAnimationFrame(() => setValue(target))
       return () => cancelAnimationFrame(id)

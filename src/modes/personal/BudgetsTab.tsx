@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { Plus, Target } from 'lucide-react'
 import { formatEuro } from '../../shared/lib/formatters'
 import { getCategoryMeta, hexToRgba } from '../../shared/lib/transactions'
@@ -8,10 +8,11 @@ import {
 } from '../../shared/lib/budgets'
 import { BudgetDrawer, type BudgetPrefill } from './BudgetDrawer'
 import { ProgressBar } from '../../components/ProgressBar'
+import { AnimatedEuro, AnimatedPercent } from '../../components/AnimatedNumber'
 
 function SummaryCard({
   value, valueColor, label,
-}: { value: string; valueColor?: string; label: string }) {
+}: { value: ReactNode; valueColor?: string; label: string }) {
   return (
     <div className="rounded-lg border border-default bg-bg-card p-4">
       <p className="text-[20px] font-semibold" style={{ color: valueColor ?? 'var(--text-primary)' }}>
@@ -96,15 +97,15 @@ export function BudgetsTab() {
       {hasBudgets ? (
         <>
           <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <SummaryCard value={formatEuro(summary.totalBudgeted)} label="Budgeted this month" />
-            <SummaryCard value={formatEuro(summary.totalSpent)} valueColor={spentColor} label="Spent so far" />
+            <SummaryCard value={<AnimatedEuro value={summary.totalBudgeted} />} label="Budgeted this month" />
+            <SummaryCard value={<AnimatedEuro value={summary.totalSpent} />} valueColor={spentColor} label="Spent so far" />
             <SummaryCard
-              value={`${Math.round(summary.overallPct)}%`}
+              value={<AnimatedPercent value={summary.overallPct} />}
               valueColor={usageColor(summary.overallPct)}
               label={`of budget used · ${summary.daysLeft} day${summary.daysLeft === 1 ? '' : 's'} left`}
             />
           </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="stagger-list grid grid-cols-1 gap-4 md:grid-cols-2">
             {summary.views.map((v) => (
               <BudgetCard key={v.id} view={v} daysLeft={summary.daysLeft} />
             ))}

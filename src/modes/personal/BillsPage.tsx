@@ -13,6 +13,7 @@ import {
 } from '../../shared/lib/bills'
 import { BillDrawer } from './BillDrawer'
 import { EmptyState } from '../../components/EmptyState'
+import { AnimatedEuro } from '../../components/AnimatedNumber'
 
 function dueLabel(bill: Bill, now: Date): { text: string; color: string; bold: boolean } {
   const d = daysUntilDue(bill, now)
@@ -206,7 +207,7 @@ export function BillsPage() {
           {/* Summary */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="rounded-lg border border-default bg-bg-card p-4">
-              <p className="text-[20px] font-semibold text-text-primary">{formatEuro(summary.monthlyRecurring)}</p>
+              <p className="text-[20px] font-semibold text-text-primary"><AnimatedEuro value={summary.monthlyRecurring} /></p>
               <p className="mt-0.5 text-[12px] text-text-muted">Monthly recurring</p>
             </div>
             <div className="rounded-lg border border-default bg-bg-card p-4">
@@ -219,7 +220,7 @@ export function BillsPage() {
               <p className="mt-0.5 text-[12px] text-text-muted">Due this week</p>
             </div>
             <div className="rounded-lg border border-default bg-bg-card p-4">
-              <p className="text-[20px] font-semibold text-text-primary">{formatEuro(summary.annualTotal)}</p>
+              <p className="text-[20px] font-semibold text-text-primary"><AnimatedEuro value={summary.annualTotal} /></p>
               <p className="mt-0.5 text-[12px] text-text-muted">Annual total</p>
             </div>
           </div>
@@ -236,15 +237,15 @@ export function BillsPage() {
           {hasTimeline ? (
             <>
               {groups.thisWeek.length > 0 && <SectionLabel>This week</SectionLabel>}
-              <div className="flex flex-col gap-3">
+              <div className="stagger-list flex flex-col gap-3">
                 {groups.thisWeek.map((b) => <BillCard key={b.id} variant="timeline" {...cardProps(b)} />)}
               </div>
               {groups.nextWeek.length > 0 && <SectionLabel>Next week</SectionLabel>}
-              <div className="flex flex-col gap-3">
+              <div className="stagger-list flex flex-col gap-3">
                 {groups.nextWeek.map((b) => <BillCard key={b.id} variant="timeline" {...cardProps(b)} />)}
               </div>
               {groups.laterThisMonth.length > 0 && <SectionLabel>Later this month</SectionLabel>}
-              <div className="flex flex-col gap-3">
+              <div className="stagger-list flex flex-col gap-3">
                 {groups.laterThisMonth.map((b) => <BillCard key={b.id} variant="timeline" {...cardProps(b)} />)}
               </div>
             </>
@@ -256,7 +257,7 @@ export function BillsPage() {
           {paid.length > 0 && (
             <>
               <SectionLabel>Paid this month</SectionLabel>
-              <div className="flex flex-col gap-3">
+              <div className="stagger-list flex flex-col gap-3">
                 {paid.map((b) => <BillCard key={b.id} variant="paid" {...cardProps(b)} />)}
               </div>
             </>
@@ -264,7 +265,7 @@ export function BillsPage() {
 
           {/* All recurring */}
           <p className="mb-1 mt-7 text-[14px] font-medium text-text-primary">All recurring bills</p>
-          <div className="flex flex-col gap-3">
+          <div className="stagger-list flex flex-col gap-3">
             {recurring.map((b) => <BillCard key={b.id} variant="recurring" {...cardProps(b)} />)}
           </div>
         </>

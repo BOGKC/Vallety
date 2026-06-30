@@ -2,7 +2,8 @@ import { useMemo, useState } from 'react'
 import { Plus, CalendarDays, Star } from 'lucide-react'
 import { Modal } from '../../shared/components/Modal'
 import { EmptyState } from '../../components/EmptyState'
-import { formatEuro } from '../../shared/lib/formatters'
+import toast from '../../components/Toast'
+import { formatEuro, parseAmount } from '../../shared/lib/formatters'
 import { cn } from '../../shared/lib/cn'
 import {
   readGoals, computeGoals, updateGoal, type Goal, type GoalView,
@@ -23,6 +24,9 @@ function GoalCard({
   view, onEdit, onAddFunds,
 }: { view: GoalView; onEdit: () => void; onAddFunds: () => void }) {
   const offset = CIRC * (1 - view.pct / 100)
+  // Ring colour reflects state immediately; only the arc length animates.
+  const complete = view.pct >= 100
+  const ringColor = complete ? 'var(--color-success)' : 'var(--color-accent)'
   return (
     <div className="rounded-lg bg-bg-card p-5">
       {/* Ring */}
@@ -34,7 +38,7 @@ function GoalCard({
             <circle
               className="goal-ring__arc"
               cx={RING / 2} cy={RING / 2} r={R} fill="none"
-              stroke="var(--color-accent)" strokeWidth={STROKE} strokeLinecap="round"
+              stroke={ringColor} strokeWidth={STROKE} strokeLinecap="round"
               transform={`rotate(-90 ${RING / 2} ${RING / 2})`}
               strokeDasharray={CIRC}
               style={{
@@ -44,7 +48,7 @@ function GoalCard({
             />
             {[0.25, 0.5, 0.75].map((f) => {
               const p = milestonePoint(f)
-              return <circle key={f} cx={p.x} cy={p.y} r={2.5} fill="var(--color-accent)" opacity={0.6} />
+              return <circle key={f} cx={p.x} cy={p.y} r={2.5} fill={ringColor} opacity={0.6} />
             })}
           </svg>
           <div className="absolute inset-0 flex items-center justify-center">
@@ -95,9 +99,14 @@ export function GoalsTab() {
   const openEdit = (g: Goal) => setDrawer({ open: true, mode: 'edit', goal: g })
 
   const applyFunds = () => {
-    const amt = Number(funds.amount)
+    const amt = parseAmount(funds.amount)
     if (funds.goal && Number.isFinite(amt) && amt > 0) {
+      const wasComplete = funds.goal.saved >= funds.goal.target
+      const nowComplete = funds.goal.saved + amt >= funds.goal.target
       setGoals(updateGoal(funds.goal.id, { saved: funds.goal.saved + amt }))
+      // Celebrate the moment a goal is first reached.
+      if (!wasComplete && nowComplete) toast.success(`🎉 Goal reached — ${funds.goal.name}!`)
+      else toast.success('Funds added')
     }
     setFunds({ goal: null, amount: '' })
   }
@@ -120,7 +129,7 @@ export function GoalsTab() {
       </div>
 
       {hasGoals ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="stagger-list grid grid-cols-1 gap-4 md:grid-cols-2">
           {summary.views.map((v) => (
             <GoalCard
               key={v.id}

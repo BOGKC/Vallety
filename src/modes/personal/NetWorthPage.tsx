@@ -14,6 +14,7 @@ import {
 } from '../../shared/lib/netWorth'
 import { AccountDrawer } from './AccountDrawer'
 import { EmptyState } from '../../components/EmptyState'
+import { AnimatedEuro } from '../../components/AnimatedNumber'
 
 interface ChartTooltipProps {
   active?: boolean
@@ -91,7 +92,7 @@ export function NetWorthPage() {
     !hasAccounts || totals.net === 0
       ? 'var(--text-muted)'
       : totals.net > 0 ? '#22C55E' : '#EF4444'
-  const heroText = !hasAccounts || totals.net === 0 ? '€—' : formatEuro(totals.net)
+  const heroIsEmpty = !hasAccounts || totals.net === 0
 
   const onAccountsSaved = (list: Account[]) => {
     setAccounts(list)
@@ -129,7 +130,7 @@ export function NetWorthPage() {
               Total net worth
             </p>
             <p className="mt-1 text-[44px] font-bold leading-none" style={{ color: heroColor }}>
-              {heroText}
+              {heroIsEmpty ? '€—' : <AnimatedEuro value={totals.net} />}
             </p>
             {delta !== null && (
               <div
@@ -212,7 +213,7 @@ export function NetWorthPage() {
                   {formatEuro(totals.assets)}
                 </span>
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="stagger-list flex flex-col gap-2">
                 {assets.map((a) => <AccountRow key={a.id} account={a} onEdit={() => openEdit(a)} />)}
               </div>
             </section>
@@ -227,7 +228,7 @@ export function NetWorthPage() {
                   {formatEuro(totals.liabilities)}
                 </span>
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="stagger-list flex flex-col gap-2">
                 {liabilities.map((a) => <AccountRow key={a.id} account={a} onEdit={() => openEdit(a)} />)}
               </div>
             </section>

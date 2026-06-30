@@ -5,6 +5,7 @@ import {
 import { Modal } from '../../shared/components/Modal'
 import { EmptyState } from '../../components/EmptyState'
 import { SkeletonTransactionRow } from '../../components/SkeletonLoader'
+import { useMinLoading } from '../../shared/hooks/useMinLoading'
 import { Drawer } from '../../components/Drawer'
 import { AddTransactionDrawer } from './AddTransactionDrawer'
 import { CsvImportModal } from './CsvImportModal'
@@ -338,14 +339,8 @@ export function TransactionsPage() {
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS)
   const [modal, setModal] = useState<'receipt' | 'csv' | null>(null)
   const [filtersOpen, setFiltersOpen] = useState(false)
-  // Briefly show skeletons on first paint. A 150ms floor prevents a flash on
-  // fast localStorage reads while still feeling instant.
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const id = window.setTimeout(() => setLoading(false), 150)
-    return () => window.clearTimeout(id)
-  }, [])
+  // Briefly show skeletons on first paint (150ms floor prevents a flash).
+  const loading = useMinLoading()
 
   const [addOpen, setAddOpen] = useState(false)
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -518,7 +513,7 @@ export function TransactionsPage() {
                     {group.label}
                   </span>
                 </div>
-                <div className="flex flex-col">
+                <div className="stagger-list flex flex-col">
                   {group.items.map((t) => (
                     <TransactionRow key={t.id} txn={t} onClick={() => openEdit(t)} />
                   ))}

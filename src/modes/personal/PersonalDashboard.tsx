@@ -14,7 +14,9 @@ import { computeDashboard } from '../../shared/lib/dashboardData'
 import { formatEuro } from '../../shared/lib/formatters'
 import { cn } from '../../shared/lib/cn'
 import { EmptyState } from '../../components/EmptyState'
-import { useCountUp } from '../../shared/hooks/useCountUp'
+import { AnimatedEuro, AnimatedPercent } from '../../components/AnimatedNumber'
+import { SkeletonBlock, SkeletonMetricCard, SkeletonChartArea } from '../../components/SkeletonLoader'
+import { useMinLoading } from '../../shared/hooks/useMinLoading'
 
 // ── Small utilities ─────────────────────────────────────────────────────────────
 
@@ -72,11 +74,6 @@ function CashflowTooltip({ active, label, payload }: TooltipPayload) {
 
 // ── Metric card ─────────────────────────────────────────────────────────────────
 
-function AnimatedEuro({ value }: { value: number }) {
-  const animated = useCountUp(value)
-  return <>{formatEuro(animated)}</>
-}
-
 function MetricCard({
   icon, iconColor, label, value, valueColor, children,
 }: {
@@ -104,11 +101,37 @@ function MetricCard({
   )
 }
 
+// ── Loading skeleton (matches the dashboard's shape) ────────────────────────────
+
+function DashboardSkeleton() {
+  return (
+    <div className="mx-auto flex max-w-6xl flex-col gap-4 sm:gap-6">
+      <div className="flex flex-col gap-2">
+        <SkeletonBlock width={180} height={22} />
+        <SkeletonBlock width={240} height={14} />
+      </div>
+      <div className="rounded-lg bg-bg-card p-6">
+        <SkeletonBlock width={120} height={12} />
+        <div className="mt-2">
+          <SkeletonBlock width={220} height={48} />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => <SkeletonMetricCard key={i} />)}
+      </div>
+      <div className="rounded-lg bg-bg-card p-5">
+        <SkeletonChartArea />
+      </div>
+    </div>
+  )
+}
+
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 export function PersonalDashboard() {
   const [showBreakdown, setShowBreakdown] = useState(false)
   const navigate = useNavigate()
+  const loading = useMinLoading()
 
   const now = useMemo(() => new Date(), [])
   const metrics = useMemo(
@@ -140,6 +163,8 @@ export function PersonalDashboard() {
     if (pct <= 20) return 'var(--color-warning)'
     return 'var(--color-success)'
   })()
+
+  if (loading) return <DashboardSkeleton />
 
   if (!hasData) {
     return (
@@ -181,7 +206,7 @@ export function PersonalDashboard() {
               className="mt-1 font-bold leading-none"
               style={{ color: safeColor, fontSize: 'clamp(32px, 8vw, 52px)' }}
             >
-              {safeToSpend.hasIncome ? formatEuro(safeToSpend.amount) : '€—'}
+              {safeToSpend.hasIncome ? <AnimatedEuro value={safeToSpend.amount} /> : '€—'}
             </p>
             <p className="mt-2 text-[13px] text-text-secondary">
               After bills, budgets and goals
@@ -254,7 +279,7 @@ export function PersonalDashboard() {
           icon={<Target className="h-4 w-4" />}
           iconColor="var(--color-accent)"
           label="Budget used"
-          value={`${budget.usedPct}%`}
+          value={<AnimatedPercent value={budget.usedPct} />}
         >
           <span className="text-[12px] text-text-muted">
             of {formatEuro(budget.total)} total

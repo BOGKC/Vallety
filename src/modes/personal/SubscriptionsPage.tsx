@@ -6,6 +6,7 @@ import {
 import { EmptyState } from '../../components/EmptyState'
 import toast from '../../components/Toast'
 import { formatEuro } from '../../shared/lib/formatters'
+import { AnimatedEuro } from '../../components/AnimatedNumber'
 import { cn } from '../../shared/lib/cn'
 import { readTransactions } from '../../shared/lib/transactions'
 import { detectSubscriptions, normalizeMerchant } from '../../shared/lib/detectSubscriptions'
@@ -309,7 +310,7 @@ export function SubscriptionsPage() {
 
       {/* Total banner */}
       <div className="mb-5 rounded-lg border border-default bg-bg-card p-5">
-        <p className="text-[28px] font-bold text-text-primary">{formatEuro(monthlyTotal)}/month</p>
+        <p className="text-[28px] font-bold text-text-primary"><AnimatedEuro value={monthlyTotal} />/month</p>
         {active.length > 0 && (
           <p className="mt-0.5 text-[14px] text-text-secondary">
             across {active.length} active subscription{active.length === 1 ? '' : 's'}
@@ -345,7 +346,7 @@ export function SubscriptionsPage() {
               <div>
                 <p className="mb-1 text-[13px] font-medium text-text-primary">Auto-detected</p>
                 <p className="mb-2 text-[12px] italic text-text-muted">Detected from your transaction history</p>
-                <div className="flex flex-col gap-3">
+                <div className="stagger-list flex flex-col gap-3">
                   {activeDetected.map((v) => (
                     <SubCard
                       key={v.key} view={v} variant="active" reminderEditing={false}
@@ -359,7 +360,7 @@ export function SubscriptionsPage() {
             {activeManual.length > 0 && (
               <div>
                 <p className="mb-2 text-[13px] font-medium text-text-primary">Manual</p>
-                <div className="flex flex-col gap-3">
+                <div className="stagger-list flex flex-col gap-3">
                   {activeManual.map((v) => (
                     <SubCard
                       key={v.key} view={v} variant="active" reminderEditing={false}
@@ -396,7 +397,7 @@ export function SubscriptionsPage() {
       {/* TO CANCEL */}
       {tab === 'to_cancel' && (
         toCancel.length > 0 ? (
-          <div className="flex flex-col gap-3">
+          <div className="stagger-list flex flex-col gap-3">
             {toCancel.map((v) => (
               <SubCard
                 key={v.key} view={v} variant="to_cancel"
@@ -416,7 +417,7 @@ export function SubscriptionsPage() {
       {/* HIDDEN */}
       {tab === 'hidden' && (
         hidden.length > 0 ? (
-          <div className="flex flex-col gap-3">
+          <div className="stagger-list flex flex-col gap-3">
             {hidden.map((v) => (
               <SubCard
                 key={v.key} view={v} variant="hidden" reminderEditing={false}

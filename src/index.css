@@ -32,7 +32,9 @@
   /* --- Text --- */
   --text-primary: #F8FAFC;
   --text-secondary: #94A3B8;
-  --text-muted: #64748B;
+  /* Lightened from #64748B to lift small muted text closer to WCAG AA on the
+     dark card/elevated surfaces while staying distinct from --text-secondary. */
+  --text-muted: #8593A8;
   --text-inverse: #0A0E1A;
 
   /* --- Borders --- */
@@ -63,6 +65,13 @@
   --transition-fast: 120ms ease;
   --transition-base: 180ms ease;
   --transition-slow: 280ms ease;
+
+  /* --- Motion: single-sourced easing & durations --- */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-emphasized: cubic-bezier(0.32, 0.72, 0, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-sheet: 280ms;
 
   /* ------------------------------------------------------------
      Legacy aliases — kept so existing components keep rendering.
@@ -357,6 +366,43 @@ button:active:not(:disabled),
 
 .shake {
   animation: form-shake 300ms ease-in-out;
+}
+
+/* Staggered list/card entrance — applied to a container; children fade + rise
+   in sequence with a capped delay so long lists still finish quickly. The
+   reduced-motion block below collapses this to a near-instant appearance. */
+@keyframes list-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.stagger-list > * {
+  animation: list-item-in var(--dur-base) var(--ease-out) both;
+}
+.stagger-list > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-list > *:nth-child(2) { animation-delay: 30ms; }
+.stagger-list > *:nth-child(3) { animation-delay: 60ms; }
+.stagger-list > *:nth-child(4) { animation-delay: 90ms; }
+.stagger-list > *:nth-child(5) { animation-delay: 120ms; }
+.stagger-list > *:nth-child(6) { animation-delay: 150ms; }
+.stagger-list > *:nth-child(7) { animation-delay: 180ms; }
+.stagger-list > *:nth-child(8) { animation-delay: 210ms; }
+.stagger-list > *:nth-child(n + 9) { animation-delay: 240ms; }
+
+/* One-shot celebration pulse for positive milestones (e.g. goal completed). */
+@keyframes goal-celebrate {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+.goal-celebrate {
+  animation: goal-celebrate 500ms var(--ease-out);
 }
 
 /* Indeterminate linear progress (e.g. CSV parsing) */
