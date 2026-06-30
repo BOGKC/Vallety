@@ -70,9 +70,6 @@ const CURRENCIES: CurrencyOption[] = [
   { code: 'EUR', label: 'Euro', symbol: '€' },
   { code: 'USD', label: 'US Dollar', symbol: '$' },
   { code: 'GBP', label: 'British Pound', symbol: '£' },
-  { code: 'SEK', label: 'Swedish Krona', symbol: 'kr' } as unknown as CurrencyOption,
-  { code: 'NOK', label: 'Norwegian Krone', symbol: 'kr' } as unknown as CurrencyOption,
-  { code: 'DKK', label: 'Danish Krone', symbol: 'kr' } as unknown as CurrencyOption,
   { code: 'CHF', label: 'Swiss Franc', symbol: 'Fr' },
   { code: 'CAD', label: 'Canadian Dollar', symbol: 'C$' },
   { code: 'AUD', label: 'Australian Dollar', symbol: 'A$' },
@@ -292,7 +289,11 @@ function Step3({
               <p className="text-text-primary text-sm font-medium truncate">{parsed.name}</p>
               <p className="text-text-secondary text-xs">{parsed.rows} transaction rows detected</p>
             </div>
-            <button onClick={onClear} className="text-text-secondary hover:text-text-primary transition-colors">
+            <button
+              onClick={onClear}
+              aria-label="Remove file"
+              className="text-text-secondary hover:text-text-primary transition-colors"
+            >
               <X className="h-4 w-4" />
             </button>
           </div>
@@ -319,7 +320,7 @@ function Step3({
             </div>
           )}
           <p className="px-4 py-2.5 text-text-secondary text-xs bg-bg-secondary">
-            Column mapping happens after setup.
+            You can import this CSV from the Transactions page after setup.
           </p>
         </div>
       )}
@@ -376,7 +377,7 @@ export function OnboardingPage() {
     setMode(selectedChoice.mode)
 
     if (parsedFile) {
-      toast.success(`${parsedFile.rows} rows queued — map columns in Settings › Import.`)
+      toast.success('You can import your CSV anytime from the Transactions page.')
     }
 
     navigate(selectedChoice.mode === 'personal' ? '/personal' : '/business', { replace: true })

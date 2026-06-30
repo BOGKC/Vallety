@@ -240,7 +240,9 @@ export function SubscriptionsPage() {
     else if (v.merchantKey) setOverrides(setOverride(v.merchantKey, { status }))
   }
   const setReminder = (v: SubView, date: string) => {
-    const iso = new Date(date).toISOString()
+    const parsed = new Date(date)
+    if (Number.isNaN(parsed.getTime())) { setReminderEditKey(null); return }
+    const iso = parsed.toISOString()
     if (v.source === 'manual' && v.manualId) setManualSubs(updateManualSub(v.manualId, { reminderDate: iso }))
     else if (v.merchantKey) setOverrides(setOverride(v.merchantKey, { reminderDate: iso }))
     setReminderEditKey(null)

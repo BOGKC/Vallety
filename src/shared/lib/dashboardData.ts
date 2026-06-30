@@ -1,8 +1,23 @@
 import {
-  startOfMonth, endOfMonth, subMonths, addMonths, startOfDay, addDays,
-  setDate, format, isWithinInterval, differenceInCalendarMonths,
+  startOfMonth, endOfMonth, subMonths, startOfDay,
+  format, isWithinInterval, differenceInCalendarMonths,
 } from 'date-fns'
-import type { FinanceData } from './localData'
+import type { Txn } from './transactions'
+import type { Budget } from './budgets'
+import type { Goal } from './goals'
+import { daysUntilDue, isPaidThisMonth, monthlyAmount, type Bill } from './bills'
+
+// ── Input ───────────────────────────────────────────────────────────────────
+// The dashboard reads the same camelCase domain records the rest of the app
+// writes (transactions.ts / budgets.ts / goals.ts / bills.ts), so the numbers
+// always reflect what the user actually entered.
+
+export interface DashboardInput {
+  transactions: Txn[]
+  budgets: Budget[]
+  goals: Goal[]
+  bills: Bill[]
+}
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -12,12 +27,7 @@ function toDate(value: string | null | undefined): Date | null {
   return Number.isNaN(d.getTime()) ? null : d
 }
 
-function sumInRange(
-  txns: FinanceData['transactions'],
-  type: 'income' | 'expense',
-  start: Date,
-  end: Date
-): number {
+function sumInRange(txns: Txn[], type: 'income' | 'expense', start: Date, end: Date): number {
   return txns.reduce((acc, t) => {
     if (t.type !== type) return acc
     const d = toDate(t.date)
@@ -25,6 +35,17 @@ function sumInRange(
     const amt = Number(t.amount)
     return acc + (Number.isFinite(amt) ? amt : 0)
   }, 0)
+}
+
+/** Monthly-equivalent of a budget regardless of its period. */
+function budgetMonthly(b: Budget): number {
+  const amt = Number.isFinite(Number(b.amount)) ? Number(b.amount) : 0
+  switch (b.period) {
+    case 'weekly': return (amt * 52) / 12
+    case 'yearly': return amt / 12
+    case 'monthly':
+    default: return amt
+  }
 }
 
 /** Percentage change from previous → current. Null when previous is 0. */
@@ -56,11 +77,11 @@ export interface DashboardMetrics {
 
 // ── Main computation ──────────────────────────────────────────────────────────
 
-export function computeDashboard(data: FinanceData, now: Date): DashboardMetrics {
+export function computeDashboard(data: DashboardInput, now: Date): DashboardMetrics {
   const { transactions, budgets, goals, bills } = data
 
   const hasData =
-    transactions.length > 0 || budgets.length > 0 || goals.length > 0
+    transactions.length > 0 || budgets.length > 0 || goals.length > 0 || bills.length > 0
 
   const thisStart = startOfMonth(now)
   const thisEnd = endOfMonth(now)
@@ -73,32 +94,21 @@ export function computeDashboard(data: FinanceData, now: Date): DashboardMetrics
   const incomeLast = sumInRange(transactions, 'income', lastStart, lastEnd)
   const expensesLast = sumInRange(transactions, 'expense', lastStart, lastEnd)
 
-  // ── Active budgets & bills totals ──
-  const activeBudgets = budgets.filter((b) => b.is_active !== false)
-  const budgetTotal = activeBudgets.reduce(
-    (acc, b) => acc + (Number.isFinite(Number(b.amount)) ? Number(b.amount) : 0),
-    0
-  )
-
-  const activeBills = bills.filter((b) => b.is_active !== false)
-  const billsTotal = activeBills.reduce(
-    (acc, b) => acc + (Number.isFinite(Number(b.amount)) ? Number(b.amount) : 0),
-    0
-  )
+  // ── Monthly budget & bill load ──
+  const budgetTotal = budgets.reduce((acc, b) => acc + budgetMonthly(b), 0)
+  const billsTotal = bills
+    .filter((b) => !b.paused)
+    .reduce((acc, b) => acc + monthlyAmount(b), 0)
 
   // ── Goal contributions: remaining spread over months left ──
-  const goalContributions = goals
-    .filter((g) => g.status === 'active' || g.status === undefined)
-    .reduce((acc, g) => {
-      const target = Number(g.target_amount) || 0
-      const current = Number(g.current_amount) || 0
-      const remaining = Math.max(0, target - current)
-      if (remaining === 0) return acc
-      const targetDate = toDate(g.target_date)
-      if (!targetDate) return acc
-      const monthsLeft = Math.max(1, differenceInCalendarMonths(targetDate, now))
-      return acc + remaining / monthsLeft
-    }, 0)
+  const goalContributions = goals.reduce((acc, g) => {
+    const remaining = Math.max(0, g.target - g.saved)
+    if (remaining === 0) return acc
+    const targetDate = toDate(g.targetDate)
+    if (!targetDate) return acc
+    const monthsLeft = Math.max(1, differenceInCalendarMonths(targetDate, now))
+    return acc + remaining / monthsLeft
+  }, 0)
 
   // ── Safe to spend ──
   const safeAmount = income - billsTotal - budgetTotal - goalContributions
@@ -122,33 +132,18 @@ export function computeDashboard(data: FinanceData, now: Date): DashboardMetrics
     }
   })
 
-  // ── Upcoming bills, next 7 days ──
+  // ── Upcoming bills, next 7 days (unpaid, not paused) ──
   const today = startOfDay(now)
-  const weekEnd = addDays(today, 7)
-  const upcomingBills = activeBills
-    .map((b) => {
-      const dueDay = Number(b.due_day)
-      if (!Number.isFinite(dueDay) || dueDay < 1) return null
-
-      const daysThis = endOfMonth(now).getDate()
-      let due = startOfDay(setDate(now, Math.min(dueDay, daysThis)))
-      if (due < today) {
-        const next = addMonths(now, 1)
-        const daysNext = endOfMonth(next).getDate()
-        due = startOfDay(setDate(next, Math.min(dueDay, daysNext)))
-      }
-      if (!isWithinInterval(due, { start: today, end: weekEnd })) return null
-
-      return {
-        name: b.name ?? 'Bill',
-        amount: Number(b.amount) || 0,
-        date: format(due, 'MMM d'),
-        _sort: due.getTime(),
-      }
-    })
-    .filter((x): x is NonNullable<typeof x> => x !== null)
-    .sort((a, b) => a._sort - b._sort)
-    .map((b) => ({ name: b.name, amount: b.amount, date: b.date }))
+  const upcomingBills = bills
+    .filter((b) => !b.paused && !isPaidThisMonth(b, now))
+    .map((b) => ({ bill: b, days: daysUntilDue(b, today) }))
+    .filter((x) => x.days >= 0 && x.days <= 7)
+    .sort((a, b) => a.days - b.days)
+    .map(({ bill }) => ({
+      name: bill.name,
+      amount: bill.amount,
+      date: format(new Date(bill.nextDue), 'MMM d'),
+    }))
 
   return {
     hasData,

@@ -10,7 +10,12 @@ export function useShake() {
   const [shaking, setShaking] = useState(false)
   return {
     shaking,
-    triggerShake: () => setShaking(true),
+    // Reset then re-set on the next frame so the animation replays even when a
+    // second invalid submit arrives while the previous shake is still running.
+    triggerShake: () => {
+      setShaking(false)
+      requestAnimationFrame(() => setShaking(true))
+    },
     shakeProps: { onAnimationEnd: () => setShaking(false) },
   }
 }

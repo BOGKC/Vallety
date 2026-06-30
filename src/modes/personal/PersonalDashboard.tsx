@@ -6,7 +6,10 @@ import {
 import {
   ArrowDownLeft, ArrowUpRight, Target, TrendingUp, ChevronDown, LayoutDashboard, Plus,
 } from 'lucide-react'
-import { loadFinanceData } from '../../shared/lib/localData'
+import { readTransactions } from '../../shared/lib/transactions'
+import { readBudgets } from '../../shared/lib/budgets'
+import { readGoals } from '../../shared/lib/goals'
+import { readBills } from '../../shared/lib/bills'
 import { computeDashboard } from '../../shared/lib/dashboardData'
 import { formatEuro } from '../../shared/lib/formatters'
 import { cn } from '../../shared/lib/cn'
@@ -108,7 +111,18 @@ export function PersonalDashboard() {
   const navigate = useNavigate()
 
   const now = useMemo(() => new Date(), [])
-  const metrics = useMemo(() => computeDashboard(loadFinanceData(), now), [now])
+  const metrics = useMemo(
+    () => computeDashboard(
+      {
+        transactions: readTransactions(),
+        budgets: readBudgets(),
+        goals: readGoals(),
+        bills: readBills(),
+      },
+      now
+    ),
+    [now]
+  )
   const greeting = timeGreeting(now.getHours())
 
   const {

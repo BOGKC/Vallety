@@ -13,46 +13,39 @@ async function fetchProfile(userId: string): Promise<Profile | null> {
   return data
 }
 
+// The Supabase auth listener is app-wide and must be initialised exactly once,
+// no matter how many components call useAuth() (TopBar, AuthGuard, auth pages…).
+// A module-level guard prevents duplicate getSession()/onAuthStateChange
+// subscriptions and redundant profile fetches. State is written via the store's
+// getState() so the long-lived listener never holds a stale closure.
+let authBootstrapped = false
+
 export function useAuth() {
   const {
     session, user, profile, loading,
-    setSession, setProfile, setLoading, setInitialized, reset,
+    setProfile, reset,
   } = useAuthStore()
 
   useEffect(() => {
-    let cancelled = false
+    if (authBootstrapped) return
+    authBootstrapped = true
+
+    const store = useAuthStore.getState
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (cancelled) return
-      setSession(session)
-      if (session?.user) {
-        const p = await fetchProfile(session.user.id)
-        if (!cancelled) setProfile(p)
-      }
-      setLoading(false)
-      setInitialized(true)
+      store().setSession(session)
+      if (session?.user) store().setProfile(await fetchProfile(session.user.id))
+      store().setLoading(false)
+      store().setInitialized(true)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        if (cancelled) return
-        setSession(session)
-        if (session?.user) {
-          const p = await fetchProfile(session.user.id)
-          if (!cancelled) setProfile(p)
-        } else {
-          setProfile(null)
-        }
-        setLoading(false)
-        setInitialized(true)
-      }
-    )
-
-    return () => {
-      cancelled = true
-      subscription.unsubscribe()
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    supabase.auth.onAuthStateChange(async (_event, session) => {
+      store().setSession(session)
+      if (session?.user) store().setProfile(await fetchProfile(session.user.id))
+      else store().setProfile(null)
+      store().setLoading(false)
+      store().setInitialized(true)
+    })
   }, [])
 
   const signIn = useCallback(

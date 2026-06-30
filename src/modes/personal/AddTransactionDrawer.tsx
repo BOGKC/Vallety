@@ -49,7 +49,12 @@ const CATEGORY_GRID = [
 function isoForMode(mode: 'today' | 'yesterday' | 'pick', picked: string): string {
   const d = new Date()
   if (mode === 'yesterday') d.setDate(d.getDate() - 1)
-  if (mode === 'pick') return new Date(picked).toISOString()
+  if (mode === 'pick') {
+    const p = new Date(picked)
+    // Guard against an empty/cleared date input (new Date('') is Invalid Date,
+    // and .toISOString() on it throws RangeError) — fall back to today.
+    if (!Number.isNaN(p.getTime())) return p.toISOString()
+  }
   return d.toISOString()
 }
 
