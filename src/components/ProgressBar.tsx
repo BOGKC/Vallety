@@ -5,6 +5,8 @@ interface ProgressBarProps {
   value: number
   color: string
   className?: string
+  /** Accessible name for the progressbar (e.g. "Groceries budget"). */
+  label?: string
 }
 
 /**
@@ -13,7 +15,7 @@ interface ProgressBarProps {
  * value changes without replaying the intro. The fill carries the
  * `.progress-fill` class (600ms width transition).
  */
-export function ProgressBar({ value, color, className }: ProgressBarProps) {
+export function ProgressBar({ value, color, className, label }: ProgressBarProps) {
   const ref = useRef<HTMLDivElement>(null)
   const hasAnimated = useRef(false)
   const [width, setWidth] = useState('0%')
@@ -67,6 +69,7 @@ export function ProgressBar({ value, color, className }: ProgressBarProps) {
       <div
         ref={ref}
         role="progressbar"
+        aria-label={label}
         aria-valuenow={Math.round(target)}
         aria-valuemin={0}
         aria-valuemax={100}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Sparkles, ArrowUp, ClipboardCopy, Info, Check } from 'lucide-react'
+import { Sparkles, ArrowUp, ClipboardCopy, Info, Square } from 'lucide-react'
 import toast from '../../components/Toast'
 import { formatEuro } from '../../shared/lib/formatters'
 import {
@@ -153,6 +153,7 @@ export function AdvisorPage() {
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const idCounter = useRef(0)
+  const abortRef = useRef<AbortController | null>(null)
   const nextId = (prefix: string) => `${prefix}_${(idCounter.current += 1)}`
 
   useEffect(() => {
@@ -181,12 +182,15 @@ export function AdvisorPage() {
     setStreamingText('')
 
     const system = SYSTEM_PROMPT.replace('{context}', buildAdvisorContext(now))
+    const controller = new AbortController()
+    abortRef.current = controller
     let acc = ''
     try {
       await streamAdvisor({
         apiKey,
         system,
         messages: history.map((m) => ({ role: m.role, content: m.content })),
+        signal: controller.signal,
         onText: (chunk) => {
           acc += chunk
           setStreamingText(acc)
@@ -198,12 +202,22 @@ export function AdvisorPage() {
         setError('The assistant returned an empty response. Please try again.')
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Something went wrong. Check your API key and try again.')
+      if (controller.signal.aborted) {
+        // User stopped the stream — keep whatever streamed so far.
+        if (acc.trim()) {
+          setMessages((prev) => [...prev, { id: nextId('a'), role: 'assistant', content: acc }])
+        }
+      } else {
+        setError(e instanceof Error ? e.message : 'Something went wrong. Check your API key and try again.')
+      }
     } finally {
       setStreaming(false)
       setStreamingText('')
+      abortRef.current = null
     }
   }
+
+  const stopStream = () => abortRef.current?.abort()
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -305,17 +319,17 @@ export function AdvisorPage() {
                 className="w-full resize-none rounded-xl border border-default bg-bg-input py-2.5 pl-3.5 pr-12 text-[14px] text-text-primary placeholder:text-text-muted focus:border-accent"
               />
               <button
-                onClick={() => send(input)}
-                disabled={!input.trim() || streaming}
+                onClick={() => (streaming ? stopStream() : send(input))}
+                disabled={!streaming && !input.trim()}
                 className="absolute bottom-2 right-2 flex h-8 w-8 items-center justify-center rounded-full text-white"
                 style={{
                   backgroundColor: 'var(--color-accent)',
-                  opacity: !input.trim() || streaming ? 0.4 : 1,
-                  cursor: !input.trim() || streaming ? 'not-allowed' : 'pointer',
+                  opacity: !streaming && !input.trim() ? 0.4 : 1,
+                  cursor: !streaming && !input.trim() ? 'not-allowed' : 'pointer',
                 }}
-                aria-label="Send"
+                aria-label={streaming ? 'Stop generating' : 'Send'}
               >
-                {streaming ? <Check className="h-4 w-4" /> : <ArrowUp className="h-4 w-4" />}
+                {streaming ? <Square className="h-3.5 w-3.5 fill-current" /> : <ArrowUp className="h-4 w-4" />}
               </button>
             </div>
           </div>

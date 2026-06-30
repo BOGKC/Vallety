@@ -119,10 +119,13 @@ function ToastCard({ data, onRemove }: { data: ToastItemData; onRemove: (id: num
   }, [data.id, data.duration])
 
   const visible = shown && !leaving
+  // Errors/warnings interrupt (assertive); confirmations are polite.
+  const assertive = data.variant === 'error' || data.variant === 'warning'
 
   return (
     <div
-      role="status"
+      role={assertive ? 'alert' : 'status'}
+      aria-live={assertive ? 'assertive' : 'polite'}
       className="flex w-[320px] max-w-[calc(100vw-40px)] items-start gap-2.5 rounded-md border border-default bg-bg-card px-3.5 py-3 shadow-xl"
       style={{
         transform: visible ? 'translateX(0)' : 'translateX(120%)',

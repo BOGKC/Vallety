@@ -48,7 +48,7 @@ function BudgetCard({ view, daysLeft }: { view: BudgetView; daysLeft: number }) 
         </span>
       </div>
 
-      <ProgressBar value={view.pct} color={view.fillColor} className="mt-3" />
+      <ProgressBar value={view.pct} color={view.fillColor} className="mt-3" label={`${view.category} budget`} />
 
       <div className="mt-2.5 flex items-center justify-between">
         <span className="text-[12px] font-medium" style={{ color: view.fillColor }}>{pctLabel}%</span>

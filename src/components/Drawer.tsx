@@ -62,6 +62,8 @@ export function Drawer({ open, onClose, ariaLabel, children }: DrawerProps) {
         role="dialog"
         aria-modal="true"
         aria-label={ariaLabel}
+        inert={!open}
+        aria-hidden={!open || undefined}
         className="fixed bottom-0 left-0 right-0 z-[60] flex h-[85vh] flex-col rounded-t-[20px] bg-bg-card shadow-2xl md:inset-y-0 md:left-auto md:right-0 md:h-full md:w-[420px] md:rounded-none"
         style={{
           transform,

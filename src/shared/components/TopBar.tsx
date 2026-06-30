@@ -5,6 +5,7 @@ import { useAppStore } from '../store/appStore'
 import { useAuthStore } from '../store/authStore'
 import { useAuth } from '../hooks/useAuth'
 import { resolvePageTitle } from '../lib/pageTitles'
+import toast from '../../components/Toast'
 
 // ── Page title resolver ─────────────────────────────────────────────────────────
 
@@ -26,15 +27,15 @@ function CurrencyPill() {
   const currency = profile?.currency ?? 'EUR'
   const symbol = CURRENCY_SYMBOLS[currency] ?? ''
 
+  // Informational only (the active currency comes from the profile), so this is
+  // a non-interactive indicator rather than a button that does nothing.
   return (
-    <button
-      type="button"
+    <span
       className="hidden md:inline-flex h-7 items-center rounded-full bg-bg-elevated px-2 text-[12px] font-medium text-text-secondary"
-      style={{ transition: 'var(--transition-fast)' }}
-      aria-label={`Currency: ${currency}`}
+      title={`Currency: ${currency}`}
     >
       {symbol} {currency}
-    </button>
+    </span>
   )
 }
 
@@ -46,6 +47,9 @@ function NotificationBell() {
 
   return (
     <button
+      onClick={() =>
+        toast.info(hasAlerts ? `${notificationCount} unread notifications` : 'No new notifications')
+      }
       className="relative flex h-8 w-8 items-center justify-center rounded-md text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
       style={{ transition: 'var(--transition-fast)' }}
       aria-label={`Notifications${hasAlerts ? ` (${notificationCount} unread)` : ''}`}

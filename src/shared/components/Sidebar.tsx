@@ -4,6 +4,7 @@ import {
   Sparkles, Settings, ChevronLeft, ChevronRight, type LucideIcon,
 } from 'lucide-react'
 import { useAppStore } from '../store/appStore'
+import { useAuthStore } from '../store/authStore'
 import { cn } from '../lib/cn'
 
 // ── Nav data ──────────────────────────────────────────────────────────────────
@@ -108,6 +109,15 @@ interface SidebarProps {
 export function Sidebar({ mobile = false }: SidebarProps) {
   const { sidebarCollapsed, toggleSidebar } = useAppStore()
   const navigate = useNavigate()
+  const profile = useAuthStore((s) => s.profile)
+  const user = useAuthStore((s) => s.user)
+
+  const displayName = profile?.full_name ?? user?.email ?? 'You'
+  const initials = profile?.full_name
+    ? profile.full_name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
+    : user?.email
+      ? user.email[0].toUpperCase()
+      : 'Y'
 
   const collapsed = mobile ? false : sidebarCollapsed
 
@@ -204,7 +214,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
             aria-label="Settings"
             className="group relative mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-bg-elevated text-[12px] font-semibold text-[var(--color-accent)]"
           >
-            Y
+            {initials}
             <span
               className="pointer-events-none absolute z-50 whitespace-nowrap rounded-md bg-bg-elevated px-2 py-1 text-[12px] font-medium text-text-primary opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100"
               style={{ left: 68 }}
@@ -215,11 +225,11 @@ export function Sidebar({ mobile = false }: SidebarProps) {
         ) : (
           <div className="flex items-center gap-2.5 px-1 py-1">
             <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-bg-elevated text-[12px] font-semibold text-[var(--color-accent)]">
-              Y
+              {initials}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[13px] font-medium leading-tight text-text-primary">
-                You
+              <p className="truncate text-[13px] font-medium leading-tight text-text-primary">
+                {displayName}
               </p>
               <span className="mt-0.5 inline-block rounded-full bg-bg-elevated px-1.5 py-0.5 text-[10px] font-medium leading-none text-text-muted">
                 Local
