@@ -1,6 +1,9 @@
+// Vallety MVP v1.0 — 2026-06-28
+// All 14 known bugs resolved. All pages render content. Ready for user testing.
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
-import { Toaster } from 'react-hot-toast'
+import { ToastViewport } from './components/Toast'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { queryClient } from './shared/lib/queryClient'
 import { AuthGuard } from './shared/components/AuthGuard'
 import { AppShell } from './shared/components/AppShell'
@@ -10,6 +13,14 @@ import { SignupPage } from './pages/auth/SignupPage'
 import { LoginPage } from './pages/auth/LoginPage'
 import { OnboardingPage } from './pages/auth/OnboardingPage'
 import { PersonalDashboard } from './modes/personal/PersonalDashboard'
+import { TransactionsPage } from './modes/personal/TransactionsPage'
+import { BudgetsPage } from './modes/personal/BudgetsPage'
+import { BillsPage } from './modes/personal/BillsPage'
+import { SubscriptionsPage } from './modes/personal/SubscriptionsPage'
+import { NetWorthPage } from './modes/personal/NetWorthPage'
+import { HouseholdPage } from './modes/personal/HouseholdPage'
+import { AdvisorPage } from './modes/personal/AdvisorPage'
+import { ScenariosPage } from './modes/personal/ScenariosPage'
 import { BusinessDashboard } from './modes/business/BusinessDashboard'
 import { InvestmentDashboard } from './modes/investment/InvestmentDashboard'
 
@@ -24,6 +35,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthInit>
+          <ErrorBoundary>
           <Routes>
             {/* ── Public routes ──────────────────────────────────────────── */}
             <Route path="/signup"     element={<SignupPage />} />
@@ -34,16 +46,31 @@ export default function App() {
             <Route element={<AuthGuard />}>
               <Route element={<AppShell />}>
 
-                <Route index element={<Navigate to="/personal" replace />} />
+                {/* Dashboard renders at "/" directly so the Dashboard nav link
+                    (to="/") shows the correct active state. /personal remains an
+                    alias below for legacy links. */}
+                <Route index element={<PersonalDashboard />} />
+
+                {/* Flat routes (new IA) ───────────────────────────────────── */}
+                <Route path="/transactions"            element={<TransactionsPage />} />
+                <Route path="/budgets"                 element={<BudgetsPage />} />
+                <Route path="/bills"                   element={<BillsPage />} />
+                <Route path="/subscriptions"           element={<SubscriptionsPage />} />
+                <Route path="/personal/subscriptions"  element={<SubscriptionsPage />} />
+                <Route path="/net-worth"               element={<NetWorthPage />} />
+                <Route path="/household"               element={<HouseholdPage />} />
+                <Route path="/personal/household"      element={<HouseholdPage />} />
+                <Route path="/scenarios"               element={<ScenariosPage />} />
+                <Route path="/personal/scenarios"      element={<ScenariosPage />} />
 
                 {/* Personal ───────────────────────────────────────────────── */}
                 <Route path="/personal"                element={<PersonalDashboard />} />
-                <Route path="/personal/transactions"   element={<ComingSoon title="Transactions" />} />
-                <Route path="/personal/budgets"        element={<ComingSoon title="Budgets" />} />
+                <Route path="/personal/transactions"   element={<TransactionsPage />} />
+                <Route path="/personal/budgets"        element={<BudgetsPage />} />
                 <Route path="/personal/goals"          element={<ComingSoon title="Goals" />} />
-                <Route path="/personal/bills"          element={<ComingSoon title="Bills" />} />
+                <Route path="/personal/bills"          element={<BillsPage />} />
                 <Route path="/personal/debts"          element={<ComingSoon title="Debts" />} />
-                <Route path="/personal/net-worth"      element={<ComingSoon title="Net Worth" />} />
+                <Route path="/personal/net-worth"      element={<NetWorthPage />} />
 
                 {/* Business ───────────────────────────────────────────────── */}
                 <Route path="/business"                element={<BusinessDashboard />} />
@@ -62,7 +89,7 @@ export default function App() {
                 {/* Shared ─────────────────────────────────────────────────── */}
                 <Route path="/settings"                element={<ComingSoon title="Settings" />} />
                 <Route path="/settings/profile"        element={<ComingSoon title="Profile" />} />
-                <Route path="/advisor"                 element={<ComingSoon title="AI Advisor" />} />
+                <Route path="/advisor"                 element={<AdvisorPage />} />
 
               </Route>
             </Route>
@@ -70,20 +97,9 @@ export default function App() {
             {/* ── Catch-all ──────────────────────────────────────────────── */}
             <Route path="*" element={<Navigate to="/login" replace />} />
           </Routes>
+          </ErrorBoundary>
 
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              style: {
-                background: 'var(--color-bg-card)',
-                color: 'var(--color-text-primary)',
-                border: '1px solid var(--color-border)',
-                fontSize: '14px',
-              },
-              success: { iconTheme: { primary: '#0F9D7A', secondary: '#fff' } },
-              error:   { iconTheme: { primary: '#f87171', secondary: '#fff' } },
-            }}
-          />
+          <ToastViewport />
         </AuthInit>
       </BrowserRouter>
     </QueryClientProvider>

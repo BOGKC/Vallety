@@ -2,31 +2,489 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================================
+   Vallety Design Tokens
+   Single source of truth for color, spacing, radius & motion.
+   ============================================================ */
 :root {
-  --color-bg-primary: #0F0F1A;
-  --color-bg-secondary: #1A1A2E;
-  --color-bg-card: #16213E;
-  --color-brand: #3B5BDB;
+  /* --- Backgrounds --- */
+  --bg-primary: #0A0E1A;   /* deepest, page background */
+  --bg-secondary: #111827; /* sidebar, secondary surfaces */
+  --bg-card: #161D2F;      /* cards, panels */
+  --bg-elevated: #1C2540;  /* modals, dropdowns, hover states */
+  --bg-input: #0F1629;     /* form inputs */
+
+  /* --- Brand / Accent (mode-aware, defaults to personal) --- */
+  --color-accent: #3B5BDB;
+  --color-accent-hover: #4C6EF5;
+  --color-accent-muted: rgba(59, 91, 219, 0.12);
+
+  /* --- Semantic colors --- */
+  --color-success: #22C55E;
+  --color-success-muted: rgba(34, 197, 94, 0.12);
+  --color-warning: #F59E0B;
+  --color-warning-muted: rgba(245, 158, 11, 0.12);
+  --color-danger: #EF4444;
+  --color-danger-muted: rgba(239, 68, 68, 0.12);
+  --color-info: #3B82F6;
+  --color-info-muted: rgba(59, 130, 246, 0.12);
+
+  /* --- Text --- */
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  /* Lightened from #64748B to lift small muted text closer to WCAG AA on the
+     dark card/elevated surfaces while staying distinct from --text-secondary. */
+  --text-muted: #8593A8;
+  --text-inverse: #0A0E1A;
+
+  /* --- Borders --- */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.10);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --border-accent: rgba(59, 91, 219, 0.4);
+
+  /* --- Spacing --- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  /* --- Radius --- */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* --- Transitions --- */
+  --transition-fast: 120ms ease;
+  --transition-base: 180ms ease;
+  --transition-slow: 280ms ease;
+
+  /* --- Motion: single-sourced easing & durations --- */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-emphasized: cubic-bezier(0.32, 0.72, 0, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-sheet: 280ms;
+
+  /* ------------------------------------------------------------
+     Legacy aliases — kept so existing components keep rendering.
+     Map old token names onto the new foundation. Migrate over time.
+     ------------------------------------------------------------ */
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-card: var(--bg-card);
+  --color-brand: var(--color-accent);
   --color-business: #0F9D7A;
   --color-investment: #9333EA;
-  --color-text-primary: #F1F5F9;
-  --color-text-secondary: #94A3B8;
-  --color-border: rgba(255, 255, 255, 0.08);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-border: var(--border-default);
 }
 
 * {
   box-sizing: border-box;
 }
 
+/* ============================================================
+   Global base styles
+   ============================================================ */
 body {
   margin: 0;
-  background-color: var(--color-bg-primary);
-  color: var(--color-text-primary);
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 #root {
   min-height: 100vh;
+}
+
+/* Smooth transitions on interactive elements */
+a,
+button,
+input,
+select,
+textarea,
+[role='button'],
+[tabindex] {
+  transition:
+    background-color var(--transition-base),
+    color var(--transition-base),
+    border-color var(--transition-base),
+    opacity var(--transition-base);
+}
+
+/* Focus rings */
+*:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Scrollbars — thin, dark track, subtle thumb */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-default) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--border-default);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--border-strong);
+}
+
+/* Opt-in scrollbar hiding for touch-scroll strips (e.g. bill pills) */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* CSV import success — draw-on checkmark */
+@keyframes csv-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.csv-check__circle {
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  animation: csv-draw 0.5s ease-out forwards;
+}
+
+.csv-check__tick {
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: csv-draw 0.3s 0.45s ease-out forwards;
+}
+
+/* Goal progress ring — draw the arc on mount */
+@keyframes goal-ring-draw {
+  from {
+    stroke-dashoffset: var(--ring-circ, 0);
+  }
+  to {
+    stroke-dashoffset: var(--ring-offset, 0);
+  }
+}
+
+.goal-ring__arc {
+  animation: goal-ring-draw 0.8s ease-out forwards;
+}
+
+/* Bill marked-paid pop */
+@keyframes paid-pop {
+  from {
+    transform: scale(0.96);
+    opacity: 0.4;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.paid-pop {
+  animation: paid-pop 0.25s ease-out;
+}
+
+/* AI Advisor — typing indicator + streaming caret */
+@keyframes advisor-dot {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.advisor-dot {
+  animation: advisor-dot 1.2s infinite ease-in-out;
+}
+
+@keyframes advisor-caret {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.advisor-caret {
+  animation: advisor-caret 1s steps(1) infinite;
+}
+
+/* ============================================================
+   Micro-interaction & animation system
+   ============================================================ */
+
+/* Button interactions — global */
+button,
+[type='button'],
+[type='submit'] {
+  transition: filter 120ms ease, transform 80ms ease;
+}
+button:hover:not(:disabled),
+[type='button']:hover:not(:disabled),
+[type='submit']:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+button:active:not(:disabled),
+[type='button']:active:not(:disabled),
+[type='submit']:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Card hover */
+.card,
+[data-card] {
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+.card:hover,
+[data-card]:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-strong);
+}
+.card:active,
+[data-card]:active {
+  transform: translateY(0);
+}
+
+/* Page transition — incoming route content */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.page-enter {
+  animation: page-enter 200ms ease-out;
+}
+
+/* Progress bar fill */
+.progress-fill {
+  transition: width 600ms ease-out;
+}
+
+/* Loading skeleton shimmer */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--bg-elevated),
+    var(--bg-card),
+    var(--bg-elevated)
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s infinite linear;
+}
+
+/* Inline form-field error — fade in on appear */
+@keyframes field-error-in {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.field-error {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--color-danger);
+  animation: field-error-in 150ms ease-out;
+}
+
+/* Submit-button shake on invalid submit — 3 cycles over 300ms */
+@keyframes form-shake {
+  0% {
+    transform: translateX(0);
+  }
+  16% {
+    transform: translateX(-4px);
+  }
+  33% {
+    transform: translateX(4px);
+  }
+  50% {
+    transform: translateX(-4px);
+  }
+  66% {
+    transform: translateX(4px);
+  }
+  83% {
+    transform: translateX(-4px);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.shake {
+  animation: form-shake 300ms ease-in-out;
+}
+
+/* Staggered list/card entrance — applied to a container; children fade + rise
+   in sequence with a capped delay so long lists still finish quickly. The
+   reduced-motion block below collapses this to a near-instant appearance. */
+@keyframes list-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.stagger-list > * {
+  animation: list-item-in var(--dur-base) var(--ease-out) both;
+}
+.stagger-list > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-list > *:nth-child(2) { animation-delay: 30ms; }
+.stagger-list > *:nth-child(3) { animation-delay: 60ms; }
+.stagger-list > *:nth-child(4) { animation-delay: 90ms; }
+.stagger-list > *:nth-child(5) { animation-delay: 120ms; }
+.stagger-list > *:nth-child(6) { animation-delay: 150ms; }
+.stagger-list > *:nth-child(7) { animation-delay: 180ms; }
+.stagger-list > *:nth-child(8) { animation-delay: 210ms; }
+.stagger-list > *:nth-child(n + 9) { animation-delay: 240ms; }
+
+/* One-shot celebration pulse for positive milestones (e.g. goal completed). */
+@keyframes goal-celebrate {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+.goal-celebrate {
+  animation: goal-celebrate 500ms var(--ease-out);
+}
+
+/* Indeterminate linear progress (e.g. CSV parsing) */
+@keyframes indeterminate-progress {
+  0% {
+    left: -40%;
+    width: 40%;
+  }
+  50% {
+    left: 25%;
+    width: 50%;
+  }
+  100% {
+    left: 100%;
+    width: 40%;
+  }
+}
+
+.progress-indeterminate {
+  position: relative;
+  width: 100%;
+  height: 3px;
+  overflow: hidden;
+  background: var(--color-accent-muted);
+  border-radius: var(--radius-full);
+}
+
+.progress-indeterminate::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--color-accent);
+  animation: indeterminate-progress 1.1s ease-in-out infinite;
+}
+
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================================
+   Mobile responsiveness
+   ============================================================ */
+
+/* Touch targets — comfortable hit areas on small screens */
+@media (max-width: 768px) {
+  button,
+  [role='button'],
+  a,
+  input,
+  select,
+  textarea {
+    min-height: 44px;
+  }
+  .nav-item {
+    min-height: 48px;
+  }
+}
+
+/* Safe-area inset at the bottom of the viewport */
+body {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Right-fade overlay to hint horizontal scroll on wrapped tables */
+.scroll-fade {
+  position: relative;
+}
+.scroll-fade::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 28px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--bg-card));
 }

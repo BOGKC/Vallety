@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import toast from 'react-hot-toast'
+import toast from '../../components/Toast'
 import { Eye, EyeOff, Wallet } from 'lucide-react'
 import { supabase } from '../../supabase/client'
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner'
@@ -125,8 +125,9 @@ export function SignupPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-pressed={showPassword}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors"
-                  tabIndex={-1}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -152,8 +153,9 @@ export function SignupPage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirm((v) => !v)}
+                  aria-label={showConfirm ? 'Hide password' : 'Show password'}
+                  aria-pressed={showConfirm}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary transition-colors"
-                  tabIndex={-1}
                 >
                   {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>

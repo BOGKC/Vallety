@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import toast from 'react-hot-toast'
+import toast from '../../components/Toast'
 import { Eye, EyeOff, Mail, Wallet } from 'lucide-react'
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner'
 import { useAuth } from '../../shared/hooks/useAuth'
@@ -102,8 +102,9 @@ function PasswordPanel({ onForgot, onMagic }: { onForgot: () => void; onMagic: (
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
-            tabIndex={-1}
+            aria-label={showPassword ? 'Hide password' : 'Show password'}
+            aria-pressed={showPassword}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary focus-visible:text-text-primary"
           >
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
@@ -270,8 +271,14 @@ function ForgotPanel({ onBack }: { onBack: () => void }) {
 export function LoginPage() {
   const [panel, setPanel] = useState<Panel>('password')
 
+  // Time-aware greeting for the sign-in panel (replaces the old static title).
+  const greeting = useMemo(() => {
+    const hour = new Date().getHours()
+    return hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+  }, [])
+
   const titles: Record<Panel, string> = {
-    password: 'Welcome back',
+    password: greeting,
     magic: 'Magic link',
     forgot: 'Reset password',
   }
