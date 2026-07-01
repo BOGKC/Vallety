@@ -353,34 +353,39 @@ export function OnboardingPage() {
 
   const handleNext = async () => {
     if (step < 2) { setStep((s) => s + 1); return }
+    if (!selectedChoice) return
 
-    // Final step — save profile then redirect
-    if (!user || !selectedChoice) return
     setSaving(true)
 
-    const { data, error } = await supabase
-      .from('profiles')
-      .update({
-        active_mode: selectedChoice.mode,
-        business_type: selectedChoice.businessType,
-        currency,
-      })
-      .eq('id', user.id)
-      .select()
-      .single()
+    // Persist the profile if we can — but never block entry on a backend
+    // hiccup. Vallety is local-first, so a failed/absent profile write must not
+    // trap the user on onboarding. The chosen mode is applied locally regardless.
+    if (user) {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .update({
+            active_mode: selectedChoice.mode,
+            business_type: selectedChoice.businessType,
+            currency,
+          })
+          .eq('id', user.id)
+          .select()
+          .single()
+        if (!error && data) setProfile(data)
+      } catch {
+        /* ignore — proceed into the app anyway */
+      }
+    }
 
     setSaving(false)
-
-    if (error) { toast.error('Could not save profile: ' + error.message); return }
-
-    setProfile(data)
     setMode(selectedChoice.mode)
 
     if (parsedFile) {
       toast.success('You can import your CSV anytime from the Transactions page.')
     }
 
-    navigate(selectedChoice.mode === 'personal' ? '/personal' : '/business', { replace: true })
+    navigate(selectedChoice.mode === 'personal' ? '/' : '/business', { replace: true })
   }
 
   return (
