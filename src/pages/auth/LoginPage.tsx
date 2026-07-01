@@ -4,11 +4,12 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from '../../components/Toast'
-import { Eye, EyeOff, Mail, Wallet } from 'lucide-react'
+import { Eye, EyeOff, Mail, Sparkles, Wallet } from 'lucide-react'
 import { GoogleIcon } from '../../components/GoogleIcon'
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner'
 import { useAuth } from '../../shared/hooks/useAuth'
 import { useAuthStore } from '../../shared/store/authStore'
+import { DEMO_EMAIL, DEMO_PASSWORD, seedDemoData } from '../../shared/lib/demoData'
 import { supabase } from '../../supabase/client'
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
@@ -54,6 +55,7 @@ function PasswordPanel({ onForgot, onMagic }: { onForgot: () => void; onMagic: (
   const location = useLocation()
   const { signIn, signInWithGoogle } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
+  const [demoLoading, setDemoLoading] = useState(false)
 
   const from = (location.state as { from?: Location })?.from?.pathname ?? '/'
 
@@ -72,6 +74,34 @@ function PasswordPanel({ onForgot, onMagic }: { onForgot: () => void; onMagic: (
   const handleGoogle = async () => {
     const { error } = await signInWithGoogle()
     if (error) toast.error(error.message)
+  }
+
+  // Trial sandbox: sign in with the public demo account (self-provisioning it
+  // on first use when email confirmation is off) and seed sample data so the
+  // trial shows a living app. Data stays in this browser's localStorage.
+  const handleDemo = async () => {
+    setDemoLoading(true)
+    const { error } = await supabase.auth.signInWithPassword({
+      email: DEMO_EMAIL,
+      password: DEMO_PASSWORD,
+    })
+    if (error) {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: DEMO_EMAIL,
+        password: DEMO_PASSWORD,
+        options: { data: { full_name: 'Demo User' } },
+      })
+      if (signUpError || !data.session) {
+        setDemoLoading(false)
+        toast.error(
+          'The demo account isn’t provisioned yet. Create demo@vallety.app once in Supabase (Authentication → Users → Add user, auto-confirm on) or disable email confirmation.'
+        )
+        return
+      }
+    }
+    seedDemoData()
+    toast.success('Welcome to the Vallety demo — explore freely!')
+    navigate('/', { replace: true })
   }
 
   return (
@@ -150,6 +180,16 @@ function PasswordPanel({ onForgot, onMagic }: { onForgot: () => void; onMagic: (
       >
         <Mail className="h-4 w-4 text-text-secondary" />
         Send magic link
+      </button>
+
+      <button
+        type="button"
+        onClick={handleDemo}
+        disabled={demoLoading}
+        className="w-full bg-transparent hover:bg-bg-secondary/50 border border-dashed border-border text-text-secondary hover:text-text-primary font-medium rounded-lg py-2.5 flex items-center justify-center gap-2.5 transition-colors disabled:opacity-60"
+      >
+        {demoLoading ? <LoadingSpinner size="sm" /> : <Sparkles className="h-4 w-4 text-brand" />}
+        {demoLoading ? 'Preparing the demo…' : 'Just looking? Try the demo'}
       </button>
     </form>
   )
