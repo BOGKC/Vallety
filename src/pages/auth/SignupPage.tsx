@@ -1,11 +1,14 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from '../../components/Toast'
-import { Eye, EyeOff, Wallet } from 'lucide-react'
+import { Eye, EyeOff, Mail, Wallet } from 'lucide-react'
+import { GoogleIcon } from '../../components/GoogleIcon'
 import { supabase } from '../../supabase/client'
+import { useAuth } from '../../shared/hooks/useAuth'
+import { useAuthStore } from '../../shared/store/authStore'
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner'
 
 const schema = z.object({
@@ -26,8 +29,19 @@ type FormValues = z.infer<typeof schema>
 
 export function SignupPage() {
   const navigate = useNavigate()
+  const { signInWithGoogle } = useAuth()
+  const session = useAuthStore((s) => s.session)
+  const initialized = useAuthStore((s) => s.initialized)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  // When Supabase requires email confirmation, signUp returns no session; we
+  // show a "check your inbox" screen instead of pushing into onboarding.
+  const [confirmEmail, setConfirmEmail] = useState<string | null>(null)
+
+  // Already signed in (e.g. returning from Google OAuth): go straight in.
+  useEffect(() => {
+    if (initialized && session && !confirmEmail) navigate('/', { replace: true })
+  }, [initialized, session, confirmEmail, navigate])
 
   const {
     register,
@@ -36,7 +50,7 @@ export function SignupPage() {
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
   const onSubmit = async (values: FormValues) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
       options: {
@@ -50,8 +64,47 @@ export function SignupPage() {
       return
     }
 
-    toast.success('Account created — check your email to confirm, then continue.')
-    navigate('/onboarding')
+    if (data.session) {
+      // Email confirmation is disabled — the user is signed in right away.
+      toast.success('Welcome to Vallety!')
+      navigate('/onboarding')
+    } else {
+      setConfirmEmail(values.email)
+    }
+  }
+
+  const handleGoogle = async () => {
+    const { error } = await signInWithGoogle()
+    if (error) toast.error(error.message)
+  }
+
+  if (confirmEmail) {
+    return (
+      <div className="min-h-screen bg-bg-primary flex items-center justify-center px-4 py-12">
+        <div className="w-full max-w-md">
+          <div className="flex items-center justify-center gap-2 mb-8">
+            <div className="h-9 w-9 rounded-lg bg-brand flex items-center justify-center">
+              <Wallet className="h-5 w-5 text-white" />
+            </div>
+            <span className="text-xl font-semibold text-text-primary">Vallety</span>
+          </div>
+          <div className="bg-bg-card border border-border rounded-2xl p-8 text-center space-y-3">
+            <div className="h-12 w-12 rounded-full bg-brand/10 flex items-center justify-center mx-auto">
+              <Mail className="h-6 w-6 text-brand" />
+            </div>
+            <h1 className="text-text-primary text-xl font-semibold">Confirm your email</h1>
+            <p className="text-text-secondary text-sm">
+              We sent a confirmation link to <span className="text-text-primary font-medium">{confirmEmail}</span>.
+              Click it and you'll be signed in automatically.
+            </p>
+            <p className="text-text-secondary/70 text-xs">Can't find it? Check your spam folder.</p>
+            <Link to="/login" className="inline-block text-brand text-sm hover:underline">
+              Back to sign in
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -172,6 +225,24 @@ export function SignupPage() {
             >
               {isSubmitting && <LoadingSpinner size="sm" />}
               {isSubmitting ? 'Creating account…' : 'Create account'}
+            </button>
+
+            <div className="relative my-1">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border" />
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="bg-bg-card px-2 text-text-secondary">or</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGoogle}
+              className="w-full bg-bg-secondary hover:bg-bg-secondary/70 border border-border text-text-primary font-medium rounded-lg py-2.5 flex items-center justify-center gap-2.5 transition-colors"
+            >
+              <GoogleIcon />
+              Continue with Google
             </button>
           </form>
 
