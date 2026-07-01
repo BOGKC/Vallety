@@ -11,6 +11,7 @@ import { ComingSoon } from './shared/components/ComingSoon'
 import { useAuth } from './shared/hooks/useAuth'
 import { SignupPage } from './pages/auth/SignupPage'
 import { LoginPage } from './pages/auth/LoginPage'
+import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
 import { OnboardingPage } from './pages/auth/OnboardingPage'
 import { PersonalDashboard } from './modes/personal/PersonalDashboard'
 import { TransactionsPage } from './modes/personal/TransactionsPage'
@@ -38,9 +39,10 @@ export default function App() {
           <ErrorBoundary>
           <Routes>
             {/* ── Public routes ──────────────────────────────────────────── */}
-            <Route path="/signup"     element={<SignupPage />} />
-            <Route path="/login"      element={<LoginPage />} />
-            <Route path="/onboarding" element={<OnboardingPage />} />
+            <Route path="/signup"         element={<SignupPage />} />
+            <Route path="/login"          element={<LoginPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/onboarding"     element={<OnboardingPage />} />
 
             {/* ── Protected routes (AuthGuard → AppShell) ────────────────── */}
             <Route element={<AuthGuard />}>
