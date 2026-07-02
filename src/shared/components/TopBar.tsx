@@ -151,7 +151,7 @@ function UserMenu() {
           )}
 
           <button
-            onClick={() => { navigate('/settings/profile'); setOpen(false) }}
+            onClick={() => { navigate('/profile'); setOpen(false) }}
             className="flex w-full items-center gap-2.5 px-3 py-2 text-[13px] text-text-secondary hover:bg-bg-card hover:text-text-primary"
             style={{ transition: 'var(--transition-fast)' }}
             role="menuitem"
@@ -161,7 +161,7 @@ function UserMenu() {
           </button>
 
           <button
-            onClick={() => { navigate('/settings'); setOpen(false) }}
+            onClick={() => { navigate('/profile'); setOpen(false) }}
             className="flex w-full items-center gap-2.5 px-3 py-2 text-[13px] text-text-secondary hover:bg-bg-card hover:text-text-primary"
             style={{ transition: 'var(--transition-fast)' }}
             role="menuitem"

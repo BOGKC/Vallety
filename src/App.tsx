@@ -13,6 +13,7 @@ import { SignupPage } from './pages/auth/SignupPage'
 import { LoginPage } from './pages/auth/LoginPage'
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
 import { OnboardingPage } from './pages/auth/OnboardingPage'
+import { ProfilePage } from './pages/profile/ProfilePage'
 import { PersonalDashboard } from './modes/personal/PersonalDashboard'
 import { TransactionsPage } from './modes/personal/TransactionsPage'
 import { BudgetsPage } from './modes/personal/BudgetsPage'
@@ -89,8 +90,9 @@ export default function App() {
                 <Route path="/investment/watchlist"    element={<ComingSoon title="Watchlist" />} />
 
                 {/* Shared ─────────────────────────────────────────────────── */}
-                <Route path="/settings"                element={<ComingSoon title="Settings" />} />
-                <Route path="/settings/profile"        element={<ComingSoon title="Profile" />} />
+                <Route path="/profile"                 element={<ProfilePage />} />
+                <Route path="/settings"                element={<Navigate to="/profile" replace />} />
+                <Route path="/settings/profile"        element={<Navigate to="/profile" replace />} />
                 <Route path="/advisor"                 element={<AdvisorPage />} />
 
               </Route>

@@ -14,8 +14,9 @@ export const PAGE_TITLES: Record<string, string> = {
   '/personal/scenarios': 'Scenarios',
   '/net-worth': 'Net worth',
   '/advisor': 'AI Advisor',
-  '/settings': 'Settings',
-  '/settings/profile': 'Profile',
+  '/profile': 'Profile & settings',
+  '/settings': 'Profile & settings',
+  '/settings/profile': 'Profile & settings',
   // Legacy mode-prefixed routes
   '/personal': 'Dashboard',
   '/personal/transactions': 'Transactions',
