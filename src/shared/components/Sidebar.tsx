@@ -209,9 +209,9 @@ export function Sidebar({ mobile = false }: SidebarProps) {
       <div className="flex-shrink-0 border-t border-[var(--border-subtle)] p-2">
         {collapsed ? (
           <NavLink
-            to="/settings"
-            title="Settings"
-            aria-label="Settings"
+            to="/profile"
+            title="Profile & settings"
+            aria-label="Profile & settings"
             className="group relative mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-bg-elevated text-[12px] font-semibold text-[var(--color-accent)]"
           >
             {initials}
@@ -219,26 +219,34 @@ export function Sidebar({ mobile = false }: SidebarProps) {
               className="pointer-events-none absolute z-50 whitespace-nowrap rounded-md bg-bg-elevated px-2 py-1 text-[12px] font-medium text-text-primary opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100"
               style={{ left: 68 }}
             >
-              Settings
+              Profile &amp; settings
             </span>
           </NavLink>
         ) : (
           <div className="flex items-center gap-2.5 px-1 py-1">
-            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-bg-elevated text-[12px] font-semibold text-[var(--color-accent)]">
-              {initials}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-[13px] font-medium leading-tight text-text-primary">
-                {displayName}
-              </p>
-              <span className="mt-0.5 inline-block rounded-full bg-bg-elevated px-1.5 py-0.5 text-[10px] font-medium leading-none text-text-muted">
-                Local
-              </span>
-            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/profile')}
+              aria-label="Open profile & settings"
+              className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md text-left hover:bg-bg-elevated"
+              style={{ transition: 'var(--transition-fast)' }}
+            >
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-bg-elevated text-[12px] font-semibold text-[var(--color-accent)]">
+                {initials}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13px] font-medium leading-tight text-text-primary">
+                  {displayName}
+                </p>
+                <span className="mt-0.5 inline-block rounded-full bg-bg-elevated px-1.5 py-0.5 text-[10px] font-medium leading-none text-text-muted">
+                  Local
+                </span>
+              </div>
+            </button>
             <NavLink
-              to="/settings"
-              title="Settings"
-              aria-label="Settings"
+              to="/profile"
+              title="Profile & settings"
+              aria-label="Profile & settings"
               className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
               style={{ transition: 'var(--transition-fast)' }}
             >

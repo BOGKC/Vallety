@@ -395,6 +395,29 @@ button:active:not(:disabled),
 .stagger-list > *:nth-child(8) { animation-delay: 210ms; }
 .stagger-list > *:nth-child(n + 9) { animation-delay: 240ms; }
 
+/* "Saved" checkmark — fades in, holds, fades out over 1.5s (remount to replay) */
+@keyframes saved-tick {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  15% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.saved-tick {
+  animation: saved-tick 1.5s ease forwards;
+  color: var(--color-success);
+}
+
 /* One-shot celebration pulse for positive milestones (e.g. goal completed). */
 @keyframes goal-celebrate {
   0% { transform: scale(1); }
