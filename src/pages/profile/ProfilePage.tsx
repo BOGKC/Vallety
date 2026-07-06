@@ -150,7 +150,7 @@ function ProfileHeader({ p }: { p: ValletyProfile }) {
   return (
     <div
       className="flex items-center gap-5 p-6"
-      style={{ backgroundColor: '#161D2F', borderRadius: 14, border: '1px solid rgba(255,255,255,0.07)' }}
+      style={{ backgroundColor: 'var(--bg-card)', borderRadius: 14, border: '1px solid rgba(255,255,255,0.07)' }}
     >
       <div className="relative flex-shrink-0">
         {photo ? (
@@ -182,8 +182,8 @@ function ProfileHeader({ p }: { p: ValletyProfile }) {
       </div>
 
       <div className="min-w-0">
-        <p className="truncate text-[20px] font-semibold text-[#F8FAFC]">{p.full_name || 'Your name'}</p>
-        <p className="truncate text-[14px] text-[#64748B]">{p.email || 'Add your email below'}</p>
+        <p className="truncate text-[20px] font-semibold text-text-primary">{p.full_name || 'Your name'}</p>
+        <p className="truncate text-[14px] text-text-muted">{p.email || 'Add your email below'}</p>
         <div className="mt-1.5 flex flex-wrap items-center gap-2">
           <span
             className="rounded-full px-2 py-0.5 text-[11px] font-semibold text-white"
@@ -191,7 +191,7 @@ function ProfileHeader({ p }: { p: ValletyProfile }) {
           >
             {plan}
           </span>
-          {memberSince && <span className="text-[12px] text-[#64748B]">Member since {memberSince}</span>}
+          {memberSince && <span className="text-[12px] text-text-muted">Member since {memberSince}</span>}
         </div>
       </div>
     </div>
@@ -230,7 +230,7 @@ function PersonalSection({ p, up, ticks }: { p: ValletyProfile; up: UpdateFn; ti
           onCommit={(v) => up({ phone: v }, 'phone')} />
       </Row>
       <Row label="Date joined">
-        <span className="text-[13px] text-[#64748B]">{joined}</span>
+        <span className="text-[13px] text-text-muted">{joined}</span>
       </Row>
     </Section>
   )
@@ -1072,13 +1072,13 @@ function BillingSection() {
       </Row>
 
       <Row label="Next billing date" sub="Your subscription renews automatically">
-        <span className="text-[13px] text-[#64748B]">
+        <span className="text-[13px] text-text-muted">
           {isFree || !nextBilling ? '—' : format(new Date(nextBilling), 'd MMMM yyyy')}
         </span>
       </Row>
 
       <Row label="Payment method">
-        <span className="text-[13px] text-[#64748B]">No payment method</span>
+        <span className="text-[13px] text-text-muted">No payment method</span>
       </Row>
 
       <Row label="Billing history">
@@ -1214,9 +1214,9 @@ function AboutSection() {
 
   return (
     <Section label="About">
-      <Row label="Version"><span className="text-[13px] text-[#64748B]">1.0.0 (MVP)</span></Row>
-      <Row label="Last updated"><span className="text-[13px] text-[#64748B]">{lastUpdated}</span></Row>
-      <Row label="Local storage used"><span className="text-[13px] text-[#64748B]">{storageKb.toFixed(1)} KB</span></Row>
+      <Row label="Version"><span className="text-[13px] text-text-muted">1.0.0 (MVP)</span></Row>
+      <Row label="Last updated"><span className="text-[13px] text-text-muted">{lastUpdated}</span></Row>
+      <Row label="Local storage used"><span className="text-[13px] text-text-muted">{storageKb.toFixed(1)} KB</span></Row>
 
       <Row label="Privacy policy">
         <button type="button" aria-label="Open privacy policy" onClick={() => setLegal('privacy')}

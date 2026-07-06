@@ -44,7 +44,7 @@ function AccentButton({
     <button
       onClick={onClick}
       className={cn(
-        'inline-flex h-9 items-center justify-center gap-1.5 rounded-md px-3 text-[13px] font-medium text-white',
+        'btn-accent inline-flex h-9 items-center justify-center gap-1.5 rounded-md px-3 text-[13px] font-medium text-white',
         full && 'w-full',
         className
       )}

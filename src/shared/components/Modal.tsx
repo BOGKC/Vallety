@@ -34,8 +34,8 @@ export function Modal({ open, onClose, title, children, footer }: ModalProps) {
     >
       <div className="absolute inset-0 bg-black/60" onClick={onClose} aria-hidden />
       <div
-        className="relative z-10 w-full max-w-md rounded-lg border border-default bg-bg-elevated shadow-2xl"
-        style={{ borderRadius: 'var(--radius-lg)' }}
+        className="glass modal-pop relative z-10 w-full max-w-md"
+        style={{ borderRadius: 'var(--radius-xl)' }}
       >
         <div className="flex items-center justify-between border-b border-subtle px-5 py-3.5">
           <h2 className="text-[16px] font-semibold text-text-primary">{title}</h2>

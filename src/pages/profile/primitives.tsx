@@ -27,7 +27,7 @@ export function Section({
       <div
         className="divide-y divide-[rgba(255,255,255,0.05)] overflow-hidden"
         style={{
-          backgroundColor: danger ? 'rgba(239,68,68,0.02)' : '#161D2F',
+          backgroundColor: danger ? 'rgba(239,68,68,0.02)' : 'var(--bg-card)',
           borderRadius: 14,
           border: danger ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(255,255,255,0.07)',
         }}
@@ -64,12 +64,12 @@ export function Row({
       <div className="flex min-w-0 items-start gap-3">
         {prefix && <span className="mt-0.5 flex-shrink-0">{prefix}</span>}
         <div className="min-w-0">
-          <p className="flex items-center gap-1.5 text-[14px] font-medium text-[#F8FAFC]">
+          <p className="flex items-center gap-1.5 text-[14px] font-medium text-text-primary">
             {label}
             {stamp ? <Check key={stamp} className="saved-tick h-3.5 w-3.5" aria-label="Saved" /> : null}
           </p>
           {sub && (
-            <p className={cn('mt-0.5 text-[12px]', danger ? 'text-[rgba(239,68,68,0.75)]' : 'text-[#64748B]')}>
+            <p className={cn('mt-0.5 text-[12px]', danger ? 'text-[rgba(239,68,68,0.75)]' : 'text-text-muted')}>
               {sub}
             </p>
           )}
@@ -101,12 +101,12 @@ export function Toggle({
         height: 22,
         minHeight: 22, // beat the global 44px mobile touch-target rule
         backgroundColor: checked ? 'var(--color-accent)' : 'rgba(255,255,255,0.12)',
-        transition: 'background-color 180ms ease',
+        transition: 'background-color var(--dur-base) var(--ease-in-out-smooth)',
       }}
     >
       <span
         className="absolute top-[2px] h-[18px] w-[18px] rounded-full bg-white shadow"
-        style={{ left: checked ? 20 : 2, transition: 'left 180ms ease' }}
+        style={{ left: checked ? 20 : 2, transition: 'left var(--dur-base) var(--ease-spring)' }}
       />
     </button>
   )
@@ -309,7 +309,7 @@ export function AccentBtn({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+      className="btn-accent inline-flex h-8 items-center gap-1.5 rounded-md px-3 text-[13px] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
       style={{ backgroundColor: 'var(--color-accent)', transition: 'var(--transition-fast)' }}
     >
       {children}

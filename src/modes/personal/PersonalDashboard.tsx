@@ -155,13 +155,14 @@ export function PersonalDashboard() {
 
   const hasCashflow = cashflow.some((m) => m.income > 0 || m.expenses > 0)
 
-  // Safe-to-spend color logic (share of monthly income).
-  const safeColor = (() => {
-    if (!safeToSpend.hasIncome) return 'var(--text-muted)'
+  // Safe-to-spend colour logic (share of monthly income). Each state gets a
+  // [from, to] pair so the hero number renders as a subtle gradient.
+  const [safeFrom, safeTo] = (() => {
+    if (!safeToSpend.hasIncome) return ['var(--text-muted)', 'var(--text-muted)']
     const pct = (safeToSpend.amount / safeToSpend.income) * 100
-    if (safeToSpend.amount < 0 || pct < 5) return 'var(--color-danger)'
-    if (pct <= 20) return 'var(--color-warning)'
-    return 'var(--color-success)'
+    if (safeToSpend.amount < 0 || pct < 5) return ['#EF4444', '#F87171']
+    if (pct <= 20) return ['#F59E0B', '#FBBF24']
+    return ['#22C55E', '#4ADE80']
   })()
 
   if (loading) return <DashboardSkeleton />
@@ -193,7 +194,10 @@ export function PersonalDashboard() {
       </div>
 
       {/* SECTION 2 — Safe-to-spend hero ─────────────────────────────────────── */}
-      <div className="rounded-lg bg-bg-card p-6">
+      <div className="relative">
+        {/* Soft breathing pool of accent light behind the hero */}
+        <div className="hero-glow" aria-hidden />
+        <div className="relative rounded-lg bg-bg-card p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 text-center sm:text-left">
             <p
@@ -203,8 +207,14 @@ export function PersonalDashboard() {
               Safe to spend
             </p>
             <p
-              className="mt-1 font-bold leading-none"
-              style={{ color: safeColor, fontSize: 'clamp(32px, 8vw, 52px)' }}
+              className="num-hero mt-1 leading-none"
+              style={{
+                fontSize: 'clamp(32px, 8vw, 52px)',
+                backgroundImage: `linear-gradient(135deg, ${safeFrom}, ${safeTo})`,
+                WebkitBackgroundClip: 'text',
+                backgroundClip: 'text',
+                color: 'transparent',
+              }}
             >
               {safeToSpend.hasIncome ? <AnimatedEuro value={safeToSpend.amount} /> : '€—'}
             </p>
@@ -253,10 +263,11 @@ export function PersonalDashboard() {
             </div>
           </div>
         </div>
+        </div>
       </div>
 
       {/* SECTION 3 — Metric cards ───────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="stagger-list grid grid-cols-2 gap-4 sm:grid-cols-4">
         <MetricCard
           icon={<ArrowDownLeft className="h-4 w-4" />}
           iconColor="var(--color-success)"

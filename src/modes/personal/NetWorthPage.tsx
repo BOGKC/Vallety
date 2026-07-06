@@ -108,7 +108,7 @@ export function NetWorthPage() {
         <h1 className="text-[18px] font-semibold text-text-primary">Net worth</h1>
         <button
           onClick={openAdd}
-          className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-[13px] font-medium text-white"
+          className="btn-accent inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-[13px] font-medium text-white"
           style={{ backgroundColor: 'var(--color-accent)', transition: 'var(--transition-fast)' }}
         >
           <Plus className="h-4 w-4" /> Add account
@@ -129,7 +129,7 @@ export function NetWorthPage() {
             <p className="text-[12px] font-medium uppercase text-text-muted" style={{ letterSpacing: '0.08em' }}>
               Total net worth
             </p>
-            <p className="mt-1 text-[44px] font-bold leading-none" style={{ color: heroColor }}>
+            <p className="num-hero mt-1 text-[44px] leading-none" style={{ color: heroColor }}>
               {heroIsEmpty ? '€—' : <AnimatedEuro value={totals.net} />}
             </p>
             {delta !== null && (

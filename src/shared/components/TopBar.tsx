@@ -200,7 +200,12 @@ export function TopBar({ onMenuClick }: TopBarProps) {
 
   return (
     <header
-      className="sticky top-0 z-40 flex h-14 flex-shrink-0 items-center justify-between gap-4 border-b border-subtle bg-bg-secondary px-4"
+      className="sticky top-0 z-40 flex h-14 flex-shrink-0 items-center justify-between gap-4 border-b border-subtle px-4"
+      style={{
+        backgroundColor: 'rgba(19, 26, 46, 0.8)',
+        backdropFilter: 'blur(20px) saturate(140%)',
+        WebkitBackdropFilter: 'blur(20px) saturate(140%)',
+      }}
     >
       {/* Left: hamburger (mobile) + page title */}
       <div className="flex min-w-0 items-center gap-3">

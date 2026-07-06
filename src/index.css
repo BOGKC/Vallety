@@ -7,43 +7,92 @@
    Single source of truth for color, spacing, radius & motion.
    ============================================================ */
 :root {
-  /* --- Backgrounds --- */
-  --bg-primary: #0A0E1A;   /* deepest, page background */
-  --bg-secondary: #111827; /* sidebar, secondary surfaces */
-  --bg-card: #161D2F;      /* cards, panels */
-  --bg-elevated: #1C2540;  /* modals, dropdowns, hover states */
-  --bg-input: #0F1629;     /* form inputs */
+  /* ── Elevation ladder — surfaces stack toward the viewer, each step only
+     a few % lighter than the one below. Subtlety is the point. ── */
+  --bg-base: #070A12; /* the void behind everything */
+  --bg-0: #0A0E1A;    /* page background */
+  --bg-1: #0E1424;    /* recessed wells, inputs */
+  --bg-2: #131A2E;    /* base card level */
+  --bg-3: #182138;    /* raised card / hover */
+  --bg-4: #1E2843;    /* dropdowns, popovers */
+  --bg-5: #26314F;    /* modals, active states */
 
-  /* --- Brand / Accent (mode-aware, defaults to personal) --- */
-  --color-accent: #3B5BDB;
-  --color-accent-hover: #4C6EF5;
+  /* Legacy elevation names → new ladder (whole app re-skins through these). */
+  --bg-primary: var(--bg-0);
+  --bg-secondary: var(--bg-1);
+  --bg-card: var(--bg-2);
+  --bg-elevated: var(--bg-4);
+  --bg-input: var(--bg-1);
+
+  /* Cards catch light at their top edge like a physical surface. */
+  --card-gradient: linear-gradient(180deg, rgba(59, 91, 219, 0.03) 0%, rgba(59, 91, 219, 0) 40%);
+
+  /* ── Accent ramps (mode-aware; personal blue is the default) ── */
+  --accent-50: #EEF2FF;
+  --accent-100: #C7D2FE;
+  --accent-300: #6C8AF0;
+  --accent-500: #3B5BDB;
+  --accent-600: #2F49B0;
+  --accent-700: #253A8C;
+  --accent-glow: rgba(59, 91, 219, 0.35);
+
+  --teal-300: #5DCAA5;
+  --teal-500: #0F9D7A;
+  --teal-600: #0C7D61;
+  --teal-glow: rgba(15, 157, 122, 0.35);
+
+  --purple-300: #C4B5FD;
+  --purple-500: #9333EA;
+  --purple-600: #7522BC;
+  --purple-glow: rgba(147, 51, 234, 0.35);
+
+  --color-accent: var(--accent-500);
+  --color-accent-hover: var(--accent-300);
   --color-accent-muted: rgba(59, 91, 219, 0.12);
 
-  /* --- Semantic colors --- */
+  /* ── Semantic colors with depth: fill / muted / border / glow ── */
   --color-success: #22C55E;
   --color-success-muted: rgba(34, 197, 94, 0.12);
+  --color-success-border: rgba(34, 197, 94, 0.25);
+  --color-success-glow: rgba(34, 197, 94, 0.3);
   --color-warning: #F59E0B;
   --color-warning-muted: rgba(245, 158, 11, 0.12);
+  --color-warning-border: rgba(245, 158, 11, 0.25);
+  --color-warning-glow: rgba(245, 158, 11, 0.3);
   --color-danger: #EF4444;
   --color-danger-muted: rgba(239, 68, 68, 0.12);
+  --color-danger-border: rgba(239, 68, 68, 0.25);
+  --color-danger-glow: rgba(239, 68, 68, 0.3);
   --color-info: #3B82F6;
   --color-info-muted: rgba(59, 130, 246, 0.12);
 
-  /* --- Text --- */
-  --text-primary: #F8FAFC;
-  --text-secondary: #94A3B8;
-  /* Lightened from #64748B to lift small muted text closer to WCAG AA on the
-     dark card/elevated surfaces while staying distinct from --text-secondary. */
-  --text-muted: #8593A8;
+  /* ── Text hierarchy — four levels. Primary is blue-white, never pure #fff. ── */
+  --text-primary: #F4F7FF;
+  --text-secondary: #A0AEC8;
+  --text-muted: #64748B;
+  --text-faint: #445068;
   --text-inverse: #0A0E1A;
 
-  /* --- Borders --- */
-  --border-subtle: rgba(255, 255, 255, 0.06);
-  --border-default: rgba(255, 255, 255, 0.10);
-  --border-strong: rgba(255, 255, 255, 0.18);
-  --border-accent: rgba(59, 91, 219, 0.4);
+  /* ── Border hierarchy ── */
+  --border-subtle: rgba(255, 255, 255, 0.04);
+  --border-default: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.14);
+  --border-strong: rgba(255, 255, 255, 0.20);
+  --border-accent: rgba(59, 91, 219, 0.45);
 
-  /* --- Spacing --- */
+  /* ── Multi-layer depth shadows (ambient + direct light falloff) ── */
+  --shadow-rest: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-raised:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 4px 12px rgba(0, 0, 0, 0.25);
+  --shadow-floating:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 4px 12px rgba(0, 0, 0, 0.25),
+    0 16px 40px rgba(0, 0, 0, 0.2);
+
+  /* ── Spacing ── */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -54,35 +103,43 @@
   --space-10: 40px;
   --space-12: 48px;
 
-  /* --- Radius --- */
+  /* ── Radius — softened for a more premium feel ── */
   --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 20px;
+  --radius-md: 10px;  /* buttons, inputs */
+  --radius-lg: 16px;  /* cards */
+  --radius-xl: 20px;  /* modals, sheets */
   --radius-full: 9999px;
 
-  /* --- Transitions --- */
-  --transition-fast: 120ms ease;
-  --transition-base: 180ms ease;
-  --transition-slow: 280ms ease;
+  /* ── Motion system: easing curves ── */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-back: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --ease-in-out-smooth: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.22, 1.2, 0.36, 1);
 
-  /* --- Motion: single-sourced easing & durations --- */
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-emphasized: cubic-bezier(0.32, 0.72, 0, 1);
-  --dur-fast: 120ms;
-  --dur-base: 200ms;
-  --dur-sheet: 280ms;
+  /* ── Motion system: durations ── */
+  --dur-instant: 100ms;
+  --dur-fast: 180ms;
+  --dur-base: 280ms;
+  --dur-slow: 450ms;
+  --dur-deliberate: 650ms;
+
+  /* Older motion aliases still referenced across components. */
+  --ease-out: var(--ease-out-expo);
+  --ease-emphasized: var(--ease-out-expo);
+  --dur-sheet: var(--dur-base);
+  --transition-fast: var(--dur-fast) var(--ease-out-expo);
+  --transition-base: var(--dur-base) var(--ease-in-out-smooth);
+  --transition-slow: var(--dur-slow) var(--ease-out-expo);
 
   /* ------------------------------------------------------------
      Legacy aliases — kept so existing components keep rendering.
-     Map old token names onto the new foundation. Migrate over time.
      ------------------------------------------------------------ */
   --color-bg-primary: var(--bg-primary);
   --color-bg-secondary: var(--bg-secondary);
   --color-bg-card: var(--bg-card);
   --color-brand: var(--color-accent);
-  --color-business: #0F9D7A;
-  --color-investment: #9333EA;
+  --color-business: var(--teal-500);
+  --color-investment: var(--purple-500);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-border: var(--border-default);
@@ -100,12 +157,44 @@ body {
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   background-color: var(--bg-primary);
   color: var(--text-primary);
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 #root {
   min-height: 100vh;
+}
+
+/* Film-grain overlay — imperceptible consciously, but removes the sterile
+   digital flatness of large dark surfaces. Pointer-events off; sits above
+   everything (it's 2% opacity texture, not chrome). */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  pointer-events: none;
+  opacity: 0.02;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
+
+/* Placeholders sit at the faintest text level */
+::placeholder {
+  color: var(--text-faint);
+}
+
+/* Refined icon weight — Lucide's default 2px stroke reads slightly heavy */
+.lucide {
+  stroke-width: 1.5px;
+}
+
+/* Hero numbers: condensed tracking + tabular digits */
+.num-hero {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Smooth transitions on interactive elements */
@@ -123,10 +212,20 @@ textarea,
     opacity var(--transition-base);
 }
 
-/* Focus rings */
+/* Focus: cohesive accent glow ring instead of the default browser outline */
 *:focus-visible {
-  outline: 2px solid var(--color-accent);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: 0 0 0 1px var(--border-accent), 0 0 20px var(--accent-glow);
+  border-radius: var(--radius-sm);
+}
+
+/* Focused inputs glow softly and pick up an accent border */
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--border-accent) !important;
+  box-shadow: 0 0 0 1px var(--border-accent), 0 0 14px var(--accent-glow);
 }
 
 /* Scrollbars — thin, dark track, subtle thumb */
@@ -245,43 +344,104 @@ textarea,
    Micro-interaction & animation system
    ============================================================ */
 
-/* Button interactions — global */
+/* Button interactions — global: lift on hover, crisp tactile press */
 button,
 [type='button'],
 [type='submit'] {
-  transition: filter 120ms ease, transform 80ms ease;
+  transition: filter var(--dur-fast) var(--ease-out-expo), transform var(--dur-instant) var(--ease-out-expo);
 }
 button:hover:not(:disabled),
 [type='button']:hover:not(:disabled),
 [type='submit']:hover:not(:disabled) {
-  filter: brightness(1.08);
+  filter: brightness(1.1);
+  transform: translateY(-1px);
 }
 button:active:not(:disabled),
 [type='button']:active:not(:disabled),
 [type='submit']:active:not(:disabled) {
-  transform: scale(0.97);
+  transform: scale(0.96);
 }
 
-/* Card hover */
+/* ── Surface material ──────────────────────────────────────────
+   Every card-level surface (Tailwind's .bg-bg-card) gets the cool top-edge
+   gradient, an inset top-bevel light line, and the resting shadow layer. */
+.bg-bg-card {
+  background-image: var(--card-gradient);
+  box-shadow: var(--shadow-rest);
+}
+
+/* Interactive cards rise toward the cursor */
 .card,
 [data-card] {
-  transition: transform 180ms ease, border-color 180ms ease;
+  transition:
+    transform var(--dur-fast) var(--ease-out-expo),
+    border-color var(--dur-fast) var(--ease-out-expo),
+    box-shadow var(--dur-fast) var(--ease-out-expo);
 }
 .card:hover,
 [data-card]:hover {
-  transform: translateY(-2px);
-  border-color: var(--border-strong);
+  transform: translateY(-3px) scale(1.005);
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-raised);
 }
 .card:active,
 [data-card]:active {
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
 }
 
-/* Page transition — incoming route content */
+/* Frosted glass for floating chrome (menus, modals, sticky header) */
+.glass,
+div[role='menu'] {
+  background-color: rgba(19, 26, 46, 0.8) !important;
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow-floating);
+}
+
+/* Gradient fill + top bevel for primary accent actions */
+.btn-accent {
+  background-image: linear-gradient(135deg, var(--accent-500), var(--accent-600)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+.btn-accent:hover:not(:disabled) {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 0 20px var(--accent-glow);
+}
+
+/* Nav icons: tiny playful bounce on hover */
+.nav-item svg,
+aside nav a svg {
+  transition: transform var(--dur-fast) var(--ease-out-back);
+}
+.nav-item:hover svg,
+aside nav a:hover svg {
+  transform: scale(1.1);
+}
+
+/* Ambient glow behind hero numbers — a soft breathing pool of accent light */
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 0.6; }
+}
+.hero-glow {
+  position: absolute;
+  left: 50%;
+  top: -80px;
+  width: 620px;
+  max-width: 90vw;
+  height: 400px;
+  transform: translateX(-50%);
+  background: radial-gradient(closest-side, rgba(59, 91, 219, 0.12), transparent);
+  opacity: 0.5;
+  animation: glow-pulse 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Page transition — depth push: fade + rise + slight scale-up */
 @keyframes page-enter {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(12px) scale(0.98);
   }
   to {
     opacity: 1;
@@ -290,33 +450,46 @@ button:active:not(:disabled),
 }
 
 .page-enter {
-  animation: page-enter 200ms ease-out;
+  animation: page-enter var(--dur-slow) var(--ease-out-expo);
 }
 
-/* Progress bar fill */
+/* Progress bar fill — springy, with a one-shot gleam across the fill */
 .progress-fill {
-  transition: width 600ms ease-out;
+  position: relative;
+  overflow: hidden;
+  transition: width var(--dur-deliberate) var(--ease-spring);
+}
+@keyframes progress-gleam {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(320%); }
+}
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+  animation: progress-gleam 900ms var(--ease-in-out-smooth) 700ms 1 both;
 }
 
-/* Loading skeleton shimmer */
+/* Loading skeleton — a smooth light band sweeps across, no harsh pulse */
 @keyframes skeleton-shimmer {
   0% {
-    background-position: -200% 0;
+    background-position: 180% 0;
   }
   100% {
-    background-position: 200% 0;
+    background-position: -80% 0;
   }
 }
 
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--bg-elevated),
-    var(--bg-card),
-    var(--bg-elevated)
-  );
-  background-size: 200% 100%;
-  animation: skeleton-shimmer 1.5s infinite linear;
+  background:
+    linear-gradient(100deg, transparent 38%, rgba(255, 255, 255, 0.05) 50%, transparent 62%),
+    var(--bg-3);
+  background-size: 220% 100%, 100% 100%;
+  animation: skeleton-shimmer 1.8s ease-in-out infinite;
 }
 
 /* Inline form-field error — fade in on appear */
@@ -374,7 +547,7 @@ button:active:not(:disabled),
 @keyframes list-item-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(12px);
   }
   to {
     opacity: 1;
@@ -383,17 +556,32 @@ button:active:not(:disabled),
 }
 
 .stagger-list > * {
-  animation: list-item-in var(--dur-base) var(--ease-out) both;
+  animation: list-item-in var(--dur-slow) var(--ease-out-expo) both;
 }
 .stagger-list > *:nth-child(1) { animation-delay: 0ms; }
-.stagger-list > *:nth-child(2) { animation-delay: 30ms; }
-.stagger-list > *:nth-child(3) { animation-delay: 60ms; }
-.stagger-list > *:nth-child(4) { animation-delay: 90ms; }
-.stagger-list > *:nth-child(5) { animation-delay: 120ms; }
-.stagger-list > *:nth-child(6) { animation-delay: 150ms; }
-.stagger-list > *:nth-child(7) { animation-delay: 180ms; }
-.stagger-list > *:nth-child(8) { animation-delay: 210ms; }
-.stagger-list > *:nth-child(n + 9) { animation-delay: 240ms; }
+.stagger-list > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-list > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-list > *:nth-child(4) { animation-delay: 150ms; }
+.stagger-list > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-list > *:nth-child(6) { animation-delay: 245ms; }
+.stagger-list > *:nth-child(7) { animation-delay: 285ms; }
+.stagger-list > *:nth-child(8) { animation-delay: 320ms; }
+.stagger-list > *:nth-child(n + 9) { animation-delay: 350ms; }
+
+/* Modal entrance — scales up with a subtle pop */
+@keyframes modal-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.modal-pop {
+  animation: modal-pop var(--dur-base) var(--ease-out-back);
+}
 
 /* "Saved" checkmark — fades in, holds, fades out over 1.5s (remount to replay) */
 @keyframes saved-tick {

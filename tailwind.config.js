@@ -57,6 +57,7 @@ export default {
       borderColor: {
         subtle: 'var(--border-subtle)',
         DEFAULT: 'var(--border-default)',
+        hover: 'var(--border-hover)',
         strong: 'var(--border-strong)',
         accent: 'var(--border-accent)',
       },
@@ -79,14 +80,17 @@ export default {
         full: 'var(--radius-full)',
       },
       transitionDuration: {
-        fast: '120ms',
-        base: '180ms',
-        slow: '280ms',
+        instant: '100ms',
+        fast: '180ms',
+        base: '280ms',
+        slow: '450ms',
+        deliberate: '650ms',
       },
       transitionTimingFunction: {
-        fast: 'ease',
-        base: 'ease',
-        slow: 'ease',
+        expo: 'cubic-bezier(0.16, 1, 0.3, 1)',
+        back: 'cubic-bezier(0.34, 1.4, 0.64, 1)',
+        smooth: 'cubic-bezier(0.65, 0, 0.35, 1)',
+        spring: 'cubic-bezier(0.22, 1.2, 0.36, 1)',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
