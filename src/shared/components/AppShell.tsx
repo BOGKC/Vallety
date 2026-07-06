@@ -4,6 +4,7 @@ import { X } from 'lucide-react'
 import { Sidebar } from './Sidebar'
 import { TopBar } from './TopBar'
 import { ModeSwitcher } from './ModeSwitcherMobile'
+import { AnimatedBackground } from '../../components/AnimatedBackground'
 import { BottomTabBar } from '../../components/BottomTabBar'
 import { OfflineBanner } from '../../components/OfflineBanner'
 import { ErrorBoundary } from '../../components/ErrorBoundary'
@@ -96,7 +97,10 @@ export function AppShell() {
   }, [location.pathname])
 
   return (
-    <div className="flex h-screen bg-bg-primary overflow-hidden">
+    // `isolate` creates a stacking context so the negative-z animated
+    // background paints above this div's own background but below content.
+    <div className="relative isolate flex h-screen overflow-hidden bg-bg-primary">
+      <AnimatedBackground />
       {/* Desktop sidebar */}
       <div className="hidden md:flex flex-col h-full">
         <Sidebar />
