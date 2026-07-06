@@ -3,6 +3,10 @@ import { readTransactions } from './transactions'
 import { readBudgets, computeBudgets } from './budgets'
 import { readGoals } from './goals'
 import { readBills, daysUntilDue } from './bills'
+import { readInvoices, readExpenses, computeBusinessSummary } from './business'
+import { readHoldings, computePortfolio, holdingValue, holdingGainPct } from './portfolio'
+import { readProfile } from './profile'
+import type { AppMode } from '../types'
 
 /** Income and expenses for the current month (used by the context cards). */
 export function monthlyTotals(now: Date): { income: number; expenses: number } {
@@ -20,12 +24,53 @@ export function monthlyTotals(now: Date): { income: number; expenses: number } {
   return { income, expenses }
 }
 
+/** Business lens: revenue, invoices, expenses, and Finnish tax estimates. */
+function businessContext(now: Date): string[] {
+  const invoices = readInvoices()
+  const expenses = readExpenses()
+  if (invoices.length === 0 && expenses.length === 0) {
+    return ['The user has no business records yet (no invoices or business expenses).']
+  }
+  const s = computeBusinessSummary(invoices, expenses, now)
+  const profile = readProfile()
+  const lines = [
+    `Business type: ${profile.business_type || 'not set'}${profile.vat_registered ? `, VAT-registered (files ${profile.vat_frequency})` : ', not VAT-registered'}.`,
+    `Business this month: €${Math.round(s.revenueMonth)} paid revenue (net), €${Math.round(s.expensesMonth)} expenses.`,
+    `Outstanding invoices: ${s.outstandingCount} totalling €${Math.round(s.outstanding)} (gross).`,
+    `ALV owed YTD: €${Math.round(s.vatOwed)}. Estimated advance tax YTD: €${Math.round(s.advanceTaxYtd)} (on €${Math.round(s.profitYtd)} profit).`,
+    `YEL: ~€${Math.round(s.yelMonthly)}/month${profile.yel_income ? ` from declared YEL income €${profile.yel_income}` : ' (YEL income not set)'}.`,
+    `Safe to pay yourself this month (after ALV, est. tax, YEL, expenses): €${Math.round(s.safeToPay)}.`,
+  ]
+  return lines
+}
+
+/** Investment lens: portfolio composition and performance. */
+function portfolioContext(): string[] {
+  const holdings = readHoldings()
+  if (holdings.length === 0) return ['The user has no holdings recorded yet.']
+  const s = computePortfolio(holdings)
+  const lines = [
+    `Portfolio: €${Math.round(s.totalValue)} current value on €${Math.round(s.totalInvested)} invested (${s.gainPct >= 0 ? '+' : ''}${s.gainPct.toFixed(1)}%). Dividends YTD €${Math.round(s.dividendsYtd)}.`,
+    `Allocation: ${s.allocation.map((a) => `${a.label} ${s.totalValue > 0 ? Math.round((a.value / s.totalValue) * 100) : 0}%`).join(', ')}. Largest position is ${Math.round(s.topConcentrationPct)}% of the portfolio.`,
+  ]
+  for (const h of s.movers.slice(0, 8)) {
+    lines.push(
+      `Holding: ${h.ticker} (${h.name}, ${h.type}) — ${h.quantity} units, value €${Math.round(holdingValue(h))}, gain ${holdingGainPct(h) >= 0 ? '+' : ''}${holdingGainPct(h).toFixed(1)}%.`
+    )
+  }
+  return lines
+}
+
 /**
  * Build a compact financial summary from localStorage for the AI advisor.
- * Kept short (well under 800 tokens) by capping each section.
+ * Kept short (well under 800 tokens) by capping each section. The mode adds
+ * its lens (business / portfolio) on top of the shared personal picture.
  */
-export function buildAdvisorContext(now: Date): string {
+export function buildAdvisorContext(now: Date, mode: AppMode = 'personal'): string {
   const lines: string[] = []
+
+  if (mode === 'business') lines.push(...businessContext(now), '')
+  if (mode === 'investment') lines.push(...portfolioContext(), '')
 
   // Spending — top 5 categories over the last 90 days
   const cutoff = subDays(now, 90)

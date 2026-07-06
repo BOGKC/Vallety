@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Sparkles, ArrowUp, ClipboardCopy, Info, Square } from 'lucide-react'
+import { useAppStore } from '../../shared/store/appStore'
 import toast from '../../components/Toast'
 import { formatEuro } from '../../shared/lib/formatters'
 import {
@@ -7,19 +8,60 @@ import {
 } from '../../shared/lib/claudeClient'
 import { buildAdvisorContext, monthlyTotals } from '../../shared/lib/buildAdvisorContext'
 
-const SYSTEM_PROMPT = `You are a friendly and helpful personal finance assistant for a Finnish user. You have access to their financial data summary below. Provide practical, specific advice based on their actual numbers. Keep responses concise (2-4 sentences unless a longer answer is genuinely needed). Use euros (€) exclusively — never dollars. Always be encouraging and non-judgmental about spending. You provide general financial information only — you are not a tax advisor or investment advisor. When discussing Finnish-specific topics (taxes, banking, etc.) be accurate but always recommend consulting a professional for official advice.
+// ── Mode personas — the advisor is a different expert per mode ────────────────
+
+interface Persona {
+  title: string
+  tagline: string
+  system: string
+  chips: string[]
+}
+
+const SHARED_RULES = `Keep responses concise (2-4 sentences unless a longer answer is genuinely needed). Use euros (€) exclusively — never dollars. Base everything on the user's actual numbers from the summary below.`
+
+const PERSONAS: Record<string, Persona> = {
+  personal: {
+    title: 'Your money coach',
+    tagline: 'Warm, practical help with everyday money',
+    system: `You are a friendly personal finance coach helping someone manage their everyday money. Be encouraging, practical, and non-judgmental — like a financially savvy friend. Focus on their budgets, spending patterns, bills, and savings goals. ${SHARED_RULES} You provide general financial information only, not professional financial advice.`,
+    chips: [
+      'Where am I overspending?',
+      'How do I hit my savings goal faster?',
+      'Build me a 50/30/20 budget',
+      'Am I spending too much on dining?',
+      'What are my top merchants this month?',
+    ],
+  },
+  business: {
+    title: 'Your business finance advisor',
+    tagline: 'Sharp guidance for Finnish solo entrepreneurs',
+    system: `You are a knowledgeable business finance advisor for a Finnish solo entrepreneur. You understand ALV (Finnish VAT), advance tax (ennakkovero), YEL pension, and the difference between toiminimi and osakeyhtiö. Be sharp, precise, and straight-talking — like a smart accountant friend. Give practical, specific guidance based on their business numbers: invoicing, deductions, pricing, cash flow, and take-home optimization. ${SHARED_RULES} IMPORTANT: always note that tax figures are estimates and recommend consulting a veroasiantuntija (tax professional) for official advice — you inform, you don't replace an accountant.`,
+    chips: [
+      'How much should I set aside for taxes this month?',
+      'What business expenses can I deduct?',
+      'Am I charging enough for my work?',
+      'Should I switch from toiminimi to OY?',
+      'How much can I safely pay myself?',
+    ],
+  },
+  investment: {
+    title: 'Your portfolio analyst',
+    tagline: 'Measured, data-driven portfolio analysis',
+    system: `You are a measured, analytical portfolio assistant. Help the user understand their portfolio's composition, performance, diversification, and dividend income based on their actual holdings. Be calm, factual, and data-driven — never hyped, never giving hot tips. You provide analysis and education ONLY, not investment advice or recommendations to buy or sell specific securities. ${SHARED_RULES} IMPORTANT: always make clear your analysis is informational only and not financial advice.`,
+    chips: [
+      'How diversified is my portfolio?',
+      "What's my best and worst performer?",
+      'How much dividend income did I earn this year?',
+      'Am I too concentrated in one holding?',
+      "What's my portfolio's asset allocation?",
+    ],
+  },
+}
+
+const SYSTEM_TEMPLATE = `{persona}
 
 User financial summary:
 {context}`
-
-const PROMPT_CHIPS = [
-  'How much did I spend on food last month?',
-  'Am I on track to hit my savings goals?',
-  'Where am I overspending this month?',
-  'Build me a 50/30/20 plan from my numbers',
-  'What are my top 5 merchants this month?',
-  'How can I save €500 more each month?',
-]
 
 interface Msg extends ChatMessage {
   id: string
@@ -139,6 +181,8 @@ function TypingIndicator() {
 // ── Page ────────────────────────────────────────────────────────────────────
 
 export function AdvisorPage() {
+  const mode = useAppStore((s) => s.mode)
+  const persona = PERSONAS[mode] ?? PERSONAS.personal
   const [hasKey, setHasKey] = useState(() => !!getApiKey())
   const [messages, setMessages] = useState<Msg[]>([])
   const [streamingText, setStreamingText] = useState('')
@@ -181,7 +225,9 @@ export function AdvisorPage() {
     setStreaming(true)
     setStreamingText('')
 
-    const system = SYSTEM_PROMPT.replace('{context}', buildAdvisorContext(now))
+    const system = SYSTEM_TEMPLATE
+      .replace('{persona}', persona.system)
+      .replace('{context}', buildAdvisorContext(now, mode))
     const controller = new AbortController()
     abortRef.current = controller
     let acc = ''
@@ -232,9 +278,17 @@ export function AdvisorPage() {
     <div className="mx-auto flex h-full max-w-3xl flex-col">
       {/* Header / context cards */}
       <div className="flex-shrink-0">
-        <div className="mb-3 flex items-center gap-2">
-          <Sparkles className="h-5 w-5" style={{ color: 'var(--color-accent)' }} />
-          <h1 className="text-[18px] font-semibold text-text-primary">AI Advisor</h1>
+        <div className="mb-3 flex items-center gap-2.5">
+          <span
+            className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full"
+            style={{ backgroundColor: 'var(--color-accent-muted)', transition: 'background-color 400ms ease' }}
+          >
+            <Sparkles className="h-5 w-5" style={{ color: 'var(--color-accent)' }} />
+          </span>
+          <div>
+            <h1 className="text-[18px] font-semibold leading-tight text-text-primary">{persona.title}</h1>
+            <p className="text-[12px]" style={{ color: 'var(--color-accent)' }}>{persona.tagline}</p>
+          </div>
         </div>
         {!noData && (
           <div className="grid grid-cols-2 gap-3">
@@ -293,7 +347,7 @@ export function AdvisorPage() {
           {/* Prompt chips */}
           {showChips && (
             <div className="flex flex-shrink-0 gap-2 overflow-x-auto pb-2 no-scrollbar" style={{ WebkitOverflowScrolling: 'touch' }}>
-              {PROMPT_CHIPS.map((chip) => (
+              {persona.chips.map((chip) => (
                 <button
                   key={chip}
                   onClick={() => send(chip)}

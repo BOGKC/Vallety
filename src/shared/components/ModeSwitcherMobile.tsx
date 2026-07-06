@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import toast from '../../components/Toast'
 import { useAppStore } from '../store/appStore'
 import { cn } from '../lib/cn'
 import type { AppMode } from '../types'
@@ -6,11 +7,11 @@ import type { AppMode } from '../types'
 const MODES: AppMode[] = ['personal', 'business', 'investment']
 const LABELS: Record<AppMode, string> = {
   personal: 'Personal',
-  business: 'Business',
-  investment: 'Investment',
+  business: 'Solo founder',
+  investment: 'Investor',
 }
 const ROOTS: Record<AppMode, string> = {
-  personal: '/personal',
+  personal: '/',
   business: '/business',
   investment: '/investment',
 }
@@ -29,6 +30,7 @@ export function ModeSwitcher({ onNavigate }: Props) {
   const navigate = useNavigate()
 
   const handleSwitch = (m: AppMode) => {
+    if (m !== mode) toast.success(`Switched to ${LABELS[m]} mode`)
     setMode(m)
     navigate(ROOTS[m])
     onNavigate?.()

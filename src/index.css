@@ -655,6 +655,72 @@ aside nav a:hover svg {
    Registered color properties let gradient colors CROSSFADE on
    mode switch (transition on --bgfx-*); unsupported browsers snap.
    ============================================================ */
+/* ── Mode accent crossfade ──────────────────────────────────────
+   The accent family is registered so the 400ms transition interpolates
+   colors (mode switch = whole-app crossfade, not a snap). */
+@property --color-accent {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #3b5bdb;
+}
+@property --color-accent-hover {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #6c8af0;
+}
+@property --color-accent-muted {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: rgba(59, 91, 219, 0.12);
+}
+@property --border-accent {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: rgba(59, 91, 219, 0.45);
+}
+@property --accent-glow {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: rgba(59, 91, 219, 0.35);
+}
+@property --accent-500 {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #3b5bdb;
+}
+@property --accent-600 {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #2f49b0;
+}
+
+:root {
+  transition:
+    --color-accent 400ms ease,
+    --color-accent-hover 400ms ease,
+    --color-accent-muted 400ms ease,
+    --border-accent 400ms ease,
+    --accent-glow 400ms ease,
+    --accent-500 400ms ease,
+    --accent-600 400ms ease;
+}
+
+/* Sidebar nav swap on mode change — items fade + slide in (container is
+   keyed by mode, so this replays on switch) */
+@keyframes nav-swap-in {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.nav-swap {
+  animation: nav-swap-in var(--dur-base) var(--ease-out-expo) both;
+}
+
 @property --bgfx-a {
   syntax: '<color>';
   inherits: true;

@@ -30,7 +30,7 @@ export const PAGE_TITLES: Record<string, string> = {
   '/business/invoices': 'Invoices',
   '/business/expenses': 'Expenses',
   '/business/mileage': 'Mileage',
-  '/business/tax': 'Tax',
+  '/business/tax': 'Tax & ALV',
   '/investment': 'Investment',
   '/investment/portfolio': 'Portfolio',
   '/investment/transactions': 'Transactions',

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
 } from 'recharts'
@@ -15,6 +16,7 @@ import {
 import { AccountDrawer } from './AccountDrawer'
 import { EmptyState } from '../../components/EmptyState'
 import { AnimatedEuro } from '../../components/AnimatedNumber'
+import { readHoldings, computePortfolio } from '../../shared/lib/portfolio'
 
 interface ChartTooltipProps {
   active?: boolean
@@ -68,6 +70,7 @@ function AccountRow({
 }
 
 export function NetWorthPage() {
+  const navigate = useNavigate()
   const [accounts, setAccounts] = useState<Account[]>(() => readAccounts())
   const [snapshots, setSnapshots] = useState<Snapshot[]>(() => ensureMonthlySnapshot())
   const [drawer, setDrawer] = useState<{ open: boolean; mode: 'add' | 'edit'; account: Account | null }>({
@@ -75,12 +78,35 @@ export function NetWorthPage() {
   })
 
   const now = useMemo(() => new Date(), [])
-  const totals = useMemo(() => computeTotals(accounts), [accounts])
+
+  // Modes are lenses over one dataset: the investment portfolio counts toward
+  // net worth here as a synthetic (read-only) asset row.
+  const portfolioValue = useMemo(() => computePortfolio(readHoldings()).totalValue, [])
+  const allAssets = useMemo<Account[]>(
+    () =>
+      portfolioValue > 0
+        ? [
+            ...accounts,
+            {
+              id: '__portfolio',
+              name: 'Investment portfolio',
+              type: 'investment',
+              institution: 'Managed in Investor mode',
+              balance: portfolioValue,
+              currency: 'EUR',
+              createdAt: '',
+            },
+          ]
+        : accounts,
+    [accounts, portfolioValue]
+  )
+
+  const totals = useMemo(() => computeTotals(allAssets), [allAssets])
   const delta = useMemo(() => monthlyDelta(totals.net, snapshots, now), [totals.net, snapshots, now])
 
-  const hasAccounts = accounts.length > 0
-  const assets = accounts.filter((a) => !isLiability(a.type))
-  const liabilities = accounts.filter((a) => isLiability(a.type))
+  const hasAccounts = allAssets.length > 0
+  const assets = allAssets.filter((a) => !isLiability(a.type))
+  const liabilities = allAssets.filter((a) => isLiability(a.type))
 
   const chartData = useMemo(
     () => snapshots.map((s) => ({ label: format(new Date(s.date), 'MMM'), net: s.netWorth, date: s.date })),
@@ -214,7 +240,10 @@ export function NetWorthPage() {
                 </span>
               </div>
               <div className="stagger-list flex flex-col gap-2">
-                {assets.map((a) => <AccountRow key={a.id} account={a} onEdit={() => openEdit(a)} />)}
+                {assets.map((a) => (
+                  <AccountRow key={a.id} account={a}
+                    onEdit={() => (a.id === '__portfolio' ? navigate('/investment/portfolio') : openEdit(a))} />
+                ))}
               </div>
             </section>
           )}
