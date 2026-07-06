@@ -24,7 +24,13 @@ import { HouseholdPage } from './modes/personal/HouseholdPage'
 import { AdvisorPage } from './modes/personal/AdvisorPage'
 import { ScenariosPage } from './modes/personal/ScenariosPage'
 import { BusinessDashboard } from './modes/business/BusinessDashboard'
+import { InvoicesPage } from './modes/business/InvoicesPage'
+import { ExpensesPage } from './modes/business/ExpensesPage'
+import { TaxPage } from './modes/business/TaxPage'
+import { ClientsPage } from './modes/business/ClientsPage'
 import { InvestmentDashboard } from './modes/investment/InvestmentDashboard'
+import { PortfolioPage } from './modes/investment/PortfolioPage'
+import { WatchlistPage } from './modes/investment/WatchlistPage'
 
 // Initialises the Supabase auth listener once for the whole app.
 function AuthInit({ children }: { children: React.ReactNode }) {
@@ -75,19 +81,19 @@ export default function App() {
                 <Route path="/personal/debts"          element={<ComingSoon title="Debts" />} />
                 <Route path="/personal/net-worth"      element={<NetWorthPage />} />
 
-                {/* Business ───────────────────────────────────────────────── */}
+                {/* Business (Solo founder) ────────────────────────────────── */}
                 <Route path="/business"                element={<BusinessDashboard />} />
-                <Route path="/business/clients"        element={<ComingSoon title="Clients" />} />
-                <Route path="/business/invoices"       element={<ComingSoon title="Invoices" />} />
-                <Route path="/business/expenses"       element={<ComingSoon title="Expenses" />} />
+                <Route path="/business/clients"        element={<ClientsPage />} />
+                <Route path="/business/invoices"       element={<InvoicesPage />} />
+                <Route path="/business/expenses"       element={<ExpensesPage />} />
                 <Route path="/business/mileage"        element={<ComingSoon title="Mileage Log" />} />
-                <Route path="/business/tax"            element={<ComingSoon title="Tax" />} />
+                <Route path="/business/tax"            element={<TaxPage />} />
 
                 {/* Investment ─────────────────────────────────────────────── */}
                 <Route path="/investment"              element={<InvestmentDashboard />} />
-                <Route path="/investment/portfolio"    element={<ComingSoon title="Portfolio" />} />
-                <Route path="/investment/transactions" element={<ComingSoon title="Investment Transactions" />} />
-                <Route path="/investment/watchlist"    element={<ComingSoon title="Watchlist" />} />
+                <Route path="/investment/portfolio"    element={<PortfolioPage />} />
+                <Route path="/investment/transactions" element={<Navigate to="/transactions" replace />} />
+                <Route path="/investment/watchlist"    element={<WatchlistPage />} />
 
                 {/* Shared ─────────────────────────────────────────────────── */}
                 <Route path="/profile"                 element={<ProfilePage />} />
