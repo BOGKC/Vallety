@@ -67,7 +67,7 @@ export function Drawer({ open, onClose, ariaLabel, children }: DrawerProps) {
         className="fixed bottom-0 left-0 right-0 z-[60] flex h-[85vh] flex-col rounded-t-[20px] bg-bg-card shadow-2xl md:inset-y-0 md:left-auto md:right-0 md:h-full md:w-[420px] md:rounded-none"
         style={{
           transform,
-          transition: dragging ? 'none' : 'transform 220ms cubic-bezier(0.32, 0.72, 0, 1)',
+          transition: dragging ? 'none' : 'transform var(--dur-base) var(--ease-out-expo)',
         }}
       >
         {/* Drag handle — mobile only */}

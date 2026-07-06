@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from 'react'
  * and from the previous value when `target` changes thereafter. Near-zero
  * targets snap. Honors prefers-reduced-motion.
  */
-export function useCountUp(target: number, duration = 500): number {
+export function useCountUp(target: number, duration = 650): number {
   const [value, setValue] = useState(0)
   const fromRef = useRef(0)
   const rafRef = useRef<number | null>(null)
@@ -28,8 +28,8 @@ export function useCountUp(target: number, duration = 500): number {
     const start = performance.now()
     const tick = (now: number) => {
       const t = Math.min(1, (now - start) / duration)
-      // ease-out cubic
-      const eased = 1 - Math.pow(1 - t, 3)
+      // ease-out expo — matches the app's --ease-out-expo motion curve
+      const eased = t >= 1 ? 1 : 1 - Math.pow(2, -10 * t)
       setValue(from + (target - from) * eased)
       if (t < 1) {
         rafRef.current = requestAnimationFrame(tick)

@@ -87,7 +87,7 @@ export function BudgetsTab() {
         <p className="text-[13px] text-text-secondary">Track spending against monthly limits.</p>
         <button
           onClick={openNew}
-          className="inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-[13px] font-medium text-white"
+          className="btn-accent inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-[13px] font-medium text-white"
           style={{ backgroundColor: 'var(--color-accent)', transition: 'var(--transition-fast)' }}
         >
           <Plus className="h-4 w-4" /> New budget
