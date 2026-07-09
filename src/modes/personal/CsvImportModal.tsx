@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Upload, FileText, X } from 'lucide-react'
+import { Upload, FileText, X, ChevronDown } from 'lucide-react'
 import toast from '../../components/Toast'
+import { LoadingMessages } from '../../components/LoadingMessages'
+import { SuccessBurst } from '../../components/SuccessBurst'
 import { cn } from '../../shared/lib/cn'
 import { formatEuro } from '../../shared/lib/formatters'
 import { PRESET_CATEGORIES, type Txn } from '../../shared/lib/transactions'
@@ -42,11 +44,15 @@ export function CsvImportModal({ open, onClose, onImported }: Props) {
     setWasOpen(false)
   }
 
+  const unreadable = result ? Math.max(0, result.rawRows.length - rows.length) : 0
+
   // Escape closes (except on the success screen, which auto-closes).
   useEffect(() => {
     if (!open) return
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape' && step !== 'success') onClose()
+      // Success auto-closes, except the partial-success screen (unreadable
+      // rows) which waits for the user — allow Escape there.
+      if (e.key === 'Escape' && (step !== 'success' || unreadable > 0)) onClose()
     }
     document.addEventListener('keydown', onKey)
     document.body.style.overflow = 'hidden'
@@ -54,21 +60,22 @@ export function CsvImportModal({ open, onClose, onImported }: Props) {
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = ''
     }
-  }, [open, step, onClose])
+  }, [open, step, unreadable, onClose])
 
-  // Success screen auto-closes after 1.5s.
+  // Success screen auto-closes after 1.5s — unless some rows couldn't be
+  // read, in which case it stays so the user can open "see details".
   useEffect(() => {
-    if (step !== 'success') return
+    if (step !== 'success' || unreadable > 0) return
     const id = window.setTimeout(() => {
       toast.success('Transactions imported successfully')
       onClose()
     }, 1500)
     return () => window.clearTimeout(id)
-  }, [step, onClose])
+  }, [step, unreadable, onClose])
 
   const handleFile = (file: File) => {
     if (!file.name.toLowerCase().endsWith('.csv')) {
-      setError('Please choose a .csv file')
+      setError("We couldn't read that file — it doesn't look like a supported bank export. Export a .csv file from your bank and try again.")
       return
     }
     setError('')
@@ -80,7 +87,7 @@ export function CsvImportModal({ open, onClose, onImported }: Props) {
         setRows(res.parsed)
         setStep('preview')
       })
-      .catch(() => setError('Could not read that file. Please check it is a valid CSV.'))
+      .catch(() => setError("We couldn't read that file — it doesn't look like a supported bank export. Try another file, or check it opens as a normal CSV."))
       .finally(() => setParsing(false))
   }
 
@@ -137,7 +144,12 @@ export function CsvImportModal({ open, onClose, onImported }: Props) {
         style={{ borderRadius: 'var(--radius-xl)' }}
       >
         {step === 'success' ? (
-          <SuccessView added={counts.added} skipped={counts.skipped} />
+          <SuccessView
+            added={counts.added}
+            skipped={counts.skipped}
+            unreadable={unreadable}
+            onDone={onClose}
+          />
         ) : (
           <>
             {/* Header */}
@@ -250,8 +262,13 @@ function UploadView({
         }}
       />
 
-      {/* Indeterminate progress while the file is being parsed */}
-      {parsing && <div className="progress-indeterminate mt-4" aria-label="Parsing file" role="progressbar" />}
+      {/* Indeterminate progress + contextual messages while parsing */}
+      {parsing && (
+        <>
+          <div className="progress-indeterminate mt-4" aria-label="Parsing file" role="progressbar" />
+          <LoadingMessages operation="csvImport" className="mt-3 justify-center" />
+        </>
+      )}
 
       {error && <p className="mt-3 text-[13px]" style={{ color: 'var(--color-danger)' }}>{error}</p>}
 
@@ -424,26 +441,52 @@ function ColumnMapper({
 
 // ── Success step ────────────────────────────────────────────────────────────
 
-function SuccessView({ added, skipped }: { added: number; skipped: number }) {
+function SuccessView({
+  added, skipped, unreadable, onDone,
+}: { added: number; skipped: number; unreadable: number; onDone: () => void }) {
+  const [showDetails, setShowDetails] = useState(false)
+  const total = added + skipped + unreadable
+  const partial = unreadable > 0
   return (
     <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
-      <svg width="48" height="48" viewBox="0 0 52 52" aria-hidden>
-        <circle
-          className="csv-check__circle"
-          cx="26" cy="26" r="24" fill="none"
-          stroke="var(--color-accent)" strokeWidth="3"
-        />
-        <path
-          className="csv-check__tick"
-          d="M16 27 L23 34 L37 19" fill="none"
-          stroke="var(--color-accent)" strokeWidth="3"
-          strokeLinecap="round" strokeLinejoin="round"
-        />
-      </svg>
-      <h2 className="text-[18px] font-semibold text-text-primary">Import complete</h2>
+      <SuccessBurst />
+      <h2 className="text-[18px] font-semibold text-text-primary">
+        {partial ? `Imported ${added} of ${total} transactions` : 'Import complete'}
+      </h2>
       <p className="text-[14px] text-text-secondary">
         {added} transaction{added === 1 ? '' : 's'} added · {skipped} duplicate{skipped === 1 ? '' : 's'} skipped
       </p>
+      {partial && (
+        <div className="text-[13px] text-text-secondary">
+          <button
+            onClick={() => setShowDetails((v) => !v)}
+            className="inline-flex items-center gap-1 hover:underline"
+            style={{ color: 'var(--color-accent)' }}
+          >
+            {unreadable} row{unreadable === 1 ? '' : 's'} couldn't be read
+            <ChevronDown
+              className="h-3.5 w-3.5"
+              style={{ transform: showDetails ? 'rotate(180deg)' : 'none', transition: 'transform 150ms ease' }}
+            />
+          </button>
+          {showDetails && (
+            <p className="mt-2 max-w-xs text-[12px] text-text-muted">
+              Those rows were missing a valid date or amount, so they were left
+              out. Everything else came through — you can add the stragglers
+              manually from Transactions.
+            </p>
+          )}
+          <div className="mt-4">
+            <button
+              onClick={onDone}
+              className="inline-flex h-9 items-center rounded-md px-4 text-[13px] font-semibold text-white"
+              style={{ backgroundColor: 'var(--color-accent)' }}
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

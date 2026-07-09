@@ -5,6 +5,7 @@ import {
   ArrowUpRight, Bug, Camera, ChevronLeft, Globe, Info, Lightbulb, Sparkles,
 } from 'lucide-react'
 import toast from '../../components/Toast'
+import { ValletyMark } from '../../components/ValletyLogo'
 import { Modal } from '../../shared/components/Modal'
 import { supabase } from '../../supabase/client'
 import { getApiKey, setApiKey, ANTHROPIC_KEY_STORAGE } from '../../shared/lib/claudeClient'
@@ -1312,7 +1313,7 @@ export function ProfilePage() {
   if (accountDeleted) {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center gap-3 text-center">
-        <span className="text-[32px] font-bold" style={{ color: 'var(--color-accent)' }}>V</span>
+        <ValletyMark size={40} />
         <h1 className="text-[18px] font-semibold text-text-primary">Account deletion requested</h1>
         <p className="text-[14px] text-text-secondary">
           All your data will be removed within 30 days. Thank you for using Vallety.

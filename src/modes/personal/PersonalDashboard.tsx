@@ -15,7 +15,7 @@ import { formatEuro } from '../../shared/lib/formatters'
 import { cn } from '../../shared/lib/cn'
 import { EmptyState } from '../../components/EmptyState'
 import { AnimatedEuro, AnimatedPercent } from '../../components/AnimatedNumber'
-import { SkeletonBlock, SkeletonMetricCard, SkeletonChartArea } from '../../components/SkeletonLoader'
+import { SkeletonBlock, SkeletonMetricCard, SkeletonChartArea } from '../../components/skeletons'
 import { useMinLoading } from '../../shared/hooks/useMinLoading'
 
 // ── Small utilities ─────────────────────────────────────────────────────────────

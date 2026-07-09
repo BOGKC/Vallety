@@ -1,24 +1,27 @@
+import { ValletyMark } from '../../components/ValletyLogo'
+import { CircleSpinner } from '../../components/loaders'
+
 interface Props {
   size?: 'sm' | 'md' | 'lg'
   className?: string
 }
 
-const sizes = { sm: 'h-4 w-4', md: 'h-8 w-8', lg: 'h-12 w-12' }
+const sizes = { sm: 16, md: 32, lg: 48 }
 
 export function LoadingSpinner({ size = 'md', className = '' }: Props) {
-  return (
-    <div
-      className={`animate-spin rounded-full border-2 border-border border-t-brand ${sizes[size]} ${className}`}
-      role="status"
-      aria-label="Loading"
-    />
-  )
+  return <CircleSpinner size={sizes[size]} className={className} />
 }
 
+/** Branded full-page wait: the mark above a quiet accent spinner. */
 export function FullPageSpinner() {
   return (
-    <div className="min-h-screen bg-bg-primary flex items-center justify-center">
-      <LoadingSpinner size="lg" />
+    <div
+      className="flex min-h-screen flex-col items-center justify-center gap-5 bg-bg-primary"
+      role="status"
+      aria-label="Loading"
+    >
+      <ValletyMark size={56} />
+      <CircleSpinner size={22} />
     </div>
   )
 }

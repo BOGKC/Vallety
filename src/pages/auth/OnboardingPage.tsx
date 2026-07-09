@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Wallet, Briefcase, TrendingUp, Check, ChevronRight, type LucideIcon } from 'lucide-react'
 import toast from '../../components/Toast'
+import { ValletyLockup } from '../../components/ValletyLogo'
 import { supabase } from '../../supabase/client'
 import { useAuthStore } from '../../shared/store/authStore'
 import { useAppStore } from '../../shared/store/appStore'
@@ -178,12 +179,7 @@ export function OnboardingPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-bg-primary px-4 py-12">
       <div className="w-full max-w-2xl">
-        <div className="mb-8 flex items-center justify-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand">
-            <Wallet className="h-5 w-5 text-white" />
-          </div>
-          <span className="text-xl font-semibold text-text-primary">Vallety</span>
-        </div>
+        <ValletyLockup size={38} className="justify-center mb-8" />
 
         <div className="rounded-2xl border border-border bg-bg-card p-8">
           <StepBar current={step} total={totalSteps} />
