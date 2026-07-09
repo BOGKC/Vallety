@@ -3,10 +3,14 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { format, isToday } from 'date-fns'
 import {
   ArrowUpRight, Bug, Camera, ChevronLeft, Globe, Info, Lightbulb, Sparkles,
+  Wallet, Briefcase, TrendingUp, Check, type LucideIcon,
 } from 'lucide-react'
 import toast from '../../components/Toast'
 import { ValletyMark } from '../../components/ValletyLogo'
 import { Modal } from '../../shared/components/Modal'
+import { useAppStore } from '../../shared/store/appStore'
+import { MODE_COLORS } from '../../shared/lib/modeColors'
+import type { AppMode } from '../../shared/types'
 import { supabase } from '../../supabase/client'
 import { getApiKey, setApiKey, ANTHROPIC_KEY_STORAGE } from '../../shared/lib/claudeClient'
 import { readTransactions, TRANSACTIONS_KEY } from '../../shared/lib/transactions'
@@ -298,6 +302,67 @@ function PrefsSection({ p, up, ticks }: { p: ValletyProfile; up: UpdateFn; ticks
           onChange={(v) => up({ week_start: v }, 'week_start')}
         />
       </Row>
+    </Section>
+  )
+}
+
+// ═══ SECTION — Workspace mode ══════════════════════════════════════════════════
+// Mode selection lives here (moved out of the sidebar) so it doesn't take up
+// nav chrome. Picking a mode switches the active workspace, re-tints the accent
+// and jumps to that mode's home.
+
+const MODE_OPTIONS: { value: AppMode; label: string; icon: LucideIcon; desc: string; home: string }[] = [
+  { value: 'personal', label: 'Personal', icon: Wallet, home: '/', desc: 'Everyday budgeting, bills, goals and net worth.' },
+  { value: 'business', label: 'Solo founder', icon: Briefcase, home: '/business', desc: 'Invoices, expenses, VAT & YEL for your business.' },
+  { value: 'investment', label: 'Investor', icon: TrendingUp, home: '/investment', desc: 'Portfolio, watchlist and holdings tracking.' },
+]
+
+function ModeSection({ navigate }: { navigate: (to: string) => void }) {
+  const mode = useAppStore((s) => s.mode)
+  const setMode = useAppStore((s) => s.setMode)
+
+  const choose = (m: (typeof MODE_OPTIONS)[number]) => {
+    if (m.value !== mode) {
+      setMode(m.value)
+      toast.success(`Switched to ${m.label} mode`)
+    }
+    navigate(m.home)
+  }
+
+  return (
+    <Section id="mode" label="Workspace mode">
+      <div className="flex flex-col gap-2 p-3">
+        {MODE_OPTIONS.map((m) => {
+          const Icon = m.icon
+          const active = mode === m.value
+          const color = MODE_COLORS[m.value].accent
+          return (
+            <button
+              key={m.value}
+              onClick={() => choose(m)}
+              aria-pressed={active}
+              className="touch-target flex items-center gap-3 rounded-lg border p-3 text-left"
+              style={{
+                borderColor: active ? color : 'var(--border-default)',
+                backgroundColor: active ? `${color}1A` : 'var(--bg-elevated)',
+                transition: 'var(--transition-fast)',
+              }}
+            >
+              <span
+                className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
+                style={{ backgroundColor: `${color}26` }}
+              >
+                <Icon className="h-5 w-5" style={{ color }} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[14px] font-medium text-text-primary">{m.label}</span>
+                <span className="block text-[12px] text-text-muted">{m.desc}</span>
+              </span>
+              {active && <Check className="h-5 w-5 flex-shrink-0" style={{ color }} />}
+            </button>
+          )
+        })}
+      </div>
     </Section>
   )
 }
@@ -1338,6 +1403,7 @@ export function ProfilePage() {
 
       <div className="flex flex-col" style={{ gap: 14 }}>
         <ProfileHeader p={profile} />
+        <ModeSection navigate={navigate} />
         <PersonalSection p={profile} up={update} ticks={ticks} />
         <PrefsSection p={profile} up={update} ticks={ticks} />
         <FinancialSection p={profile} up={update} ticks={ticks} />
