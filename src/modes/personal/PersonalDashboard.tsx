@@ -116,7 +116,7 @@ function DashboardSkeleton() {
           <SkeletonBlock width={220} height={48} />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="cq-metrics">
         {Array.from({ length: 4 }).map((_, i) => <SkeletonMetricCard key={i} />)}
       </div>
       <div className="rounded-lg bg-bg-card p-5">
@@ -267,7 +267,7 @@ export function PersonalDashboard() {
       </div>
 
       {/* SECTION 3 — Metric cards ───────────────────────────────────────────── */}
-      <div className="stagger-list grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="stagger-list cq-metrics">
         <MetricCard
           icon={<ArrowDownLeft className="h-4 w-4" />}
           iconColor="var(--color-success)"

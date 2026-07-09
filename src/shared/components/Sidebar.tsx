@@ -113,9 +113,12 @@ const MODE_NAV: Record<AppMode, NavGroup[]> = {
 function SidebarNavItem({
   item,
   collapsed,
+  touch = false,
 }: {
   item: NavItem
   collapsed: boolean
+  /** Touch tablet: taller (48px) hit areas than desktop's 36px. */
+  touch?: boolean
 }) {
   return (
     <NavLink
@@ -125,7 +128,7 @@ function SidebarNavItem({
       className={({ isActive }) =>
         cn(
           'group relative flex items-center rounded-md text-[13px] font-medium',
-          'h-9 px-2',
+          touch ? 'h-12 px-2.5' : 'h-9 px-2',
           collapsed ? 'justify-center' : 'gap-3',
           isActive
             ? 'bg-[var(--color-accent-muted)] text-[var(--color-accent)]'
@@ -165,9 +168,13 @@ function SidebarNavItem({
 interface SidebarProps {
   /** Render in mobile-drawer mode: always expanded, no collapse toggle. */
   mobile?: boolean
+  /** Force the collapsed icon rail (tablet portrait), ignoring stored state. */
+  forceCollapsed?: boolean
+  /** Touch tablet: wider rail (72px) + 48px nav rows. */
+  touch?: boolean
 }
 
-export function Sidebar({ mobile = false }: SidebarProps) {
+export function Sidebar({ mobile = false, forceCollapsed, touch = false }: SidebarProps) {
   const { sidebarCollapsed, toggleSidebar, mode, setMode } = useAppStore()
   const navigate = useNavigate()
 
@@ -188,12 +195,12 @@ export function Sidebar({ mobile = false }: SidebarProps) {
       ? user.email[0].toUpperCase()
       : 'Y'
 
-  const collapsed = mobile ? false : sidebarCollapsed
+  const collapsed = mobile ? false : (forceCollapsed ?? sidebarCollapsed)
 
   return (
     <aside
       style={{
-        width: mobile ? '100%' : collapsed ? 60 : 240,
+        width: mobile ? '100%' : collapsed ? (touch ? 72 : 60) : 240,
         transition: 'width var(--transition-base)',
       }}
       className={cn(
@@ -293,7 +300,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
             )}
             <div className="flex flex-col gap-0.5">
               {group.items.map((item) => (
-                <SidebarNavItem key={item.to} item={item} collapsed={collapsed} />
+                <SidebarNavItem key={item.to} item={item} collapsed={collapsed} touch={touch} />
               ))}
             </div>
           </div>
