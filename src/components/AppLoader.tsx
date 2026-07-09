@@ -33,7 +33,10 @@ const LABEL: Record<Phase, string> = {
   gone: '',
 }
 
-const MIN_DISPLAY_MS = 600
+// Hold long enough for the logo animation to play through once (draw ~650ms,
+// tip launch to ~1020ms, light sweep to ~1730ms) before exiting — otherwise a
+// fast local boot would cut the sequence off. Never longer than that.
+const MIN_DISPLAY_MS = 1750
 const EXIT_MS = 400
 
 export function AppLoader() {
@@ -96,26 +99,53 @@ export function AppLoader() {
         aria-hidden
       />
 
-      {/* The mark draws itself, then the tip extends */}
-      <svg width="88" height="88" viewBox="0 0 48 48" fill="none" aria-hidden>
-        <defs>
-          <linearGradient id="splash-v" x1="9" y1="38" x2="40" y2="10" gradientUnits="userSpaceOnUse">
-            <stop offset="0%" stopColor="var(--accent-600, #2F49B0)" />
-            <stop offset="55%" stopColor="var(--accent-500, #3B5BDB)" />
-            <stop offset="100%" stopColor="color-mix(in srgb, var(--accent-500, #3B5BDB) 55%, #F4F7FF)" />
-          </linearGradient>
-        </defs>
-        <path
-          className="logo-draw__v"
-          d={VALLETY_V_PATH}
-          stroke="url(#splash-v)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"
-        />
-        <path
-          className="logo-draw__tip"
-          d={VALLETY_ARROW_PATH}
-          fill="url(#splash-v)" stroke="url(#splash-v)" strokeWidth="2" strokeLinejoin="round"
-        />
-      </svg>
+      {/* The mark draws itself, the tip launches up, then a light sweep
+          crosses it — the whole stage floats gently while loading. */}
+      <div className="logo-stage relative" aria-hidden>
+        <svg width="88" height="88" viewBox="0 0 48 48" fill="none">
+          <defs>
+            <linearGradient id="splash-v" x1="9" y1="38" x2="40" y2="10" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stopColor="var(--accent-600, #2F49B0)" />
+              <stop offset="55%" stopColor="var(--accent-500, #3B5BDB)" />
+              <stop offset="100%" stopColor="color-mix(in srgb, var(--accent-500, #3B5BDB) 55%, #F4F7FF)" />
+            </linearGradient>
+            {/* Clip the light sweep to the mark's silhouette */}
+            <clipPath id="splash-clip">
+              <path d={VALLETY_V_PATH} stroke="#000" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+              <path d={VALLETY_ARROW_PATH} fill="#000" stroke="#000" strokeWidth="3" strokeLinejoin="round" />
+            </clipPath>
+          </defs>
+
+          {/* Motion trail behind the launching tip */}
+          <path
+            className="logo-draw__trail"
+            d="M31 17 L37 12"
+            stroke="var(--accent-500, #3B5BDB)" strokeWidth="3" strokeLinecap="round"
+          />
+          <path
+            className="logo-draw__v"
+            d={VALLETY_V_PATH}
+            stroke="url(#splash-v)" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"
+          />
+          <path
+            className="logo-draw__tip"
+            d={VALLETY_ARROW_PATH}
+            fill="url(#splash-v)" stroke="url(#splash-v)" strokeWidth="2" strokeLinejoin="round"
+          />
+
+          {/* Light sweep, clipped to the mark (skew on the group so the
+              rect's animated translateX doesn't clobber it) */}
+          <g clipPath="url(#splash-clip)">
+            <g transform="skewX(-18)">
+              <rect
+                className="logo-sweep"
+                x="-14" y="-6" width="12" height="60"
+                fill="#FFFFFF" opacity="0.5"
+              />
+            </g>
+          </g>
+        </svg>
+      </div>
 
       {/* Real-milestone progress */}
       <div className="mt-8 w-40">
@@ -125,7 +155,9 @@ export function AppLoader() {
             style={{
               width: `${PROGRESS[phase] * 100}%`,
               backgroundImage: 'linear-gradient(90deg, var(--accent-600), var(--accent-500))',
-              transition: 'width 300ms var(--ease-in-out-smooth, ease)',
+              // The render phase is the deliberate animation hold, so let the
+              // bar ease across it rather than sit stalled at 90%.
+              transition: `width ${phase === 'render' ? 1400 : 300}ms var(--ease-in-out-smooth, ease)`,
             }}
           />
         </div>
