@@ -956,6 +956,61 @@ aside nav a:hover svg {
   animation: wifi-pulse 2s ease-in-out infinite;
 }
 
+/* Empty-state icon — gentle idle breathe so the screen feels intentional,
+   not broken. Transform + opacity only. */
+@keyframes empty-breathe {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.85; }
+  50% { transform: translateY(-4px) scale(1.04); opacity: 1; }
+}
+.empty-breathe {
+  animation: empty-breathe 4.5s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Empty-state CTA — a soft accent halo that pulses to invite the eye
+   (opacity-only pseudo-glow, so it stays cheap and calm). */
+.cta-invite { position: relative; }
+.cta-invite::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: inherit;
+  background: var(--color-accent);
+  opacity: 0;
+  filter: blur(12px);
+  z-index: -1;
+  animation: cta-invite-pulse 3.2s ease-in-out infinite;
+}
+@keyframes cta-invite-pulse {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.28; }
+}
+
+/* Nav icon — a single calm scale-bounce when a tab becomes active.
+   Applied to an element that remounts on activation so it plays once. */
+@keyframes icon-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+.icon-pop {
+  animation: icon-pop 340ms var(--ease-out-back, ease-out);
+}
+
+/* Notification bell — a gentle shake when a new notification arrives. */
+@keyframes bell-shake {
+  0%, 100% { transform: rotate(0); }
+  15% { transform: rotate(-11deg); }
+  30% { transform: rotate(9deg); }
+  45% { transform: rotate(-6deg); }
+  60% { transform: rotate(4deg); }
+  75% { transform: rotate(-2deg); }
+}
+.bell-shake {
+  animation: bell-shake 700ms ease-in-out;
+  transform-origin: 50% 15%;
+}
+
 /* Respect reduced-motion preference */
 @media (prefers-reduced-motion: reduce) {
   *,

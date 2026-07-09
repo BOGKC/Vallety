@@ -36,6 +36,7 @@ export function EmptyState({
       style={{ padding: compact ? '24px 16px' : '48px 24px' }}
     >
       <Icon
+        className="empty-breathe"
         size={compact ? 32 : 44}
         style={{ color: 'var(--text-muted)', marginBottom: 16 }}
       />
@@ -55,7 +56,7 @@ export function EmptyState({
       {primaryAction && (
         <button
           onClick={primaryAction.onClick}
-          className="btn-accent inline-flex items-center justify-center gap-1.5 rounded-md px-5 text-[14px] font-semibold text-white"
+          className="cta-invite btn-accent inline-flex items-center justify-center gap-1.5 rounded-md px-5 text-[14px] font-semibold text-white"
           style={{ backgroundColor: 'var(--color-accent)', height: 44, transition: 'var(--transition-fast)' }}
         >
           {PrimaryIcon && <PrimaryIcon size={16} />}
