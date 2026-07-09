@@ -825,38 +825,77 @@ aside nav a:hover svg {
    Loading, error & success states
    ============================================================ */
 
-/* App splash — the V draws itself, then the arrow tip pops in */
+/* App splash — the V draws itself, the arrow launches up, a light sweep
+   crosses the finished mark, then the whole logo breathes while loading.
+   Timeline: 0–800ms draw · 720ms tip launches · 1150ms sweep · 1300ms idle */
+
+/* The stage floats gently the whole time (transform-only, GPU-cheap). */
+@keyframes logo-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+.logo-stage {
+  animation: logo-float 3s ease-in-out 1.15s infinite;
+  will-change: transform;
+}
+
 @keyframes logo-draw {
   to { stroke-dashoffset: 0; }
 }
 .logo-draw__v {
   stroke-dasharray: 60;
   stroke-dashoffset: 60;
-  animation: logo-draw 800ms var(--ease-out-expo, ease-out) forwards;
+  animation: logo-draw 650ms var(--ease-out-expo, ease-out) forwards;
 }
-@keyframes logo-tip-in {
-  from { opacity: 0; transform: scale(0); }
-  to { opacity: 1; transform: scale(1); }
+
+/* The arrowhead launches up along the arm, overshoots, then settles. */
+@keyframes logo-tip-launch {
+  0% { opacity: 0; transform: translate(-5px, 7px) scale(0.4); }
+  60% { opacity: 1; transform: translate(1.5px, -2px) scale(1.08); }
+  100% { opacity: 1; transform: translate(0, 0) scale(1); }
 }
 .logo-draw__tip {
   opacity: 0;
   transform-box: view-box;
-  transform-origin: 34px 20px;
-  animation: logo-tip-in 350ms 720ms var(--ease-out-back, ease-out) forwards;
+  transform-origin: 35px 15px;
+  animation: logo-tip-launch 440ms 580ms var(--ease-out-back, ease-out) forwards;
+}
+
+/* A short motion trail behind the launching tip — fades as it arrives. */
+@keyframes logo-trail {
+  0% { opacity: 0; stroke-dashoffset: 14; }
+  35% { opacity: 0.5; }
+  100% { opacity: 0; stroke-dashoffset: 0; }
+}
+.logo-draw__trail {
+  stroke-dasharray: 14;
+  stroke-dashoffset: 14;
+  opacity: 0;
+  animation: logo-trail 460ms 580ms ease-out forwards;
+}
+
+/* A diagonal light band sweeps across the mark once it's assembled. */
+@keyframes logo-sweep {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(120%); }
+}
+.logo-sweep {
+  animation: logo-sweep 780ms 950ms var(--ease-in-out-smooth, ease) forwards;
 }
 
 /* Breathing accent glow behind the splash logo */
 @keyframes splash-breathe {
-  from { opacity: 0.04; }
-  to { opacity: 0.08; }
+  0%, 100% { opacity: 0.05; transform: scale(0.94); }
+  50% { opacity: 0.11; transform: scale(1.06); }
 }
 .splash-glow {
-  animation: splash-breathe 2s ease-in-out infinite alternate;
+  animation: splash-breathe 2.4s ease-in-out infinite;
+  will-change: opacity, transform;
 }
 
 /* Splash exit — fade + slight scale-up, then unmount */
 @keyframes splash-out {
-  to { opacity: 0; transform: scale(1.04); }
+  to { opacity: 0; transform: scale(1.06); }
 }
 .splash--out {
   animation: splash-out 400ms var(--ease-in-out-smooth, ease) forwards;
