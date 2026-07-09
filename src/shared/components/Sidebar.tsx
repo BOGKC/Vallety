@@ -6,6 +6,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import toast from '../../components/Toast'
+import { ValletyMark } from '../../components/ValletyLogo'
 import { useAppStore } from '../store/appStore'
 import { useAuthStore } from '../store/authStore'
 import { cn } from '../lib/cn'
@@ -215,9 +216,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
             className="flex h-9 w-9 items-center justify-center rounded-md hover:bg-bg-elevated"
             style={{ transition: 'var(--transition-fast)' }}
           >
-            <span className="text-[20px] font-bold leading-none text-[var(--color-accent)]">
-              V
-            </span>
+            <ValletyMark size={24} />
           </button>
         ) : (
           <>
@@ -226,9 +225,7 @@ export function Sidebar({ mobile = false }: SidebarProps) {
               className="flex items-center gap-2 text-left"
               aria-label="Go to dashboard"
             >
-              <span className="text-[20px] font-bold leading-none text-[var(--color-accent)]">
-                V
-              </span>
+              <ValletyMark size={24} />
               <span className="text-[14px] font-medium text-text-primary">
                 vallety
               </span>

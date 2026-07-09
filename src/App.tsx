@@ -3,7 +3,9 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ToastViewport } from './components/Toast'
+import { AppLoader } from './components/AppLoader'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { NotFoundPage } from './components/errors/NotFoundPage'
 import { queryClient } from './shared/lib/queryClient'
 import { AuthGuard } from './shared/components/AuthGuard'
 import { AppShell } from './shared/components/AppShell'
@@ -104,10 +106,13 @@ export default function App() {
               </Route>
             </Route>
 
-            {/* ── Catch-all ──────────────────────────────────────────────── */}
-            <Route path="*" element={<Navigate to="/login" replace />} />
+            {/* ── Catch-all: friendly 404 (dashboard link re-runs AuthGuard) ─ */}
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
           </ErrorBoundary>
+
+          {/* Branded splash over everything until the session check resolves */}
+          <AppLoader />
 
           <ToastViewport />
         </AuthInit>

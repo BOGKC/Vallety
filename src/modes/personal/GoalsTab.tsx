@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Plus, CalendarDays, Star } from 'lucide-react'
 import { Modal } from '../../shared/components/Modal'
 import { EmptyState } from '../../components/EmptyState'
+import { SuccessBurst } from '../../components/SuccessBurst'
 import toast from '../../components/Toast'
 import { formatEuro, parseAmount } from '../../shared/lib/formatters'
 import { cn } from '../../shared/lib/cn'
@@ -84,12 +85,49 @@ function GoalCard({
   )
 }
 
+// Each goal gets its celebration exactly once — remember who's had theirs.
+const CELEBRATED_KEY = 'vallety_celebrated_goals'
+const readCelebrated = (): string[] => {
+  try { return JSON.parse(localStorage.getItem(CELEBRATED_KEY) ?? '[]') } catch { return [] }
+}
+const markCelebrated = (id: string) => {
+  localStorage.setItem(CELEBRATED_KEY, JSON.stringify([...new Set([...readCelebrated(), id])]))
+}
+
+/** Brief, skippable "You did it!" moment — burst + message, auto-dismisses. */
+function GoalCelebration({ name, onDone }: { name: string; onDone: () => void }) {
+  useEffect(() => {
+    const id = window.setTimeout(onDone, 2600)
+    return () => window.clearTimeout(id)
+  }, [onDone])
+  return (
+    <button
+      className="modal-pop fixed inset-0 z-[70] flex w-full flex-col items-center justify-center gap-3 text-center"
+      style={{ backgroundColor: 'color-mix(in srgb, var(--bg-primary) 88%, transparent)', backdropFilter: 'blur(4px)' }}
+      onClick={onDone}
+      aria-label="Dismiss celebration"
+    >
+      <SuccessBurst size={72} />
+      <p className="text-[22px] font-semibold text-text-primary">You did it!</p>
+      <p className="text-[14px] text-text-secondary">{name} — goal reached 🎉</p>
+      <p className="mt-2 text-[12px] text-text-muted">Tap anywhere to continue</p>
+    </button>
+  )
+}
+
 export function GoalsTab() {
   const [goals, setGoals] = useState<Goal[]>(() => readGoals())
   const [drawer, setDrawer] = useState<{ open: boolean; mode: 'add' | 'edit'; goal: Goal | null }>({
     open: false, mode: 'add', goal: null,
   })
   const [funds, setFunds] = useState<{ goal: Goal | null; amount: string }>({ goal: null, amount: '' })
+  // Detected-on-load celebration: a goal that reached 100% since we last
+  // looked (e.g. edited elsewhere) still gets its moment, exactly once.
+  const [celebrating, setCelebrating] = useState<{ id: string; name: string } | null>(() => {
+    const done = readCelebrated()
+    const fresh = readGoals().find((g) => g.target > 0 && g.saved >= g.target && !done.includes(g.id))
+    return fresh ? { id: fresh.id, name: fresh.name } : null
+  })
 
   const now = useMemo(() => new Date(), [])
   const summary = useMemo(() => computeGoals(goals, now), [goals, now])
@@ -98,6 +136,11 @@ export function GoalsTab() {
   const openAdd = () => setDrawer({ open: true, mode: 'add', goal: null })
   const openEdit = (g: Goal) => setDrawer({ open: true, mode: 'edit', goal: g })
 
+  const finishCelebration = () => {
+    if (celebrating) markCelebrated(celebrating.id)
+    setCelebrating(null)
+  }
+
   const applyFunds = () => {
     const amt = parseAmount(funds.amount)
     if (funds.goal && Number.isFinite(amt) && amt > 0) {
@@ -105,8 +148,11 @@ export function GoalsTab() {
       const nowComplete = funds.goal.saved + amt >= funds.goal.target
       setGoals(updateGoal(funds.goal.id, { saved: funds.goal.saved + amt }))
       // Celebrate the moment a goal is first reached.
-      if (!wasComplete && nowComplete) toast.success(`🎉 Goal reached — ${funds.goal.name}!`)
-      else toast.success('Funds added')
+      if (!wasComplete && nowComplete) {
+        setCelebrating({ id: funds.goal.id, name: funds.goal.name })
+      } else {
+        toast.success('Funds added')
+      }
     }
     setFunds({ goal: null, amount: '' })
   }
@@ -192,6 +238,8 @@ export function GoalsTab() {
           />
         </label>
       </Modal>
+
+      {celebrating && <GoalCelebration name={celebrating.name} onDone={finishCelebration} />}
     </div>
   )
 }

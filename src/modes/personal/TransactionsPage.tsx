@@ -4,7 +4,7 @@ import {
 } from 'lucide-react'
 import { Modal } from '../../shared/components/Modal'
 import { EmptyState } from '../../components/EmptyState'
-import { SkeletonTransactionRow } from '../../components/SkeletonLoader'
+import { SkeletonTransactionRow } from '../../components/skeletons'
 import { useMinLoading } from '../../shared/hooks/useMinLoading'
 import { Drawer } from '../../components/Drawer'
 import { AddTransactionDrawer } from './AddTransactionDrawer'

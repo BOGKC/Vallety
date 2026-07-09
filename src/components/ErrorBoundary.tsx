@@ -1,4 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
+import {
+  BrokenShapeIllustration, ErrorActions, PrimaryAction, SecondaryAction,
+} from './errors/ErrorState'
 
 interface Props {
   children: ReactNode
@@ -7,96 +10,76 @@ interface Props {
 interface State {
   hasError: boolean
   error: Error | null
-  showDetails: boolean
 }
 
 /**
  * Catches render errors anywhere in its subtree and shows a calm, on-brand
  * fallback. Data lives in localStorage, so nothing is lost when a page throws —
- * "Try again" simply re-mounts the subtree.
+ * "Try again" simply re-mounts the subtree. Raw error details are logged to
+ * the console and attached to the "Report this" email, never shown on screen.
  *
  * Must be a class component: React only supports error boundaries via the
  * getDerivedStateFromError / componentDidCatch lifecycle.
  */
 export class ErrorBoundary extends Component<Props, State> {
-  state: State = { hasError: false, error: null, showDetails: false }
+  state: State = { hasError: false, error: null }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
     return { hasError: true, error }
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    // Surface for debugging. Persisted data is untouched.
+    // Console/monitoring only — the user never sees the stack.
     console.error('ErrorBoundary caught an error:', error, info)
   }
 
-  handleRetry = () => this.setState({ hasError: false, error: null, showDetails: false })
+  handleRetry = () => this.setState({ hasError: false, error: null })
 
-  toggleDetails = () => this.setState((s) => ({ showDetails: !s.showDetails }))
+  buildReportHref = () => {
+    const e = this.state.error
+    const body = [
+      'Something went sideways in Vallety — error report:',
+      '',
+      `Message: ${e?.message ?? 'Unknown'}`,
+      `Page: ${window.location.pathname}`,
+      `Time: ${new Date().toISOString()}`,
+      `Browser: ${navigator.userAgent}`,
+      '',
+      (e?.stack ?? '').split('\n').slice(0, 6).join('\n'),
+    ].join('\n')
+    return `mailto:support@vallety.app?subject=${encodeURIComponent('Vallety error report')}&body=${encodeURIComponent(body)}`
+  }
 
   render() {
     if (!this.state.hasError) return this.props.children
 
-    const { error, showDetails } = this.state
     return (
       <div
         className="flex min-h-screen flex-col items-center justify-center px-6 text-center"
         style={{ backgroundColor: 'var(--bg-primary)' }}
         role="alert"
       >
-        {/* Vallety logo mark */}
-        <span
-          className="font-bold leading-none"
-          style={{ fontSize: 32, color: 'var(--color-accent)' }}
-          aria-hidden
-        >
-          V
-        </span>
+        <BrokenShapeIllustration />
 
-        <h1 className="mt-4 text-[18px] font-semibold" style={{ color: 'var(--text-primary)' }}>
-          Something went wrong
+        <h1 className="mt-5 text-[20px] font-semibold" style={{ color: 'var(--text-primary)' }}>
+          Something went sideways
         </h1>
-        <p className="mt-1.5 text-[14px]" style={{ color: 'var(--text-secondary)' }}>
-          An unexpected error occurred. Your data is safe.
+        <p className="mt-1.5 max-w-sm text-[14px]" style={{ color: 'var(--text-secondary)' }}>
+          Don't worry — your data is safe. Let's get you back on track.
         </p>
 
-        <div className="mt-5 flex items-center gap-2">
-          <button
-            onClick={this.handleRetry}
-            className="inline-flex h-10 items-center rounded-md px-4 text-[14px] font-semibold text-white"
-            style={{ backgroundColor: 'var(--color-accent)', transition: 'var(--transition-fast)' }}
-          >
-            Try again
-          </button>
-          <a
-            href="/"
-            className="inline-flex h-10 items-center rounded-md border px-4 text-[14px] font-medium"
-            style={{ borderColor: 'var(--border-default)', color: 'var(--text-secondary)' }}
-          >
-            Go to dashboard
-          </a>
-        </div>
+        <ErrorActions>
+          <PrimaryAction onClick={this.handleRetry}>Try again</PrimaryAction>
+          <SecondaryAction href="/">Go to dashboard</SecondaryAction>
+        </ErrorActions>
 
-        <button
-          onClick={this.toggleDetails}
-          className="mt-5 text-[12px]"
+        <a
+          href={this.buildReportHref()}
+          className="mt-5 text-[12px] hover:underline"
           style={{ color: 'var(--text-muted)' }}
         >
-          {showDetails ? 'Hide details' : 'Show details'}
-        </button>
-
-        {showDetails && (
-          <pre
-            className="mt-2 max-w-md overflow-auto rounded-md border p-3 text-left text-[12px]"
-            style={{
-              backgroundColor: 'var(--bg-card)',
-              borderColor: 'var(--border-subtle)',
-              color: 'var(--color-danger)',
-            }}
-          >
-            {error?.message || 'Unknown error'}
-          </pre>
-        )}
+          Report this
+        </a>
       </div>
     )
   }

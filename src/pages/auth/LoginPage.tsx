@@ -4,8 +4,9 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from '../../components/Toast'
-import { Eye, EyeOff, Mail, Sparkles, Wallet } from 'lucide-react'
+import { Eye, EyeOff, Mail, Sparkles } from 'lucide-react'
 import { GoogleIcon } from '../../components/GoogleIcon'
+import { ValletyLockup } from '../../components/ValletyLogo'
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner'
 import { useAuth } from '../../shared/hooks/useAuth'
 import { useAuthStore } from '../../shared/store/authStore'
@@ -344,12 +345,7 @@ export function LoginPage() {
   return (
     <div className="min-h-screen bg-bg-primary flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-md">
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <div className="h-9 w-9 rounded-lg bg-brand flex items-center justify-center">
-            <Wallet className="h-5 w-5 text-white" />
-          </div>
-          <span className="text-xl font-semibold text-text-primary">Vallety</span>
-        </div>
+        <ValletyLockup size={38} className="justify-center mb-8" />
 
         <div className="bg-bg-card border border-border rounded-2xl p-8">
           <h1 className="text-2xl font-semibold text-text-primary mb-1">{titles[panel]}</h1>

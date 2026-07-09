@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Sparkles, ArrowUp, ClipboardCopy, Info, Square } from 'lucide-react'
 import { useAppStore } from '../../shared/store/appStore'
 import toast from '../../components/Toast'
+import { LoadingMessages } from '../../components/LoadingMessages'
 import { formatEuro } from '../../shared/lib/formatters'
 import {
   getApiKey, setApiKey, streamAdvisor, type ChatMessage,
@@ -163,16 +164,11 @@ function TypingIndicator() {
         <Sparkles className="h-3.5 w-3.5" style={{ color: 'var(--color-accent)' }} />
       </span>
       <div
-        className="flex items-center gap-1 border border-default bg-bg-card px-3.5 py-3"
+        className="border border-default bg-bg-card px-3.5 py-2.5"
         style={{ borderRadius: '14px 14px 14px 4px' }}
       >
-        {[0, 1, 2].map((i) => (
-          <span
-            key={i}
-            className="advisor-dot h-1.5 w-1.5 rounded-full"
-            style={{ backgroundColor: 'var(--text-secondary)', animationDelay: `${i * 150}ms` }}
-          />
-        ))}
+        {/* Dots appear instantly; the contextual script rotates with them. */}
+        <LoadingMessages operation="advisor" appearAfterMs={0} />
       </div>
     </div>
   )
@@ -254,7 +250,19 @@ export function AdvisorPage() {
           setMessages((prev) => [...prev, { id: nextId('a'), role: 'assistant', content: acc }])
         }
       } else {
-        setError(e instanceof Error ? e.message : 'Something went wrong. Check your API key and try again.')
+        // Raw details go to the console; the user gets calm, actionable copy
+        // and never loses what they typed — the message returns to the box.
+        console.error('Advisor request failed:', e)
+        const raw = e instanceof Error ? e.message : ''
+        setError(
+          /rate.?limit|429|overloaded|529/i.test(raw)
+            ? 'The advisor is taking a break — try again in a moment.'
+            : /401|403|authentication|invalid.*key|x-api-key/i.test(raw)
+              ? 'That API key didn’t work — check it in Profile & settings, then try again.'
+              : 'The advisor couldn’t answer just now. Your message is back in the box — try again in a moment.'
+        )
+        setMessages((prev) => prev.filter((m) => m.id !== userMsg.id))
+        setInput(trimmed)
       }
     } finally {
       setStreaming(false)
