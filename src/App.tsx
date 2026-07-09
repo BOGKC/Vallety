@@ -1,38 +1,46 @@
 // Vallety MVP v1.0 — 2026-06-28
 // All 14 known bugs resolved. All pages render content. Ready for user testing.
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { ToastViewport } from './components/Toast'
 import { AppLoader } from './components/AppLoader'
+import { PWAManager } from './components/PWAManager'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { NotFoundPage } from './components/errors/NotFoundPage'
 import { queryClient } from './shared/lib/queryClient'
 import { AuthGuard } from './shared/components/AuthGuard'
 import { AppShell } from './shared/components/AppShell'
 import { ComingSoon } from './shared/components/ComingSoon'
+import { FullPageSpinner } from './shared/components/LoadingSpinner'
 import { useAuth } from './shared/hooks/useAuth'
+
+// Auth pages load eagerly — they're the first thing an unauthed visitor needs.
 import { SignupPage } from './pages/auth/SignupPage'
 import { LoginPage } from './pages/auth/LoginPage'
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
 import { OnboardingPage } from './pages/auth/OnboardingPage'
-import { ProfilePage } from './pages/profile/ProfilePage'
-import { PersonalDashboard } from './modes/personal/PersonalDashboard'
-import { TransactionsPage } from './modes/personal/TransactionsPage'
-import { BudgetsPage } from './modes/personal/BudgetsPage'
-import { BillsPage } from './modes/personal/BillsPage'
-import { SubscriptionsPage } from './modes/personal/SubscriptionsPage'
-import { NetWorthPage } from './modes/personal/NetWorthPage'
-import { HouseholdPage } from './modes/personal/HouseholdPage'
-import { AdvisorPage } from './modes/personal/AdvisorPage'
-import { ScenariosPage } from './modes/personal/ScenariosPage'
-import { BusinessDashboard } from './modes/business/BusinessDashboard'
-import { InvoicesPage } from './modes/business/InvoicesPage'
-import { ExpensesPage } from './modes/business/ExpensesPage'
-import { TaxPage } from './modes/business/TaxPage'
-import { ClientsPage } from './modes/business/ClientsPage'
-import { InvestmentDashboard } from './modes/investment/InvestmentDashboard'
-import { PortfolioPage } from './modes/investment/PortfolioPage'
-import { WatchlistPage } from './modes/investment/WatchlistPage'
+
+// In-app pages are code-split so each loads on demand — keeps the initial
+// bundle lean (recharts, drawers, etc. only ship when their page is visited).
+const ProfilePage = lazy(() => import('./pages/profile/ProfilePage').then((m) => ({ default: m.ProfilePage })))
+const PersonalDashboard = lazy(() => import('./modes/personal/PersonalDashboard').then((m) => ({ default: m.PersonalDashboard })))
+const TransactionsPage = lazy(() => import('./modes/personal/TransactionsPage').then((m) => ({ default: m.TransactionsPage })))
+const BudgetsPage = lazy(() => import('./modes/personal/BudgetsPage').then((m) => ({ default: m.BudgetsPage })))
+const BillsPage = lazy(() => import('./modes/personal/BillsPage').then((m) => ({ default: m.BillsPage })))
+const SubscriptionsPage = lazy(() => import('./modes/personal/SubscriptionsPage').then((m) => ({ default: m.SubscriptionsPage })))
+const NetWorthPage = lazy(() => import('./modes/personal/NetWorthPage').then((m) => ({ default: m.NetWorthPage })))
+const HouseholdPage = lazy(() => import('./modes/personal/HouseholdPage').then((m) => ({ default: m.HouseholdPage })))
+const AdvisorPage = lazy(() => import('./modes/personal/AdvisorPage').then((m) => ({ default: m.AdvisorPage })))
+const ScenariosPage = lazy(() => import('./modes/personal/ScenariosPage').then((m) => ({ default: m.ScenariosPage })))
+const BusinessDashboard = lazy(() => import('./modes/business/BusinessDashboard').then((m) => ({ default: m.BusinessDashboard })))
+const InvoicesPage = lazy(() => import('./modes/business/InvoicesPage').then((m) => ({ default: m.InvoicesPage })))
+const ExpensesPage = lazy(() => import('./modes/business/ExpensesPage').then((m) => ({ default: m.ExpensesPage })))
+const TaxPage = lazy(() => import('./modes/business/TaxPage').then((m) => ({ default: m.TaxPage })))
+const ClientsPage = lazy(() => import('./modes/business/ClientsPage').then((m) => ({ default: m.ClientsPage })))
+const InvestmentDashboard = lazy(() => import('./modes/investment/InvestmentDashboard').then((m) => ({ default: m.InvestmentDashboard })))
+const PortfolioPage = lazy(() => import('./modes/investment/PortfolioPage').then((m) => ({ default: m.PortfolioPage })))
+const WatchlistPage = lazy(() => import('./modes/investment/WatchlistPage').then((m) => ({ default: m.WatchlistPage })))
 
 // Initialises the Supabase auth listener once for the whole app.
 function AuthInit({ children }: { children: React.ReactNode }) {
@@ -46,6 +54,7 @@ export default function App() {
       <BrowserRouter>
         <AuthInit>
           <ErrorBoundary>
+          <Suspense fallback={<FullPageSpinner />}>
           <Routes>
             {/* ── Public routes ──────────────────────────────────────────── */}
             <Route path="/signup"         element={<SignupPage />} />
@@ -109,10 +118,14 @@ export default function App() {
             {/* ── Catch-all: friendly 404 (dashboard link re-runs AuthGuard) ─ */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
+          </Suspense>
           </ErrorBoundary>
 
           {/* Branded splash over everything until the session check resolves */}
           <AppLoader />
+
+          {/* Service-worker update prompt (toast + Refresh) */}
+          <PWAManager />
 
           <ToastViewport />
         </AuthInit>

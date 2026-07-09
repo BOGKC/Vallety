@@ -968,8 +968,40 @@ aside nav a:hover svg {
 }
 
 /* ============================================================
-   Mobile responsiveness
+   Mobile responsiveness & native feel
    ============================================================ */
+
+/* Kill the grey tap-flash and text selection on interactive chrome; we
+   provide our own :active feedback below. Inputs/textareas keep selection. */
+button,
+[role='button'],
+a,
+.nav-item,
+label {
+  -webkit-tap-highlight-color: transparent;
+}
+button,
+[role='button'],
+.nav-item {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Own :active state on touch — a subtle press-down instead of the flash. */
+@media (hover: none) {
+  button:active,
+  [role='button']:active,
+  .nav-item:active {
+    transform: scale(0.97);
+    transition: transform 80ms ease;
+  }
+}
+
+/* Install banner entrance */
+@keyframes install-slide-up {
+  from { transform: translateY(140%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
 
 /* Touch targets — comfortable hit areas on small screens */
 @media (max-width: 768px) {
@@ -986,9 +1018,25 @@ aside nav a:hover svg {
   }
 }
 
-/* Safe-area inset at the bottom of the viewport */
+/* Momentum scrolling + no bounce-through to the wrong colour on the main
+   scroll region. The dark body background shows through any overscroll. */
+main {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* Safe-area insets: dark body so notch/home-indicator bounce stays on-theme */
+html,
+body {
+  background-color: var(--bg-primary);
+}
 body {
   padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Header clears the status-bar / notch when installed (viewport-fit=cover) */
+.safe-top {
+  padding-top: env(safe-area-inset-top);
 }
 
 /* Right-fade overlay to hint horizontal scroll on wrapped tables */

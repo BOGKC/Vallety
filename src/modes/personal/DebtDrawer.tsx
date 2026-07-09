@@ -115,7 +115,7 @@ export function DebtDrawer({ open, onClose, onSaved }: Props) {
 
             <label className="flex flex-col gap-1.5">
               <span className="text-[12px] text-text-muted">Current balance (€)<RequiredMark /></span>
-              <input className={fieldClass} type="number" min="0" step="0.01"
+              <input className={fieldClass} type="number" inputMode="decimal" min="0" step="0.01"
                 placeholder="0.00" {...register('balance')} />
               <FieldError message={errors.balance?.message} />
             </label>
@@ -123,12 +123,12 @@ export function DebtDrawer({ open, onClose, onSaved }: Props) {
             <div className="flex gap-3">
               <label className="flex flex-1 flex-col gap-1.5">
                 <span className="text-[12px] text-text-muted">Interest rate (%)</span>
-                <input className={fieldClass} type="number" min="0" step="0.1" value={rate}
+                <input className={fieldClass} type="number" inputMode="decimal" min="0" step="0.1" value={rate}
                   placeholder="0.0" onChange={(e) => setRate(e.target.value)} />
               </label>
               <label className="flex flex-1 flex-col gap-1.5">
                 <span className="text-[12px] text-text-muted">Min. monthly (€)</span>
-                <input className={fieldClass} type="number" min="0" step="0.01" value={minPayment}
+                <input className={fieldClass} type="number" inputMode="decimal" min="0" step="0.01" value={minPayment}
                   placeholder="0.00" onChange={(e) => setMinPayment(e.target.value)} />
               </label>
             </div>

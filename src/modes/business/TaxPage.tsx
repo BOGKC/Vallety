@@ -56,7 +56,7 @@ export function TaxPage() {
           <p className="text-[12px] font-medium uppercase text-text-muted" style={{ letterSpacing: '0.08em' }}>
             Recommended to set aside
           </p>
-          <p className="num-hero mt-1 text-[44px] leading-none text-text-primary">
+          <p className="num-hero mt-1 leading-none text-text-primary" style={{ fontSize: 'clamp(32px, 9vw, 44px)' }}>
             <AnimatedEuro value={setAside} />
           </p>
           <p className="mt-2 text-[13px] text-text-secondary">

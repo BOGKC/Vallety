@@ -7,7 +7,9 @@ export type ToastVariant = 'success' | 'error' | 'info' | 'warning'
 export interface ToastOptions {
   /** Optional undo action — renders an "Undo" button. */
   undo?: () => void
-  /** Override the auto-dismiss delay (ms). */
+  /** Optional action button with a custom label (e.g. "Refresh"). */
+  action?: { label: string; onClick: () => void }
+  /** Override the auto-dismiss delay (ms). Pass Infinity to require manual dismiss. */
   duration?: number
 }
 
@@ -16,6 +18,7 @@ interface ToastItemData {
   variant: ToastVariant
   message: string
   undo?: () => void
+  action?: { label: string; onClick: () => void }
   duration: number
 }
 
@@ -49,6 +52,7 @@ function push(variant: ToastVariant, message: string, opts?: ToastOptions): numb
     variant,
     message,
     undo: opts?.undo,
+    action: opts?.action,
     duration: opts?.duration ?? DEFAULT_DURATION,
   }]
   // Keep at most MAX_VISIBLE — drop the oldest.
@@ -106,13 +110,16 @@ function ToastCard({ data, onRemove }: { data: ToastItemData; onRemove: (id: num
   useEffect(() => {
     // Enter on next frame so the transition runs.
     const enter = window.requestAnimationFrame(() => setShown(true))
-    const timer = window.setTimeout(() => {
-      setLeaving(true)
-      window.setTimeout(() => onRemove(data.id), 200)
-    }, data.duration)
+    // Infinite duration → sticky toast that only dismisses on tap/action.
+    const timer = Number.isFinite(data.duration)
+      ? window.setTimeout(() => {
+          setLeaving(true)
+          window.setTimeout(() => onRemove(data.id), 200)
+        }, data.duration)
+      : undefined
     return () => {
       window.cancelAnimationFrame(enter)
-      window.clearTimeout(timer)
+      if (timer !== undefined) window.clearTimeout(timer)
     }
     // onRemove is the stable module-level `remove`
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -144,6 +151,15 @@ function ToastCard({ data, onRemove }: { data: ToastItemData; onRemove: (id: num
           style={{ color: 'var(--color-accent)' }}
         >
           Undo
+        </button>
+      )}
+      {data.action && (
+        <button
+          onClick={() => { data.action?.onClick(); close() }}
+          className="flex-shrink-0 text-[13px] font-semibold"
+          style={{ color: 'var(--color-accent)' }}
+        >
+          {data.action.label}
         </button>
       )}
       <button

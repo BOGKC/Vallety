@@ -159,7 +159,7 @@ export function GoalDrawer({ open, mode, goal, onClose, onSaved }: Props) {
 
             <label className="flex flex-col gap-1.5">
               <span className="text-[12px] text-text-muted">Already saved (optional)</span>
-              <input className={fieldClass} type="number" min="0" step="0.01" value={saved}
+              <input className={fieldClass} type="number" inputMode="decimal" min="0" step="0.01" value={saved}
                 placeholder="0.00" onChange={(e) => setSaved(e.target.value)} />
             </label>
 
