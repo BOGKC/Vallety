@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { X } from 'lucide-react'
 import { Sidebar } from './Sidebar'
@@ -7,7 +7,9 @@ import { ModeSwitcher } from './ModeSwitcherMobile'
 import { AnimatedBackground } from '../../components/AnimatedBackground'
 import { BottomTabBar } from '../../components/BottomTabBar'
 import { OfflineBanner } from '../../components/OfflineBanner'
+import { InstallBanner } from '../../components/InstallBanner'
 import { ErrorBoundary } from '../../components/ErrorBoundary'
+import { CircleSpinner } from '../../components/loaders'
 import { resolvePageTitle } from '../lib/pageTitles'
 
 // ── Mobile bottom-sheet drawer ────────────────────────────────────────────────
@@ -78,11 +80,74 @@ function MobileDrawer({ open, onClose }: MobileDrawerProps) {
   )
 }
 
+// ── Pull-to-refresh (touch only) ──────────────────────────────────────────────
+
+const PULL_TRIGGER = 72 // px past which release triggers a refresh
+
+/**
+ * Custom pull-to-refresh for the main scroll region. Engages only when the
+ * scroll is already at the top and the gesture is a downward drag, so it never
+ * fights normal scrolling. On release past the threshold it runs onRefresh
+ * (which re-reads local data by remounting the route) with a branded spinner.
+ */
+function usePullToRefresh(
+  scrollRef: React.RefObject<HTMLElement | null>,
+  onRefresh: () => void
+) {
+  const [pull, setPull] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
+  const startY = useRef<number | null>(null)
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    if (!window.matchMedia('(hover: none)').matches) return // touch devices only
+
+    const onStart = (e: TouchEvent) => {
+      startY.current = el.scrollTop <= 0 ? e.touches[0].clientY : null
+    }
+    const onMove = (e: TouchEvent) => {
+      if (startY.current === null || refreshing) return
+      const dy = e.touches[0].clientY - startY.current
+      if (dy <= 0) { setPull(0); return }
+      // Rubber-band: resistance grows with distance.
+      setPull(Math.min(dy * 0.5, 96))
+    }
+    const onEnd = () => {
+      if (startY.current === null) return
+      if (pull >= PULL_TRIGGER && !refreshing) {
+        setRefreshing(true)
+        setPull(PULL_TRIGGER)
+        onRefresh()
+        window.setTimeout(() => { setRefreshing(false); setPull(0) }, 650)
+      } else {
+        setPull(0)
+      }
+      startY.current = null
+    }
+
+    el.addEventListener('touchstart', onStart, { passive: true })
+    el.addEventListener('touchmove', onMove, { passive: true })
+    el.addEventListener('touchend', onEnd)
+    return () => {
+      el.removeEventListener('touchstart', onStart)
+      el.removeEventListener('touchmove', onMove)
+      el.removeEventListener('touchend', onEnd)
+    }
+  }, [scrollRef, onRefresh, pull, refreshing])
+
+  return { pull, refreshing }
+}
+
 // ── App Shell ─────────────────────────────────────────────────────────────────
 
 export function AppShell() {
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
   const location = useLocation()
+  const mainRef = useRef<HTMLElement>(null)
+
+  const { pull, refreshing } = usePullToRefresh(mainRef, () => setRefreshKey((k) => k + 1))
 
   // Close drawer on navigation. rAF defers the state update out of the effect
   // body (avoids a synchronous setState-in-effect).
@@ -111,15 +176,34 @@ export function AppShell() {
         <OfflineBanner />
         <TopBar onMenuClick={() => setDrawerOpen(true)} />
 
-        <main className="flex-1 overflow-y-auto">
-          {/* key on pathname so the incoming route fades + slides up on change.
-              Extra bottom padding on mobile clears the fixed bottom tab bar.
-              Each route is wrapped in an ErrorBoundary keyed on the path so a
-              crash in one page never takes down the shell, and navigating away
-              clears the error. */}
+        <main ref={mainRef} className="relative flex-1 overflow-y-auto">
+          {/* Pull-to-refresh indicator */}
           <div
-            key={location.pathname}
-            className="page-enter px-6 pt-6 pb-[calc(72px+env(safe-area-inset-bottom))] md:pb-6"
+            className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center"
+            style={{
+              height: pull,
+              opacity: pull > 8 ? 1 : 0,
+              transition: refreshing ? 'none' : 'height 200ms ease, opacity 200ms ease',
+            }}
+            aria-hidden
+          >
+            <div
+              className="mt-2"
+              style={{ transform: `rotate(${pull * 3}deg)`, opacity: Math.min(pull / PULL_TRIGGER, 1) }}
+            >
+              <CircleSpinner size={22} />
+            </div>
+          </div>
+
+          {/* key on pathname + refreshKey so the incoming route fades + slides
+              up on change, and a pull-to-refresh remounts it (re-reading local
+              data). Extra bottom padding on mobile clears the fixed tab bar.
+              Each route is wrapped in an ErrorBoundary so a crash in one page
+              never takes down the shell. */}
+          <div
+            key={`${location.pathname}:${refreshKey}`}
+            className="page-enter px-4 pt-5 pb-[calc(72px+env(safe-area-inset-bottom))] sm:px-6 md:pb-6"
+            style={{ transform: pull ? `translateY(${pull}px)` : undefined, transition: refreshing ? 'none' : 'transform 200ms ease' }}
           >
             <ErrorBoundary key={location.pathname}>
               <Outlet />
@@ -130,6 +214,9 @@ export function AppShell() {
 
       {/* Mobile drawer (full nav via hamburger) */}
       <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+
+      {/* Custom install prompt (engagement-gated, iOS + Android) */}
+      <InstallBanner />
 
       {/* Mobile bottom tab bar */}
       <BottomTabBar />

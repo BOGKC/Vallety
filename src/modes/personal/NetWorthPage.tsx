@@ -155,7 +155,7 @@ export function NetWorthPage() {
             <p className="text-[12px] font-medium uppercase text-text-muted" style={{ letterSpacing: '0.08em' }}>
               Total net worth
             </p>
-            <p className="num-hero mt-1 text-[44px] leading-none" style={{ color: heroColor }}>
+            <p className="num-hero mt-1 leading-none" style={{ color: heroColor, fontSize: 'clamp(32px, 9vw, 44px)' }}>
               {heroIsEmpty ? '€—' : <AnimatedEuro value={totals.net} />}
             </p>
             {delta !== null && (
