@@ -84,7 +84,10 @@ export function BottomTabBar() {
                     transition: 'opacity 200ms ease, transform 260ms var(--ease-out-back)',
                   }}
                 />
-                <Icon size={22} strokeWidth={isActive ? 2.4 : 2} />
+                {/* key on isActive remounts the icon so the pop plays once
+                    when the tab becomes active, not on every render. */}
+                <Icon key={isActive ? 'on' : 'off'} className={isActive ? 'icon-pop' : undefined}
+                  size={22} strokeWidth={isActive ? 2.4 : 2} />
                 <span className="w-full truncate text-center text-[10px] font-medium leading-none">
                   {t.label}
                 </span>

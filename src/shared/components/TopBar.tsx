@@ -45,6 +45,19 @@ function NotificationBell() {
   const { notificationCount } = useAppStore()
   const hasAlerts = notificationCount > 0
 
+  // Shake the bell once whenever the unread count rises (a new alert arrived).
+  const prevCount = useRef(notificationCount)
+  const [shake, setShake] = useState(false)
+  useEffect(() => {
+    if (notificationCount > prevCount.current) {
+      const raf = requestAnimationFrame(() => setShake(true))
+      const timer = window.setTimeout(() => setShake(false), 750)
+      prevCount.current = notificationCount
+      return () => { cancelAnimationFrame(raf); window.clearTimeout(timer) }
+    }
+    prevCount.current = notificationCount
+  }, [notificationCount])
+
   return (
     <button
       onClick={() =>
@@ -54,7 +67,7 @@ function NotificationBell() {
       style={{ transition: 'var(--transition-fast)' }}
       aria-label={`Notifications${hasAlerts ? ` (${notificationCount} unread)` : ''}`}
     >
-      <Bell className="h-[18px] w-[18px]" />
+      <Bell className={`h-[18px] w-[18px] ${shake ? 'bell-shake' : ''}`} />
       {hasAlerts && (
         <span
           className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[var(--color-danger)]"
