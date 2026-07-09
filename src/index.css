@@ -1053,3 +1053,103 @@ body {
   pointer-events: none;
   background: linear-gradient(90deg, transparent, var(--bg-card));
 }
+
+/* ============================================================
+   Tablet tier — container queries so components respond to their
+   OWN width (works in iPad Split View / Slide Over, not just the
+   viewport). The scroll region is the query container.
+   ============================================================ */
+
+main {
+  container-type: inline-size;
+  container-name: appmain;
+}
+
+/* Card grid: 1 col narrow → 2 (≥560px) → 3 (≥900px). For budget/goal cards. */
+.cq-cards {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+@container appmain (min-width: 560px) {
+  .cq-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@container appmain (min-width: 900px) {
+  .cq-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+/* Metric grid: 2 cols → 3 (≥620px) → 4 (≥920px). For dashboard/summary tiles. */
+.cq-metrics {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@container appmain (min-width: 620px) {
+  .cq-metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+}
+@container appmain (min-width: 920px) {
+  .cq-metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* Two-up panels (charts / report pairs) once there's room. */
+.cq-2up {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: 1fr;
+}
+@container appmain (min-width: 860px) {
+  .cq-2up { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ── Master–detail (container-query driven) ─────────────────────────────── */
+.md-split { display: none; }
+.md-stack { display: block; }
+@container appmain (min-width: 720px) {
+  .md-split {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+    /* Fill the main scroll area so each pane scrolls independently. */
+    height: calc(100dvh - 52px - env(safe-area-inset-top) - 2.5rem);
+  }
+  .md-stack { display: none; }
+}
+.md-pane { min-width: 0; }
+/* "Back" affordance shows only in the stacked view (hidden in split). */
+.md-back { display: inline-flex; }
+@container appmain (min-width: 720px) {
+  .md-back { display: none; }
+}
+.md-list {
+  flex-shrink: 0;
+  overflow-y: auto;
+  height: 100%;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 0.25rem;
+}
+.md-detail {
+  flex: 1 1 60%;
+  overflow-y: auto;
+  height: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── Tablet spacing & density ───────────────────────────────────────────── */
+/* Slightly more generous than phone (16px), less airy than desktop. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .card-pad { padding: 20px; }
+}
+
+/* ── Touch tuning ───────────────────────────────────────────────────────── */
+/* Keep touch-first hit areas on any coarse pointer, even wide landscape. */
+@media (pointer: coarse) {
+  .nav-item { min-height: 48px; }
+  .touch-target { min-height: 44px; min-width: 44px; }
+}
+
+/* Hover effects only where hover actually works, so they never "stick" on
+   touch tablets. (Tailwind's hoverOnlyWhenSupported covers hover: utilities;
+   this covers our hand-written hover rules.) */
+@media (hover: none) {
+  .hover-lift:hover { transform: none; }
+}

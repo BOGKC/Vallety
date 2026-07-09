@@ -10,6 +10,7 @@ import { OfflineBanner } from '../../components/OfflineBanner'
 import { InstallBanner } from '../../components/InstallBanner'
 import { ErrorBoundary } from '../../components/ErrorBoundary'
 import { CircleSpinner } from '../../components/loaders'
+import { useDeviceTier } from '../hooks/useDeviceTier'
 import { resolvePageTitle } from '../lib/pageTitles'
 
 // ── Mobile bottom-sheet drawer ────────────────────────────────────────────────
@@ -146,6 +147,14 @@ export function AppShell() {
   const [refreshKey, setRefreshKey] = useState(0)
   const location = useLocation()
   const mainRef = useRef<HTMLElement>(null)
+  const { tier } = useDeviceTier()
+
+  // Nav tier: phone → bottom bar + hamburger drawer; tablet portrait → icon
+  // rail; tablet landscape → touch-sized full sidebar; desktop → full sidebar.
+  const showSidebar = tier !== 'mobile'
+  const showBottomBar = tier === 'mobile'
+  const railOnly = tier === 'tablet-portrait'
+  const touchNav = tier === 'tablet-portrait' || tier === 'tablet-landscape'
 
   const { pull, refreshing } = usePullToRefresh(mainRef, () => setRefreshKey((k) => k + 1))
 
@@ -166,10 +175,14 @@ export function AppShell() {
     // background paints above this div's own background but below content.
     <div className="relative isolate flex h-screen overflow-hidden bg-bg-primary">
       <AnimatedBackground />
-      {/* Desktop sidebar */}
-      <div className="hidden md:flex flex-col h-full">
-        <Sidebar />
-      </div>
+      {/* Side navigation — tier-driven: icon rail (tablet portrait), touch
+          sidebar (tablet landscape), full sidebar (desktop). Phone uses the
+          bottom bar + hamburger drawer instead. */}
+      {showSidebar && (
+        <div className="flex flex-col h-full">
+          <Sidebar forceCollapsed={railOnly || undefined} touch={touchNav} />
+        </div>
+      )}
 
       {/* Main column */}
       <div className="flex flex-col flex-1 min-w-0">
@@ -212,14 +225,14 @@ export function AppShell() {
         </main>
       </div>
 
-      {/* Mobile drawer (full nav via hamburger) */}
-      <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      {/* Mobile drawer (full nav via hamburger) — phone only */}
+      {showBottomBar && <MobileDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />}
 
       {/* Custom install prompt (engagement-gated, iOS + Android) */}
       <InstallBanner />
 
-      {/* Mobile bottom tab bar */}
-      <BottomTabBar />
+      {/* Mobile bottom tab bar — phone only */}
+      {showBottomBar && <BottomTabBar />}
     </div>
   )
 }

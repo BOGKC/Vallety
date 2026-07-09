@@ -1,5 +1,5 @@
-import { useMemo, useState, type ReactNode } from 'react'
-import { Plus, Target } from 'lucide-react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { Plus, Target, Pencil, ChevronLeft } from 'lucide-react'
 import { formatEuro } from '../../shared/lib/formatters'
 import { getCategoryMeta, hexToRgba } from '../../shared/lib/transactions'
 import {
@@ -9,6 +9,7 @@ import {
 import { BudgetDrawer, type BudgetPrefill } from './BudgetDrawer'
 import { ProgressBar } from '../../components/ProgressBar'
 import { AnimatedEuro, AnimatedPercent } from '../../components/AnimatedNumber'
+import { MasterDetail } from '../../shared/components/MasterDetail'
 
 function SummaryCard({
   value, valueColor, label,
@@ -23,7 +24,14 @@ function SummaryCard({
   )
 }
 
-function BudgetCard({ view, daysLeft }: { view: BudgetView; daysLeft: number }) {
+function BudgetCard({
+  view, daysLeft, selected, onSelect,
+}: {
+  view: BudgetView
+  daysLeft: number
+  selected?: boolean
+  onSelect?: () => void
+}) {
   const meta = getCategoryMeta(view.category)
   const Icon = meta.icon
   const pctLabel = Math.round(view.pct)
@@ -33,7 +41,12 @@ function BudgetCard({ view, daysLeft }: { view: BudgetView; daysLeft: number }) 
   const daysWarning = daysLeft <= 7
 
   return (
-    <div className="rounded-lg border border-default bg-bg-card p-4 transition-transform duration-150 hover:scale-[1.01] hover:bg-bg-elevated">
+    <button
+      onClick={onSelect}
+      className="touch-target w-full rounded-lg border bg-bg-card p-4 text-left transition-transform duration-150 hover:scale-[1.01] hover:bg-bg-elevated"
+      style={{ borderColor: selected ? 'var(--color-accent)' : 'var(--border-default)' }}
+      aria-pressed={selected}
+    >
       <div className="flex items-center justify-between gap-2">
         <div className="flex min-w-0 items-center gap-2.5">
           <span
@@ -63,6 +76,66 @@ function BudgetCard({ view, daysLeft }: { view: BudgetView; daysLeft: number }) 
           {daysChip}
         </span>
       </div>
+    </button>
+  )
+}
+
+/** Right-pane detail for the selected budget (tablet landscape / desktop). */
+function BudgetDetail({
+  view, daysLeft, onEdit, onBack,
+}: { view: BudgetView; daysLeft: number; onEdit: () => void; onBack: () => void }) {
+  const meta = getCategoryMeta(view.category)
+  const Icon = meta.icon
+  const remaining = view.amount - view.spent
+  return (
+    <div className="rounded-lg border border-default bg-bg-card card-pad p-5">
+      {/* Back — stacked (narrow) view only; hidden when the list is beside us. */}
+      <button
+        onClick={onBack}
+        className="md-back touch-target mb-3 inline-flex items-center gap-1 text-[13px] font-medium text-text-secondary hover:text-text-primary"
+      >
+        <ChevronLeft className="h-4 w-4" /> All budgets
+      </button>
+      <div className="flex items-center gap-3">
+        <span
+          className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full"
+          style={{ backgroundColor: hexToRgba(meta.color, 0.15) }}
+        >
+          <Icon className="h-5 w-5" style={{ color: meta.color }} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-[17px] font-semibold text-text-primary">{view.category}</h3>
+          <p className="text-[12px] text-text-muted">
+            {daysLeft === 0 ? 'Month ends today' : `${daysLeft} day${daysLeft === 1 ? '' : 's'} left this month`}
+          </p>
+        </div>
+        <button
+          onClick={onEdit}
+          className="touch-target inline-flex items-center gap-1.5 rounded-md border border-default px-3 text-[13px] font-medium text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
+        >
+          <Pencil className="h-3.5 w-3.5" /> Edit
+        </button>
+      </div>
+
+      <p className="num-hero mt-5 leading-none" style={{ color: view.fillColor, fontSize: 'clamp(30px, 6vw, 40px)' }}>
+        {formatEuro(view.spent)}
+      </p>
+      <p className="mt-1 text-[13px] text-text-secondary">of {formatEuro(view.amount)} budgeted</p>
+
+      <ProgressBar value={view.pct} color={view.fillColor} className="mt-4" label={`${view.category} budget`} />
+
+      <div className="mt-5 grid grid-cols-2 gap-3">
+        <div className="rounded-lg border border-default bg-bg-elevated p-3">
+          <p className="text-[18px] font-semibold" style={{ color: remaining < 0 ? 'var(--color-danger)' : 'var(--color-success)' }}>
+            {formatEuro(Math.abs(remaining))}
+          </p>
+          <p className="mt-0.5 text-[12px] text-text-muted">{remaining < 0 ? 'Over budget' : 'Left to spend'}</p>
+        </div>
+        <div className="rounded-lg border border-default bg-bg-elevated p-3">
+          <p className="text-[18px] font-semibold" style={{ color: view.fillColor }}>{Math.round(view.pct)}%</p>
+          <p className="mt-0.5 text-[12px] text-text-muted">of budget used</p>
+        </div>
+      </div>
     </div>
   )
 }
@@ -71,12 +144,25 @@ export function BudgetsTab() {
   const [budgets, setBudgets] = useState<Budget[]>(() => readBudgets())
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [prefill, setPrefill] = useState<BudgetPrefill | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
+
+  // External-keyboard affordance (iPad Magic Keyboard): Escape clears the
+  // selected budget / closes the detail pane.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelectedId(null) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   const now = useMemo(() => new Date(), [])
   const summary = useMemo(() => computeBudgets(budgets, now), [budgets, now])
 
   const hasBudgets = budgets.length > 0
   const spentColor = summary.totalSpent > summary.totalBudgeted ? '#EF4444' : '#22C55E'
+
+  // Selection survives rotation and the split⇄stack reflow. If the selected
+  // budget disappears (deleted), fall back to null so the pane clears.
+  const selected = summary.views.find((v) => v.id === selectedId) ?? null
 
   const openNew = () => { setPrefill(null); setDrawerOpen(true) }
   const openSuggested = (s: BudgetPrefill) => { setPrefill(s); setDrawerOpen(true) }
@@ -96,7 +182,8 @@ export function BudgetsTab() {
 
       {hasBudgets ? (
         <>
-          <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {/* Summary tiles — 2/3/4-up by container width (Split-View aware). */}
+          <div className="cq-metrics mb-6">
             <SummaryCard value={<AnimatedEuro value={summary.totalBudgeted} />} label="Budgeted this month" />
             <SummaryCard value={<AnimatedEuro value={summary.totalSpent} />} valueColor={spentColor} label="Spent so far" />
             <SummaryCard
@@ -105,11 +192,39 @@ export function BudgetsTab() {
               label={`of budget used · ${summary.daysLeft} day${summary.daysLeft === 1 ? '' : 's'} left`}
             />
           </div>
-          <div className="stagger-list grid grid-cols-1 gap-4 md:grid-cols-2">
-            {summary.views.map((v) => (
-              <BudgetCard key={v.id} view={v} daysLeft={summary.daysLeft} />
-            ))}
-          </div>
+
+          {/* Master–detail: card grid when narrow (phone / small Split View),
+              list + detail pane when the container is wide (tablet landscape /
+              desktop). Selection is preserved across the reflow. */}
+          <MasterDetail
+            hasSelection={selected !== null}
+            stackList={
+              <div className="cq-cards stagger-list">
+                {summary.views.map((v) => (
+                  <BudgetCard key={v.id} view={v} daysLeft={summary.daysLeft}
+                    onSelect={() => setSelectedId(v.id)} />
+                ))}
+              </div>
+            }
+            list={
+              <div className="flex flex-col gap-2">
+                {summary.views.map((v) => (
+                  <BudgetCard key={v.id} view={v} daysLeft={summary.daysLeft}
+                    selected={v.id === selectedId} onSelect={() => setSelectedId(v.id)} />
+                ))}
+              </div>
+            }
+            detail={
+              selected ? (
+                <BudgetDetail view={selected} daysLeft={summary.daysLeft} onEdit={openNew} onBack={() => setSelectedId(null)} />
+              ) : (
+                <div className="flex h-full min-h-[200px] flex-col items-center justify-center rounded-lg border border-dashed border-default bg-bg-card p-8 text-center">
+                  <Target className="h-8 w-8" style={{ color: 'var(--text-muted)' }} />
+                  <p className="mt-3 text-[14px] text-text-secondary">Select a budget to see its breakdown.</p>
+                </div>
+              )
+            }
+          />
         </>
       ) : (
         <div className="rounded-lg border border-default bg-bg-card p-6 text-center">
