@@ -1,24 +1,15 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, ArrowLeftRight, Target, Calendar, TrendingUp,
-  Sparkles, Settings, ChevronLeft, ChevronRight, Wallet, Briefcase,
+  Sparkles, Settings, ChevronLeft, ChevronRight,
   FileText, Receipt, Percent, Users, Home, PieChart, Eye,
   type LucideIcon,
 } from 'lucide-react'
-import toast from '../../components/Toast'
 import { ValletyMark } from '../../components/ValletyLogo'
 import { useAppStore } from '../store/appStore'
 import { useAuthStore } from '../store/authStore'
 import { cn } from '../lib/cn'
 import type { AppMode } from '../types'
-
-// ── Mode metadata ─────────────────────────────────────────────────────────────
-
-const MODES: { value: AppMode; label: string; icon: LucideIcon; home: string }[] = [
-  { value: 'personal', label: 'Personal', icon: Wallet, home: '/' },
-  { value: 'business', label: 'Solo founder', icon: Briefcase, home: '/business' },
-  { value: 'investment', label: 'Investor', icon: TrendingUp, home: '/investment' },
-]
 
 // ── Nav data (per mode — modes are lenses, so shared pages recur) ─────────────
 
@@ -175,16 +166,9 @@ interface SidebarProps {
 }
 
 export function Sidebar({ mobile = false, forceCollapsed, touch = false }: SidebarProps) {
-  const { sidebarCollapsed, toggleSidebar, mode, setMode } = useAppStore()
+  const { sidebarCollapsed, toggleSidebar, mode } = useAppStore()
   const navigate = useNavigate()
 
-  const switchMode = (m: AppMode) => {
-    if (m === mode) return
-    const meta = MODES.find((x) => x.value === m)
-    setMode(m)
-    toast.success(`Switched to ${meta?.label ?? m} mode`)
-    navigate(meta?.home ?? '/')
-  }
   const profile = useAuthStore((s) => s.profile)
   const user = useAuthStore((s) => s.user)
 
@@ -253,34 +237,8 @@ export function Sidebar({ mobile = false, forceCollapsed, touch = false }: Sideb
         )}
       </div>
 
-      {/* Mode switcher ───────────────────────────────────────────────────── */}
-      <div className={cn('flex gap-1 border-b border-[var(--border-subtle)] p-2', collapsed && 'flex-col items-center')}>
-        {MODES.map((m) => {
-          const Icon = m.icon
-          const active = mode === m.value
-          return (
-            <button
-              key={m.value}
-              onClick={() => switchMode(m.value)}
-              title={m.label}
-              aria-label={`${m.label} mode`}
-              aria-pressed={active}
-              className={cn(
-                'flex min-w-0 items-center justify-center gap-1.5 rounded-md text-[11px] font-medium',
-                collapsed ? 'h-8 w-8' : 'h-8 flex-1 px-1.5',
-                active ? 'text-white' : 'text-text-muted hover:bg-bg-elevated hover:text-text-primary'
-              )}
-              style={{
-                backgroundColor: active ? 'var(--color-accent)' : undefined,
-                transition: 'background-color 400ms ease, color 400ms ease',
-              }}
-            >
-              <Icon className="h-3.5 w-3.5 flex-shrink-0" />
-              {!collapsed && <span className="truncate">{m.label}</span>}
-            </button>
-          )
-        })}
-      </div>
+      {/* Mode switching now lives in Profile & settings → Workspace mode, so
+          it no longer takes up nav chrome here. */}
 
       {/* Navigation (keyed by mode so items animate in on switch) ─────────── */}
       <nav

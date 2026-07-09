@@ -3,7 +3,6 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { X } from 'lucide-react'
 import { Sidebar } from './Sidebar'
 import { TopBar } from './TopBar'
-import { ModeSwitcher } from './ModeSwitcherMobile'
 import { AnimatedBackground } from '../../components/AnimatedBackground'
 import { BottomTabBar } from '../../components/BottomTabBar'
 import { OfflineBanner } from '../../components/OfflineBanner'
@@ -64,12 +63,8 @@ function MobileDrawer({ open, onClose }: MobileDrawerProps) {
           </button>
         </div>
 
-        {/* Mode switcher inside drawer */}
-        <div className="px-4 pb-3 pt-1">
-          <ModeSwitcher onNavigate={onClose} />
-        </div>
-
-        {/* Nav items via Sidebar in mobile mode */}
+        {/* Nav items via Sidebar in mobile mode (mode switching now lives in
+            Profile & settings → Workspace mode) */}
         <div className="overflow-y-auto max-h-[60vh] pb-safe-bottom">
           <Sidebar mobile />
         </div>
