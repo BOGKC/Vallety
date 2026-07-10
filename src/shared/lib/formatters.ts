@@ -5,11 +5,16 @@
  * USD/locale-currency helper.
  */
 export const formatEuro = (value: number, decimals = 0): string => {
-  const sign = value < 0 ? '-' : ''
+  // Derive the sign from the ROUNDED value so a tiny negative that rounds to
+  // zero (e.g. -0.3 at 0 decimals) never renders the broken-looking "-€0".
+  const safe = Number.isFinite(value) ? value : 0
+  const factor = 10 ** decimals
+  const rounded = Math.round(safe * factor) / factor
+  const sign = rounded < 0 ? '-' : ''
   const abs = new Intl.NumberFormat('en-IE', {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
-  }).format(Math.abs(value))
+  }).format(Math.abs(rounded))
   return `${sign}€${abs}`
 }
 
