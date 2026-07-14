@@ -3,13 +3,17 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { format, isToday } from 'date-fns'
 import {
   ArrowUpRight, Bug, Camera, ChevronLeft, Globe, Info, Lightbulb, Sparkles,
-  Wallet, Briefcase, TrendingUp, Check, type LucideIcon,
+  Wallet, Briefcase, TrendingUp, Check, Lock, type LucideIcon,
 } from 'lucide-react'
 import toast from '../../components/Toast'
 import { ValletyMark } from '../../components/ValletyLogo'
 import { Modal } from '../../shared/components/Modal'
 import { useAppStore } from '../../shared/store/appStore'
 import { MODE_COLORS } from '../../shared/lib/modeColors'
+import { usePlan } from '../../shared/hooks/usePlan'
+import { useUpgrade } from '../../components/premium/UpgradeModalProvider'
+import { PremiumBadge } from '../../components/premium/PremiumBadge'
+import type { FeatureKey, Tier } from '../../shared/lib/plans'
 import type { AppMode } from '../../shared/types'
 import { supabase } from '../../supabase/client'
 import { getApiKey, setApiKey, ANTHROPIC_KEY_STORAGE } from '../../shared/lib/claudeClient'
@@ -311,17 +315,27 @@ function PrefsSection({ p, up, ticks }: { p: ValletyProfile; up: UpdateFn; ticks
 // nav chrome. Picking a mode switches the active workspace, re-tints the accent
 // and jumps to that mode's home.
 
-const MODE_OPTIONS: { value: AppMode; label: string; icon: LucideIcon; desc: string; home: string }[] = [
+const MODE_OPTIONS: {
+  value: AppMode; label: string; icon: LucideIcon; desc: string; home: string
+  feature?: FeatureKey; tier?: Tier
+}[] = [
   { value: 'personal', label: 'Personal', icon: Wallet, home: '/', desc: 'Everyday budgeting, bills, goals and net worth.' },
-  { value: 'business', label: 'Solo founder', icon: Briefcase, home: '/business', desc: 'Invoices, expenses, VAT & YEL for your business.' },
-  { value: 'investment', label: 'Investor', icon: TrendingUp, home: '/investment', desc: 'Portfolio, watchlist and holdings tracking.' },
+  { value: 'business', label: 'Solo founder', icon: Briefcase, home: '/business', desc: 'Invoices, expenses, VAT & YEL for your business.', feature: 'business_mode', tier: 'freelancer' },
+  { value: 'investment', label: 'Investor', icon: TrendingUp, home: '/investment', desc: 'Portfolio, watchlist and holdings tracking.', feature: 'investment_mode', tier: 'investor' },
 ]
 
 function ModeSection({ navigate }: { navigate: (to: string) => void }) {
   const mode = useAppStore((s) => s.mode)
   const setMode = useAppStore((s) => s.setMode)
+  const { hasFeature } = usePlan()
+  const { open: openUpgrade } = useUpgrade()
 
   const choose = (m: (typeof MODE_OPTIONS)[number]) => {
+    // Premium modes (business / investor) open the upgrade modal when locked.
+    if (m.feature && !hasFeature(m.feature)) {
+      openUpgrade(m.tier)
+      return
+    }
     if (m.value !== mode) {
       setMode(m.value)
       toast.success(`Switched to ${m.label} mode`)
@@ -336,6 +350,7 @@ function ModeSection({ navigate }: { navigate: (to: string) => void }) {
           const Icon = m.icon
           const active = mode === m.value
           const color = MODE_COLORS[m.value].accent
+          const locked = m.feature ? !hasFeature(m.feature) : false
           return (
             <button
               key={m.value}
@@ -355,10 +370,15 @@ function ModeSection({ navigate }: { navigate: (to: string) => void }) {
                 <Icon className="h-5 w-5" style={{ color }} />
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block text-[14px] font-medium text-text-primary">{m.label}</span>
+                <span className="flex items-center gap-1.5">
+                  <span className="text-[14px] font-medium text-text-primary">{m.label}</span>
+                  {locked && m.tier && <PremiumBadge tier={m.tier} />}
+                </span>
                 <span className="block text-[12px] text-text-muted">{m.desc}</span>
               </span>
-              {active && <Check className="h-5 w-5 flex-shrink-0" style={{ color }} />}
+              {locked
+                ? <Lock className="h-4 w-4 flex-shrink-0 text-text-muted" />
+                : active && <Check className="h-5 w-5 flex-shrink-0" style={{ color }} />}
             </button>
           )
         })}

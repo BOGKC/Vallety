@@ -7,6 +7,7 @@ import { AnimatedBackground } from '../../components/AnimatedBackground'
 import { BottomTabBar } from '../../components/BottomTabBar'
 import { OfflineBanner } from '../../components/OfflineBanner'
 import { InstallBanner } from '../../components/InstallBanner'
+import { PlanBanner } from '../../components/premium/PlanBanner'
 import { ErrorBoundary } from '../../components/ErrorBoundary'
 import { CircleSpinner } from '../../components/loaders'
 import { useDeviceTier } from '../hooks/useDeviceTier'
@@ -182,6 +183,7 @@ export function AppShell() {
       {/* Main column */}
       <div className="flex flex-col flex-1 min-w-0">
         <OfflineBanner />
+        <PlanBanner />
         <TopBar onMenuClick={() => setDrawerOpen(true)} />
 
         <main ref={mainRef} className="relative flex-1 overflow-y-auto">

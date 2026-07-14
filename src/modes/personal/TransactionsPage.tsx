@@ -9,6 +9,9 @@ import { useMinLoading } from '../../shared/hooks/useMinLoading'
 import { Drawer } from '../../components/Drawer'
 import { AddTransactionDrawer } from './AddTransactionDrawer'
 import { CsvImportModal } from './CsvImportModal'
+import { usePlan } from '../../shared/hooks/usePlan'
+import { useUpgrade } from '../../components/premium/UpgradeModalProvider'
+import { PremiumBadge } from '../../components/premium/PremiumBadge'
 import { formatEuro } from '../../shared/lib/formatters'
 import { cn } from '../../shared/lib/cn'
 import {
@@ -349,6 +352,12 @@ export function TransactionsPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [draft, setDraft] = useState<Draft>(blankDraft())
 
+  const { hasFeature } = usePlan()
+  const { open: openUpgrade } = useUpgrade()
+  // CSV import is premium (personal+). Locked → upgrade modal instead of the importer.
+  const csvLocked = !hasFeature('csv_import')
+  const openCsv = () => (csvLocked ? openUpgrade('personal') : setModal('csv'))
+
   const now = useMemo(() => new Date(), [])
   const categoryOptions = useMemo(() => allCategories(txns), [txns])
   const filtered = useMemo(() => applyFilters(txns, filters, now), [txns, filters, now])
@@ -394,8 +403,9 @@ export function TransactionsPage() {
           <GhostButton onClick={() => setModal('receipt')} className="hidden sm:inline-flex">
             <Camera className="h-4 w-4" /> Scan receipt
           </GhostButton>
-          <GhostButton onClick={() => setModal('csv')} className="hidden sm:inline-flex">
+          <GhostButton onClick={openCsv} className="hidden sm:inline-flex">
             <Upload className="h-4 w-4" /> Import CSV
+            {csvLocked && <PremiumBadge tier="personal" />}
           </GhostButton>
           <AccentButton onClick={openAdd}>
             <Plus className="h-4 w-4" /> <span className="hidden sm:inline">New transaction</span>
@@ -495,7 +505,7 @@ export function TransactionsPage() {
             title="No transactions yet"
             description="Add one manually, import a bank CSV, or scan a receipt to get started."
             primaryAction={{ label: 'Add transaction', icon: Plus, onClick: openAdd }}
-            secondaryAction={{ label: 'Import CSV', onClick: () => setModal('csv') }}
+            secondaryAction={{ label: 'Import CSV', onClick: openCsv }}
           />
         ) : !hasResults ? (
           // Condition 2: data exists but filters exclude everything
