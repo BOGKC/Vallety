@@ -44,6 +44,11 @@ export interface ValletyProfile {
   email: string
   phone: string
   created_at: string // ISO
+  // Plan / billing (canonical plan state — see plans.ts / billing.ts)
+  plan: import('./plans').Tier
+  plan_status: import('./plans').PlanStatus
+  plan_renews_at: string | null
+  trial_ends_at: string | null
   // App preferences
   home_currency: string
   language: 'en' | 'fi' | 'sv'
@@ -95,6 +100,10 @@ export const DEFAULT_PROFILE: ValletyProfile = {
   email: '',
   phone: '',
   created_at: '',
+  plan: 'free',
+  plan_status: 'active',
+  plan_renews_at: null,
+  trial_ends_at: null,
   home_currency: 'EUR',
   language: 'en',
   date_format: 'DD.MM.YYYY',

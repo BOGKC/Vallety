@@ -6,8 +6,10 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { ValletyMark } from '../../components/ValletyLogo'
+import { PremiumBadge } from '../../components/premium/PremiumBadge'
 import { useAppStore } from '../store/appStore'
 import { useAuthStore } from '../store/authStore'
+import { usePlan } from '../hooks/usePlan'
 import { cn } from '../lib/cn'
 import type { AppMode } from '../types'
 
@@ -171,6 +173,7 @@ export function Sidebar({ mobile = false, forceCollapsed, touch = false }: Sideb
 
   const profile = useAuthStore((s) => s.profile)
   const user = useAuthStore((s) => s.user)
+  const { plan, isPremium } = usePlan()
 
   const displayName = profile?.full_name ?? user?.email ?? 'You'
   const initials = profile?.full_name
@@ -298,8 +301,10 @@ export function Sidebar({ mobile = false, forceCollapsed, touch = false }: Sideb
                 <p className="truncate text-[13px] font-medium leading-tight text-text-primary">
                   {displayName}
                 </p>
-                <span className="mt-0.5 inline-block rounded-full bg-bg-elevated px-1.5 py-0.5 text-[10px] font-medium leading-none text-text-muted">
-                  Local
+                <span className="mt-0.5 inline-flex items-center gap-1 leading-none">
+                  {isPremium
+                    ? <PremiumBadge tier={plan} />
+                    : <span className="rounded-full bg-bg-elevated px-1.5 py-0.5 text-[10px] font-medium text-text-muted">Free</span>}
                 </span>
               </div>
             </button>

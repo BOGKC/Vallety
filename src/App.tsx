@@ -13,6 +13,7 @@ import { AuthGuard } from './shared/components/AuthGuard'
 import { AppShell } from './shared/components/AppShell'
 import { ComingSoon } from './shared/components/ComingSoon'
 import { FullPageSpinner } from './shared/components/LoadingSpinner'
+import { UpgradeModalProvider } from './components/premium/UpgradeModalProvider'
 import { useAuth } from './shared/hooks/useAuth'
 
 // Auth pages load eagerly — they're the first thing an unauthed visitor needs.
@@ -41,6 +42,7 @@ const ClientsPage = lazy(() => import('./modes/business/ClientsPage').then((m) =
 const InvestmentDashboard = lazy(() => import('./modes/investment/InvestmentDashboard').then((m) => ({ default: m.InvestmentDashboard })))
 const PortfolioPage = lazy(() => import('./modes/investment/PortfolioPage').then((m) => ({ default: m.PortfolioPage })))
 const WatchlistPage = lazy(() => import('./modes/investment/WatchlistPage').then((m) => ({ default: m.WatchlistPage })))
+const PricingPage = lazy(() => import('./pages/PricingPage').then((m) => ({ default: m.PricingPage })))
 
 // Initialises the Supabase auth listener once for the whole app.
 function AuthInit({ children }: { children: React.ReactNode }) {
@@ -53,6 +55,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthInit>
+          <UpgradeModalProvider>
           <ErrorBoundary>
           <Suspense fallback={<FullPageSpinner />}>
           <Routes>
@@ -111,6 +114,7 @@ export default function App() {
                 <Route path="/settings"                element={<Navigate to="/profile" replace />} />
                 <Route path="/settings/profile"        element={<Navigate to="/profile" replace />} />
                 <Route path="/advisor"                 element={<AdvisorPage />} />
+                <Route path="/pricing"                 element={<PricingPage />} />
 
               </Route>
             </Route>
@@ -128,6 +132,7 @@ export default function App() {
           <PWAManager />
 
           <ToastViewport />
+          </UpgradeModalProvider>
         </AuthInit>
       </BrowserRouter>
     </QueryClientProvider>
