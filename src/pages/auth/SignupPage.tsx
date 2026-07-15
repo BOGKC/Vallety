@@ -55,15 +55,28 @@ export function SignupPage() {
     const emailRedirectTo = authCallbackUrl()
     // Surfaced so the exact redirect can be inspected in the browser console.
     console.log('[auth] signUp emailRedirectTo:', emailRedirectTo)
-    const { data, error } = await supabase.auth.signUp({
-      email: values.email,
-      password: values.password,
-      options: {
-        data: { full_name: values.fullName },
-        emailRedirectTo,
-      },
-    })
 
+    let result
+    try {
+      result = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: { full_name: values.fullName },
+          emailRedirectTo,
+        },
+      })
+    } catch (e) {
+      // A rejected fetch (DNS/offline/CORS) throws rather than returning an
+      // error object — surface it legibly instead of a raw "Failed to fetch".
+      console.error('[auth] signUp request failed to reach Supabase:', e)
+      toast.error(
+        "Couldn't reach the server. Check your connection — if it keeps happening, the app's Supabase URL is misconfigured.",
+      )
+      return
+    }
+
+    const { data, error } = result
     if (error) {
       toast.error(error.message)
       return
