@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '../../supabase/client'
 import { readProfile } from '../../shared/lib/profile'
-import { FullPageSpinner } from '../../shared/components/LoadingSpinner'
+import { ValletyMark } from '../../components/ValletyLogo'
+import { CircleSpinner } from '../../components/loaders'
 import { BrokenShapeIllustration, ErrorActions, PrimaryAction } from '../../components/errors/ErrorState'
 
 /**
@@ -27,16 +28,16 @@ export function AuthCallbackPage() {
       const url = new URL(window.location.href)
       const hash = new URLSearchParams(url.hash.replace(/^#/, ''))
 
-      // 1) Provider-reported error (e.g. link expired) — shown, not swallowed.
+      // 1) Provider-reported error (e.g. link expired) — logged raw, shown friendly.
       const errDesc = url.searchParams.get('error_description') ?? hash.get('error_description')
-      if (errDesc) { setError(errDesc); return }
+      if (errDesc) { console.error('[auth] callback error:', errDesc); setError(errDesc); return }
 
       // 2) PKCE flow: exchange the ?code= for a session. Implicit flow is
       //    auto-handled by the client (detectSessionInUrl), so we just read it.
       const code = url.searchParams.get('code')
       if (code) {
         const { error: exErr } = await supabase.auth.exchangeCodeForSession(code)
-        if (exErr) { setError(exErr.message); return }
+        if (exErr) { console.error('[auth] exchangeCodeForSession failed:', exErr.message); setError(exErr.message); return }
       }
 
       // 3) Resolve the session (implicit hash may still be settling — poll briefly).
@@ -72,14 +73,29 @@ export function AuthCallbackPage() {
         role="alert"
       >
         <BrokenShapeIllustration />
-        <h1 className="mt-5 text-[20px] font-semibold text-text-primary">Couldn't sign you in</h1>
-        <p className="mt-1.5 max-w-sm text-[14px] text-text-secondary">{error}</p>
+        <h1 className="mt-5 text-[20px] font-semibold text-text-primary">This link is invalid or expired</h1>
+        <p className="mt-1.5 max-w-sm text-[14px] text-text-secondary">
+          Request a fresh sign-in link and try again.
+        </p>
         <ErrorActions>
-          <PrimaryAction href="/login">Back to sign in</PrimaryAction>
+          <PrimaryAction href="/login">Go to login</PrimaryAction>
         </ErrorActions>
       </div>
     )
   }
 
-  return <FullPageSpinner />
+  // Processing state
+  return (
+    <div
+      className="flex min-h-screen flex-col items-center justify-center gap-5 bg-bg-primary"
+      role="status"
+      aria-live="polite"
+    >
+      <ValletyMark size={56} />
+      <div className="flex items-center gap-2.5">
+        <CircleSpinner size={20} />
+        <span className="text-[14px] text-text-secondary">Signing you in…</span>
+      </div>
+    </div>
+  )
 }
