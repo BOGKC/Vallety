@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
 } from 'recharts'
 import {
-  ArrowDownLeft, ArrowUpRight, Target, TrendingUp, ChevronDown, LayoutDashboard, Plus,
+  ArrowDownLeft, ArrowUpRight, Target, TrendingUp, ChevronDown,
 } from 'lucide-react'
 import { readTransactions } from '../../shared/lib/transactions'
 import { readBudgets } from '../../shared/lib/budgets'
@@ -12,8 +11,10 @@ import { readGoals } from '../../shared/lib/goals'
 import { readBills } from '../../shared/lib/bills'
 import { computeDashboard } from '../../shared/lib/dashboardData'
 import { formatEuro } from '../../shared/lib/formatters'
+import { readProfile } from '../../shared/lib/profile'
 import { cn } from '../../shared/lib/cn'
-import { EmptyState } from '../../components/EmptyState'
+import { GettingStarted } from '../../components/GettingStarted'
+import { InfoTip, TERM_DEFS } from '../../components/InfoTip'
 import { AnimatedEuro, AnimatedPercent } from '../../components/AnimatedNumber'
 import { SkeletonBlock, SkeletonMetricCard, SkeletonChartArea } from '../../components/skeletons'
 import { useMinLoading } from '../../shared/hooks/useMinLoading'
@@ -130,8 +131,10 @@ function DashboardSkeleton() {
 
 export function PersonalDashboard() {
   const [showBreakdown, setShowBreakdown] = useState(false)
-  const navigate = useNavigate()
   const loading = useMinLoading()
+  // First-run checklist: shows until every step is done or the user skips
+  // (persisted in the profile). rAF-free initial read so it never flashes.
+  const [gsDone, setGsDone] = useState(() => readProfile().getting_started_done)
 
   const now = useMemo(() => new Date(), [])
   const metrics = useMemo(
@@ -167,24 +170,21 @@ export function PersonalDashboard() {
 
   if (loading) return <DashboardSkeleton />
 
-  if (!hasData) {
+  // New/empty user (or anyone who hasn't finished setup) → guided first run
+  // instead of bland empty cards. Once complete/skipped it never returns.
+  if (!gsDone && !hasData) {
     return (
-      <div className="mx-auto max-w-6xl">
-        <div className="rounded-lg bg-bg-card">
-          <EmptyState
-            icon={LayoutDashboard}
-            title="Welcome to Vallety"
-            description="Add your first transaction to start seeing your financial picture."
-            primaryAction={{ label: 'Add transaction', icon: Plus, onClick: () => navigate('/transactions') }}
-            secondaryAction={{ label: 'Import CSV', onClick: () => navigate('/transactions') }}
-          />
-        </div>
+      <div className="mx-auto max-w-3xl">
+        <GettingStarted onDone={() => setGsDone(true)} />
       </div>
     )
   }
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-4 sm:gap-6">
+      {/* First-run checklist sits above the dashboard until setup is done. */}
+      {!gsDone && <GettingStarted onDone={() => setGsDone(true)} />}
+
       {/* SECTION 1 — Greeting ──────────────────────────────────────────────── */}
       <div>
         <h1 className="text-[22px] font-semibold text-text-primary">{greeting}</h1>
@@ -201,10 +201,11 @@ export function PersonalDashboard() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 text-center sm:text-left">
             <p
-              className="text-[12px] font-medium uppercase text-text-muted"
+              className="inline-flex items-center justify-center gap-1 text-[12px] font-medium uppercase text-text-muted sm:justify-start"
               style={{ letterSpacing: '0.08em' }}
             >
               Safe to spend
+              <InfoTip label="Safe to spend" text={TERM_DEFS.safeToSpend} />
             </p>
             <p
               className="num-hero mt-1 leading-none"

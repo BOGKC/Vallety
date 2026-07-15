@@ -10,10 +10,11 @@ import { ValletyMark } from '../../components/ValletyLogo'
 import { Modal } from '../../shared/components/Modal'
 import { useAppStore } from '../../shared/store/appStore'
 import { MODE_COLORS } from '../../shared/lib/modeColors'
+import { APP_VERSION_LABEL } from '../../shared/lib/version'
 import { usePlan } from '../../shared/hooks/usePlan'
 import { useUpgrade } from '../../components/premium/UpgradeModalProvider'
 import { PremiumBadge } from '../../components/premium/PremiumBadge'
-import type { FeatureKey, Tier } from '../../shared/lib/plans'
+import { planLabel, type FeatureKey, type Tier } from '../../shared/lib/plans'
 import type { AppMode } from '../../shared/types'
 import { supabase } from '../../supabase/client'
 import { getApiKey, setApiKey, ANTHROPIC_KEY_STORAGE } from '../../shared/lib/claudeClient'
@@ -130,7 +131,7 @@ function ProfileHeader({ p }: { p: ValletyProfile }) {
     try { return window.localStorage.getItem(PROFILE_PHOTO_KEY) } catch { return null }
   })
   const fileRef = useRef<HTMLInputElement>(null)
-  const plan = useMemo(() => readPlan(), [])
+  const { plan } = usePlan()
 
   const initials = (p.full_name || 'V')
     .split(' ')
@@ -198,7 +199,7 @@ function ProfileHeader({ p }: { p: ValletyProfile }) {
             className="rounded-full px-2 py-0.5 text-[11px] font-semibold text-white"
             style={{ backgroundColor: 'var(--color-accent)' }}
           >
-            {plan}
+            {planLabel(plan)}
           </span>
           {memberSince && <span className="text-[12px] text-text-muted">Member since {memberSince}</span>}
         </div>
@@ -1300,7 +1301,7 @@ function AboutSection() {
 
   return (
     <Section label="About">
-      <Row label="Version"><span className="text-[13px] text-text-muted">1.0.0 (MVP)</span></Row>
+      <Row label="Version"><span className="text-[13px] text-text-muted">{APP_VERSION_LABEL}</span></Row>
       <Row label="Last updated"><span className="text-[13px] text-text-muted">{lastUpdated}</span></Row>
       <Row label="Local storage used"><span className="text-[13px] text-text-muted">{storageKb.toFixed(1)} KB</span></Row>
 

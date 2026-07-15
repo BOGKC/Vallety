@@ -49,6 +49,9 @@ export interface ValletyProfile {
   plan_status: import('./plans').PlanStatus
   plan_renews_at: string | null
   trial_ends_at: string | null
+  // First-run guidance (persisted so nothing ever re-shows once done/skipped)
+  getting_started_done: boolean
+  tour_done: boolean
   // App preferences
   home_currency: string
   language: 'en' | 'fi' | 'sv'
@@ -104,6 +107,8 @@ export const DEFAULT_PROFILE: ValletyProfile = {
   plan_status: 'active',
   plan_renews_at: null,
   trial_ends_at: null,
+  getting_started_done: false,
+  tour_done: false,
   home_currency: 'EUR',
   language: 'en',
   date_format: 'DD.MM.YYYY',

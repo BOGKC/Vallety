@@ -4,6 +4,8 @@ import { Bell, LogOut, User, Settings, Menu } from 'lucide-react'
 import { useAppStore } from '../store/appStore'
 import { useAuthStore } from '../store/authStore'
 import { useAuth } from '../hooks/useAuth'
+import { usePlan } from '../hooks/usePlan'
+import { planLabel } from '../lib/plans'
 import { resolvePageTitle } from '../lib/pageTitles'
 import toast from '../../components/Toast'
 
@@ -78,16 +80,13 @@ function NotificationBell() {
   )
 }
 
-// ── Sync indicator ──────────────────────────────────────────────────────────────
+// ── Plan indicator (identity sub-label, consistent with the sidebar) ─────────────
 
-function SyncIndicator() {
+function PlanIndicator() {
+  const { plan } = usePlan()
   return (
-    <div
-      className="hidden md:flex items-center gap-1.5 px-1.5"
-      title="Data is stored locally"
-    >
-      <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-success)]" aria-hidden />
-      <span className="text-[12px] text-text-muted">Local</span>
+    <div className="hidden md:flex items-center px-1.5" title={`${planLabel(plan)}`}>
+      <span className="text-[12px] font-medium text-text-muted">{planLabel(plan)}</span>
     </div>
   )
 }
@@ -247,7 +246,7 @@ export function TopBar({ onMenuClick }: TopBarProps) {
       <div className="flex flex-shrink-0 items-center gap-2">
         <CurrencyPill />
         <NotificationBell />
-        <SyncIndicator />
+        <PlanIndicator />
         <UserMenu />
       </div>
     </header>

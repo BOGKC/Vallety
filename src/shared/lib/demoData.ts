@@ -116,3 +116,30 @@ export function seedDemoData(now = new Date()): void {
     /* ignore */
   }
 }
+
+// ── Sample-data mode (the "Explore with sample data" first-run option) ──────────
+// Distinct from the demo account: any signed-in user can load a labelled sample
+// dataset to SEE a filled-in Vallety, then clear it in one tap. We flag it so
+// "clear" only removes the sample collections, never hand-entered data.
+
+export const SAMPLE_ACTIVE_KEY = 'vallety_sample_active'
+const SAMPLE_KEYS = [TRANSACTIONS_KEY, BUDGETS_KEY, GOALS_KEY, BILLS_KEY, ACCOUNTS_KEY, SNAPSHOTS_KEY]
+
+export function isSampleActive(): boolean {
+  try { return window.localStorage.getItem(SAMPLE_ACTIVE_KEY) === '1' } catch { return false }
+}
+
+/** Load the sample dataset (only into empty collections) and flag it. */
+export function loadSampleData(now = new Date()): void {
+  seedDemoData(now)
+  try { window.localStorage.setItem(SAMPLE_ACTIVE_KEY, '1') } catch { /* ignore */ }
+}
+
+/** Remove the sample dataset and the flag. Safe: only clears the sample keys. */
+export function clearSampleData(): void {
+  try {
+    for (const k of SAMPLE_KEYS) window.localStorage.removeItem(k)
+    window.localStorage.removeItem(SAMPLE_ACTIVE_KEY)
+    window.localStorage.removeItem('vallety_demo_seeded')
+  } catch { /* ignore */ }
+}
