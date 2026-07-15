@@ -52,12 +52,15 @@ export function SignupPage() {
   } = useForm<FormValues>({ resolver: zodResolver(schema) })
 
   const onSubmit = async (values: FormValues) => {
+    const emailRedirectTo = authCallbackUrl()
+    // Surfaced so the exact redirect can be inspected in the browser console.
+    console.log('[auth] signUp emailRedirectTo:', emailRedirectTo)
     const { data, error } = await supabase.auth.signUp({
       email: values.email,
       password: values.password,
       options: {
         data: { full_name: values.fullName },
-        emailRedirectTo: authCallbackUrl(),
+        emailRedirectTo,
       },
     })
 

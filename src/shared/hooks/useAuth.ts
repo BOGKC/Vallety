@@ -66,9 +66,11 @@ export function useAuth() {
   }, [])
 
   const signInWithGoogle = useCallback(async () => {
+    const redirectTo = authCallbackUrl()
+    console.log('[auth] OAuth redirectTo:', redirectTo)
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: authCallbackUrl() },
+      options: { redirectTo },
     })
     return { error }
   }, [])
