@@ -270,7 +270,8 @@ function PersonalSection({ p, up, ticks }: { p: ValletyProfile; up: UpdateFn; ti
     <Section label="Personal information">
       <Row label="Full name" stamp={ticks.full_name}>
         <TextField initial={p.full_name} placeholder="Your full name"
-          onCommit={(v) => up({ full_name: v }, 'full_name')} />
+          validate={(v) => (v.trim().length >= 2 ? null : 'Enter your name (at least 2 characters)')}
+          onCommit={(v) => up({ full_name: v.trim() }, 'full_name')} />
       </Row>
       <Row
         label="Email address"
@@ -281,7 +282,9 @@ function PersonalSection({ p, up, ticks }: { p: ValletyProfile; up: UpdateFn; ti
         }
       >
         <TextField initial={p.email} type="email" placeholder="your@email.com"
-          disabled={emailBusy} onCommit={(v) => void changeEmail(v)} />
+          disabled={emailBusy}
+          validate={(v) => (/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v.trim()) ? null : 'Enter a valid email address')}
+          onCommit={(v) => void changeEmail(v)} />
       </Row>
       <Row label="Phone number" stamp={ticks.phone}>
         <TextField initial={p.phone} type="tel" placeholder="+358 40 123 4567 (optional)"
@@ -521,17 +524,18 @@ function BusinessSection({ p, up, ticks }: { p: ValletyProfile; up: UpdateFn; ti
             <TextField initial={p.y_tunnus} placeholder="1234567-8" width={140} error={yError}
               onCommit={(v) => up({ y_tunnus: v }, 'y_tunnus')} />
           </Row>
-          <Row label="Business type" stamp={ticks.business_type} stack>
-            <Pills
-              grid
+          <Row label="Business type" stamp={ticks.business_type}>
+            <SelectBox
+              ariaLabel="Business type"
               value={p.business_type}
               options={[
+                { value: '', label: 'None' },
                 { value: 'toiminimi', label: 'Toiminimi (sole trader)' },
                 { value: 'oy', label: 'Osakeyhtiö (OY)' },
                 { value: 'freelancer', label: 'Freelancer' },
                 { value: 'kevytyrittaja', label: 'Kevytyrittäjä' },
               ]}
-              onChange={(v) => up({ business_type: v }, 'business_type')}
+              onChange={(v) => up({ business_type: v as ValletyProfile['business_type'] }, 'business_type')}
             />
           </Row>
           <Row label="VAT registered (ALV)" sub="Toggle on if you are registered for value-added tax in Finland" stamp={ticks.vat_registered}>

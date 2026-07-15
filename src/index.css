@@ -1071,6 +1071,14 @@ button,
   .nav-item {
     min-height: 48px;
   }
+  /* iOS zooms the viewport when a focused control's font is < 16px. Bump text
+     entry controls to 16px on mobile so tapping a field never zooms the page.
+     (Desktop keeps the denser 13px sizing from the component classes.) */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
 
 /* Momentum scrolling + no bounce-through to the wrong colour on the main

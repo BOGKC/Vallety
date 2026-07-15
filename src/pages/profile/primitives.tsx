@@ -186,7 +186,7 @@ export function SelectBox({
 // ── Debounced text field ──────────────────────────────────────────────────────
 
 export function TextField({
-  initial, onCommit, placeholder, type = 'text', prefix, transform, error, width = 220, disabled,
+  initial, onCommit, placeholder, type = 'text', prefix, transform, error, width = 220, disabled, validate,
 }: {
   initial: string
   onCommit: (v: string) => void
@@ -199,8 +199,12 @@ export function TextField({
   error?: string | null
   width?: number
   disabled?: boolean
+  /** Field-level validation. Returns an error message (shown inline) or null.
+   *  A non-null result blocks the commit so an invalid value is never saved. */
+  validate?: (v: string) => string | null
 }) {
   const [value, setValue] = useState(initial)
+  const [liveError, setLiveError] = useState<string | null>(null)
   const timer = useRef<number | null>(null)
 
   // The profile loads asynchronously from Supabase, so `initial` can change
@@ -214,22 +218,33 @@ export function TextField({
   }
 
   // Debounce: the write is scheduled from the event handler, not an effect.
+  // Validation gates the commit — an invalid value shows an inline error and
+  // is never persisted.
+  const commit = (v: string) => {
+    const err = validate ? validate(v) : null
+    setLiveError(err)
+    if (!err) onCommit(v)
+  }
+
   const handleChange = (raw: string) => {
     const v = transform ? transform(raw) : raw
     setValue(v)
+    if (validate) setLiveError(validate(v)) // clear/show the error as they type
     if (timer.current) window.clearTimeout(timer.current)
-    timer.current = window.setTimeout(() => onCommit(v), 500)
+    timer.current = window.setTimeout(() => commit(v), 500)
   }
 
   const flush = () => {
     if (timer.current) {
       window.clearTimeout(timer.current)
       timer.current = null
-      onCommit(value)
+      commit(value)
     }
   }
 
   useEffect(() => () => { if (timer.current) window.clearTimeout(timer.current) }, [])
+
+  const shownError = error ?? liveError
 
   return (
     <div className="w-full sm:w-auto">
@@ -246,15 +261,16 @@ export function TextField({
           disabled={disabled}
           onChange={(e) => handleChange(e.target.value)}
           onBlur={flush}
+          aria-invalid={shownError ? true : undefined}
           className={cn(
             'h-9 w-full rounded-md border bg-bg-input text-[13px] text-text-primary placeholder:text-text-muted focus:border-accent disabled:opacity-50 sm:w-auto',
             prefix ? 'pl-7 pr-3' : 'px-3',
-            error ? 'border-[var(--color-danger)]' : 'border-default'
+            shownError ? 'border-[var(--color-danger)]' : 'border-default'
           )}
           style={{ maxWidth: '100%', width }}
         />
       </div>
-      {error && <p className="mt-1 text-[12px] text-[var(--color-danger)]">{error}</p>}
+      {shownError && <p className="mt-1 text-[12px] text-[var(--color-danger)]">{shownError}</p>}
     </div>
   )
 }
