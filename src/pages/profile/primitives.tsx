@@ -186,7 +186,7 @@ export function SelectBox({
 // ── Debounced text field ──────────────────────────────────────────────────────
 
 export function TextField({
-  initial, onCommit, placeholder, type = 'text', prefix, transform, error, width = 220,
+  initial, onCommit, placeholder, type = 'text', prefix, transform, error, width = 220, disabled,
 }: {
   initial: string
   onCommit: (v: string) => void
@@ -198,9 +198,20 @@ export function TextField({
   transform?: (v: string) => string
   error?: string | null
   width?: number
+  disabled?: boolean
 }) {
   const [value, setValue] = useState(initial)
   const timer = useRef<number | null>(null)
+
+  // The profile loads asynchronously from Supabase, so `initial` can change
+  // after mount. Re-sync during render (React's "adjust state when a prop
+  // changes" pattern) whenever the incoming value actually changes — a commit
+  // sets it to what we already have, so this never clobbers active typing.
+  const [lastInitial, setLastInitial] = useState(initial)
+  if (initial !== lastInitial) {
+    setLastInitial(initial)
+    setValue(initial)
+  }
 
   // Debounce: the write is scheduled from the event handler, not an effect.
   const handleChange = (raw: string) => {
@@ -232,10 +243,11 @@ export function TextField({
           type={type}
           value={value}
           placeholder={placeholder}
+          disabled={disabled}
           onChange={(e) => handleChange(e.target.value)}
           onBlur={flush}
           className={cn(
-            'h-9 w-full rounded-md border bg-bg-input text-[13px] text-text-primary placeholder:text-text-muted focus:border-accent sm:w-auto',
+            'h-9 w-full rounded-md border bg-bg-input text-[13px] text-text-primary placeholder:text-text-muted focus:border-accent disabled:opacity-50 sm:w-auto',
             prefix ? 'pl-7 pr-3' : 'px-3',
             error ? 'border-[var(--color-danger)]' : 'border-default'
           )}

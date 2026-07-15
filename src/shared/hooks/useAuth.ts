@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from 'react'
 import { supabase } from '../../supabase/client'
 import { useAuthStore } from '../store/authStore'
+import { useAppStore } from '../store/appStore'
 import { authCallbackUrl } from '../lib/authRedirect'
 import type { Profile } from '../../supabase/types'
 
@@ -35,7 +36,15 @@ export function useAuth() {
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       store().setSession(session)
-      if (session?.user) store().setProfile(await fetchProfile(session.user.id))
+      if (session?.user) {
+        const profile = await fetchProfile(session.user.id)
+        store().setProfile(profile)
+        // One-time on initial load: adopt the saved workspace mode so the
+        // preference follows the user to a new device. (Deliberately not done
+        // in onAuthStateChange to avoid a token refresh reverting a just-made
+        // local mode switch.)
+        if (profile?.active_mode) useAppStore.getState().setMode(profile.active_mode)
+      }
       store().setLoading(false)
       store().setInitialized(true)
     })

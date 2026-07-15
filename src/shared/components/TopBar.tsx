@@ -121,6 +121,7 @@ function UserMenu() {
 
   const displayName = profile?.full_name ?? user?.email ?? null
   const email = user?.email ?? ''
+  const avatarUrl = profile?.avatar_url ?? null
   const initials = profile?.full_name
     ? profile.full_name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
     : user?.email
@@ -137,13 +138,15 @@ function UserMenu() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-bg-elevated text-[13px] font-semibold text-[var(--color-accent)]"
+        className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-bg-elevated text-[13px] font-semibold text-[var(--color-accent)]"
         style={{ transition: 'var(--transition-fast)' }}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label="Account menu"
       >
-        {initials}
+        {avatarUrl
+          ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+          : initials}
       </button>
 
       {open && (

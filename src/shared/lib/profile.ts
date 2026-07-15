@@ -43,6 +43,7 @@ export interface ValletyProfile {
   full_name: string
   email: string
   phone: string
+  avatar_url: string | null // public URL from the Supabase 'avatars' bucket
   created_at: string // ISO
   // Plan / billing (canonical plan state — see plans.ts / billing.ts)
   plan: import('./plans').Tier
@@ -103,6 +104,7 @@ export const DEFAULT_PROFILE: ValletyProfile = {
   full_name: '',
   email: '',
   phone: '',
+  avatar_url: null,
   created_at: '',
   plan: 'free',
   plan_status: 'active',

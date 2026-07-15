@@ -178,6 +178,7 @@ export function Sidebar({ mobile = false, forceCollapsed, touch = false }: Sideb
   const { plan, isPremium } = usePlan()
 
   const displayName = profile?.full_name ?? user?.email ?? 'You'
+  const avatarUrl = profile?.avatar_url ?? null
   const initials = profile?.full_name
     ? profile.full_name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase()
     : user?.email
@@ -277,9 +278,11 @@ export function Sidebar({ mobile = false, forceCollapsed, touch = false }: Sideb
             to="/profile"
             title="Profile & settings"
             aria-label="Profile & settings"
-            className="group relative mx-auto flex h-8 w-8 items-center justify-center rounded-full bg-bg-elevated text-[12px] font-semibold text-[var(--color-accent)]"
+            className="group relative mx-auto flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-bg-elevated text-[12px] font-semibold text-[var(--color-accent)]"
           >
-            {initials}
+            {avatarUrl
+              ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+              : initials}
             <span
               className="pointer-events-none absolute z-50 whitespace-nowrap rounded-md bg-bg-elevated px-2 py-1 text-[12px] font-medium text-text-primary opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100"
               style={{ left: 68 }}
@@ -296,8 +299,10 @@ export function Sidebar({ mobile = false, forceCollapsed, touch = false }: Sideb
               className="flex min-w-0 flex-1 items-center gap-2.5 rounded-md text-left hover:bg-bg-elevated"
               style={{ transition: 'var(--transition-fast)' }}
             >
-              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-bg-elevated text-[12px] font-semibold text-[var(--color-accent)]">
-                {initials}
+              <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-bg-elevated text-[12px] font-semibold text-[var(--color-accent)]">
+                {avatarUrl
+                  ? <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+                  : initials}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-[13px] font-medium leading-tight text-text-primary">

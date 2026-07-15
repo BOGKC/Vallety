@@ -3,12 +3,17 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { format, isToday } from 'date-fns'
 import {
   ArrowUpRight, Bug, Camera, ChevronLeft, Globe, Info, Lightbulb, Sparkles,
-  Wallet, Briefcase, TrendingUp, Check, Lock, type LucideIcon,
+  Wallet, Briefcase, TrendingUp, Check, Lock, Trash2, type LucideIcon,
 } from 'lucide-react'
 import toast from '../../components/Toast'
 import { ValletyMark } from '../../components/ValletyLogo'
 import { Modal } from '../../shared/components/Modal'
 import { useAppStore } from '../../shared/store/appStore'
+import { useAuthStore } from '../../shared/store/authStore'
+import {
+  applyOptimisticProfile, saveProfileToSupabase, mergeDbIntoLocal,
+  uploadAvatar, removeAvatar, type ProfileSavePatch,
+} from '../../shared/lib/profileSync'
 import { MODE_COLORS } from '../../shared/lib/modeColors'
 import { APP_VERSION_LABEL } from '../../shared/lib/version'
 import { usePlan } from '../../shared/hooks/usePlan'
@@ -22,8 +27,8 @@ import { readTransactions, TRANSACTIONS_KEY } from '../../shared/lib/transaction
 import { BUDGETS_KEY } from '../../shared/lib/budgets'
 import { GOALS_KEY } from '../../shared/lib/goals'
 import {
-  readProfile, saveProfilePatch, readPlan, storageUsedKb, collectAllData,
-  clearAllValletyKeys, PROFILE_PHOTO_KEY, LAST_UPDATED_KEY, AI_USAGE_KEY,
+  saveProfilePatch, readPlan, storageUsedKb, collectAllData,
+  clearAllValletyKeys, LAST_UPDATED_KEY, AI_USAGE_KEY,
   NEXT_BILLING_KEY, type ValletyProfile, type Plan, type LoyaltyCard,
 } from '../../shared/lib/profile'
 import {
@@ -33,7 +38,7 @@ import {
 
 // ── Shared constants ──────────────────────────────────────────────────────────
 
-type UpdateFn = (patch: Partial<ValletyProfile>, tickKey?: string) => void
+type UpdateFn = (patch: ProfileSavePatch, tickKey?: string) => void
 type Ticks = Record<string, number>
 
 const CURRENCIES = [
@@ -126,13 +131,16 @@ async function testAnthropicKey(key: string): Promise<string | null> {
 
 // ═══ SECTION 1 — Profile header ════════════════════════════════════════════════
 
-function ProfileHeader({ p }: { p: ValletyProfile }) {
-  const [photo, setPhoto] = useState<string | null>(() => {
-    try { return window.localStorage.getItem(PROFILE_PHOTO_KEY) } catch { return null }
-  })
+// Reject anything over ~4 MB before we attempt an upload (and to keep the
+// signed-out base64 fallback out of localStorage's ~5 MB ceiling).
+const MAX_AVATAR_BYTES = 4 * 1024 * 1024
+
+function ProfileHeader({ p, onAvatarSaved }: { p: ValletyProfile; onAvatarSaved: (url: string | null) => void }) {
   const fileRef = useRef<HTMLInputElement>(null)
+  const [busy, setBusy] = useState(false)
   const { plan } = usePlan()
 
+  const photo = p.avatar_url
   const initials = (p.full_name || 'V')
     .split(' ')
     .filter(Boolean)
@@ -141,18 +149,30 @@ function ProfileHeader({ p }: { p: ValletyProfile }) {
     .join('')
     .toUpperCase() || 'V'
 
-  const onPhoto = (file: File) => {
-    const reader = new FileReader()
-    reader.onload = () => {
-      const url = String(reader.result)
-      try {
-        window.localStorage.setItem(PROFILE_PHOTO_KEY, url)
-        setPhoto(url)
-      } catch {
-        toast.error('Photo is too large to store locally — try a smaller image.')
-      }
+  const onPhoto = async (file: File) => {
+    if (!file.type.startsWith('image/')) { toast.error('Please choose an image file.'); return }
+    if (file.size > MAX_AVATAR_BYTES) { toast.error('That image is too large — please choose one under 4 MB.'); return }
+    setBusy(true)
+    const res = await uploadAvatar(file)
+    setBusy(false)
+    if (res.ok && res.url) {
+      onAvatarSaved(res.url)
+      toast.success('Photo updated')
+    } else {
+      toast.error(res.error ? `Couldn't upload photo: ${res.error}` : "Couldn't upload photo. Please try again.")
     }
-    reader.readAsDataURL(file)
+  }
+
+  const onRemovePhoto = async () => {
+    setBusy(true)
+    const res = await removeAvatar()
+    setBusy(false)
+    if (res.ok) {
+      onAvatarSaved(null)
+      toast.success('Photo removed')
+    } else {
+      toast.error(res.error ? `Couldn't remove photo: ${res.error}` : "Couldn't remove photo. Please try again.")
+    }
   }
 
   const memberSince = p.created_at ? format(new Date(p.created_at), 'MMMM yyyy') : ''
@@ -173,11 +193,17 @@ function ProfileHeader({ p }: { p: ValletyProfile }) {
             {initials}
           </div>
         )}
+        {busy && (
+          <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/40">
+            <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+          </div>
+        )}
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
-          aria-label="Change profile photo"
-          className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border border-default bg-bg-elevated text-text-secondary hover:text-text-primary"
+          disabled={busy}
+          aria-label={photo ? 'Change profile photo' : 'Add profile photo'}
+          className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full border border-default bg-bg-elevated text-text-secondary hover:text-text-primary disabled:opacity-50"
           style={{ minHeight: 24 }}
         >
           <Camera className="h-3 w-3" />
@@ -187,7 +213,7 @@ function ProfileHeader({ p }: { p: ValletyProfile }) {
           type="file"
           accept="image/*"
           className="hidden"
-          onChange={(e) => { const f = e.target.files?.[0]; if (f) onPhoto(f); e.target.value = '' }}
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) void onPhoto(f); e.target.value = '' }}
         />
       </div>
 
@@ -202,6 +228,16 @@ function ProfileHeader({ p }: { p: ValletyProfile }) {
             {planLabel(plan)}
           </span>
           {memberSince && <span className="text-[12px] text-text-muted">Member since {memberSince}</span>}
+          {photo && (
+            <button
+              type="button"
+              onClick={() => void onRemovePhoto()}
+              disabled={busy}
+              className="inline-flex items-center gap-1 text-[12px] text-text-muted hover:text-text-primary disabled:opacity-50"
+            >
+              <Trash2 className="h-3 w-3" /> Remove photo
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -212,6 +248,24 @@ function ProfileHeader({ p }: { p: ValletyProfile }) {
 
 function PersonalSection({ p, up, ticks }: { p: ValletyProfile; up: UpdateFn; ticks: Ticks }) {
   const joined = p.created_at ? format(new Date(p.created_at), 'd MMMM yyyy') : '—'
+  const [emailBusy, setEmailBusy] = useState(false)
+  const [emailPending, setEmailPending] = useState<string | null>(null)
+
+  // Email is an auth credential, not a profile column: changing it goes through
+  // Supabase's confirmation flow (updateUser), which emails a verification link.
+  // We never overwrite profiles.email directly here.
+  const changeEmail = async (v: string) => {
+    const next = v.trim().toLowerCase()
+    if (!next || next === (p.email || '').toLowerCase()) return
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(next)) { toast.error('Enter a valid email address.'); return }
+    setEmailBusy(true)
+    const { error } = await supabase.auth.updateUser({ email: next })
+    setEmailBusy(false)
+    if (error) { toast.error(error.message); return }
+    setEmailPending(next)
+    toast.success('Check your new email to confirm the change.')
+  }
+
   return (
     <Section label="Personal information">
       <Row label="Full name" stamp={ticks.full_name}>
@@ -219,21 +273,15 @@ function PersonalSection({ p, up, ticks }: { p: ValletyProfile; up: UpdateFn; ti
           onCommit={(v) => up({ full_name: v }, 'full_name')} />
       </Row>
       <Row
-        label={
-          <>
-            Email address
-            <span
-              className="rounded-full px-1.5 py-0.5 text-[10px] font-medium"
-              style={{ backgroundColor: 'var(--color-warning-muted)', color: 'var(--color-warning)' }}
-            >
-              Unverified
-            </span>
-          </>
+        label="Email address"
+        sub={
+          emailPending
+            ? `Pending confirmation — check ${emailPending} to complete the change.`
+            : 'Changing this sends a confirmation link to the new address.'
         }
-        stamp={ticks.email}
       >
         <TextField initial={p.email} type="email" placeholder="your@email.com"
-          onCommit={(v) => up({ email: v }, 'email')} />
+          disabled={emailBusy} onCommit={(v) => void changeEmail(v)} />
       </Row>
       <Row label="Phone number" stamp={ticks.phone}>
         <TextField initial={p.phone} type="tel" placeholder="+358 40 123 4567 (optional)"
@@ -339,6 +387,9 @@ function ModeSection({ navigate }: { navigate: (to: string) => void }) {
     }
     if (m.value !== mode) {
       setMode(m.value)
+      // Persist the preference so it follows the user across sessions/devices.
+      applyOptimisticProfile({ active_mode: m.value })
+      void saveProfileToSupabase({ active_mode: m.value })
       toast.success(`Switched to ${m.label} mode`)
     }
     navigate(m.home)
@@ -1373,15 +1424,38 @@ function AboutSection() {
 export function ProfilePage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const [profile, setProfile] = useState<ValletyProfile>(() => readProfile())
+  const dbProfile = useAuthStore((s) => s.profile)
+  // Seed from the Supabase row (authoritative) merged over the local cache, so
+  // every field shows the persisted value on load — across sessions and devices.
+  const [profile, setProfile] = useState<ValletyProfile>(() => mergeDbIntoLocal(dbProfile))
   const [ticks, setTicks] = useState<Ticks>({})
   const [accountDeleted, setAccountDeleted] = useState(false)
 
-  // Spread-merge every save; flash the row's "Saved" tick.
+  // Re-hydrate when the auth-store profile arrives/changes (e.g. late fetch,
+  // or a save reconciled the row). Done as a render-time state adjustment keyed
+  // on the profile reference (not an effect) so it can't cascade re-renders;
+  // local-only fields are preserved by the merge.
+  const [syncedFrom, setSyncedFrom] = useState(dbProfile)
+  if (dbProfile !== syncedFrom) {
+    setSyncedFrom(dbProfile)
+    setProfile(mergeDbIntoLocal(dbProfile))
+  }
+
+  // Spread-merge every save. The change is applied locally + optimistically to
+  // the shared auth store (so the sidebar/header update instantly), persisted to
+  // localStorage, then to Supabase. The "Saved" tick only flashes once the save
+  // actually succeeds; a failure surfaces a toast so a change is never lost silently.
   const update: UpdateFn = (patch, tickKey) => {
     setProfile((prev) => ({ ...prev, ...patch }))
+    applyOptimisticProfile(patch)
     saveProfilePatch(patch)
-    if (tickKey) setTicks((t) => ({ ...t, [tickKey]: Date.now() }))
+    void saveProfileToSupabase(patch).then((res) => {
+      if (res.ok) {
+        if (tickKey) setTicks((t) => ({ ...t, [tickKey]: Date.now() }))
+      } else {
+        toast.error(res.error ? `Couldn't save: ${res.error}` : "Couldn't save your change. Please try again.")
+      }
+    })
   }
 
   // Smooth-scroll to a section when linked with a hash (/profile#danger).
@@ -1423,7 +1497,17 @@ export function ProfilePage() {
       </button>
 
       <div className="flex flex-col" style={{ gap: 14 }}>
-        <ProfileHeader p={profile} />
+        <ProfileHeader
+          p={profile}
+          onAvatarSaved={(url) => {
+            // uploadAvatar/removeAvatar already persisted to Supabase + the auth
+            // store; mirror it into local state + cache and flash the tick.
+            setProfile((prev) => ({ ...prev, avatar_url: url }))
+            applyOptimisticProfile({ avatar_url: url })
+            saveProfilePatch({ avatar_url: url })
+            setTicks((t) => ({ ...t, avatar: Date.now() }))
+          }}
+        />
         <ModeSection navigate={navigate} />
         <PersonalSection p={profile} up={update} ticks={ticks} />
         <PrefsSection p={profile} up={update} ticks={ticks} />
