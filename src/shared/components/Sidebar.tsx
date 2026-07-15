@@ -10,6 +10,8 @@ import { PremiumBadge } from '../../components/premium/PremiumBadge'
 import { useAppStore } from '../store/appStore'
 import { useAuthStore } from '../store/authStore'
 import { usePlan } from '../hooks/usePlan'
+import { planLabel } from '../lib/plans'
+import { APP_VERSION_LABEL } from '../lib/version'
 import { cn } from '../lib/cn'
 import type { AppMode } from '../types'
 
@@ -304,7 +306,7 @@ export function Sidebar({ mobile = false, forceCollapsed, touch = false }: Sideb
                 <span className="mt-0.5 inline-flex items-center gap-1 leading-none">
                   {isPremium
                     ? <PremiumBadge tier={plan} />
-                    : <span className="rounded-full bg-bg-elevated px-1.5 py-0.5 text-[10px] font-medium text-text-muted">Free</span>}
+                    : <span className="rounded-full bg-bg-elevated px-1.5 py-0.5 text-[10px] font-medium text-text-muted">{planLabel(plan)}</span>}
                 </span>
               </div>
             </button>
@@ -318,6 +320,10 @@ export function Sidebar({ mobile = false, forceCollapsed, touch = false }: Sideb
               <Settings className="h-4 w-4" />
             </NavLink>
           </div>
+        )}
+        {/* Version — single source of truth (shared/lib/version.ts) */}
+        {!collapsed && (
+          <p className="px-1 pt-1.5 text-[10px] text-text-muted">Vallety {APP_VERSION_LABEL}</p>
         )}
       </div>
 

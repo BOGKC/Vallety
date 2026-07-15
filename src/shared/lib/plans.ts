@@ -32,6 +32,13 @@ export const TIERS: TierDef[] = [
 
 export const tierDef = (t: Tier): TierDef => TIERS.find((x) => x.key === t) ?? TIERS[0]
 
+/**
+ * The identity sub-label shown under a user's name everywhere (sidebar,
+ * header, profile). One function so the three never drift: "Free plan",
+ * "Personal", "All Access", …
+ */
+export const planLabel = (t: Tier): string => (t === 'free' ? 'Free plan' : tierDef(t).name)
+
 /** Annual price = 10 months (2 free). Returns the effective per-month figure. */
 export function annualPerMonth(monthly: number): number {
   return (monthly * 10) / 12
