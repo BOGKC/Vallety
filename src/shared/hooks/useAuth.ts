@@ -65,16 +65,6 @@ export function useAuth() {
     return { error }
   }, [])
 
-  const signInWithGoogle = useCallback(async () => {
-    const redirectTo = authCallbackUrl()
-    console.log('[auth] OAuth redirectTo:', redirectTo)
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo },
-    })
-    return { error }
-  }, [])
-
   const signOut = useCallback(async () => {
     await supabase.auth.signOut()
     reset()
@@ -94,7 +84,6 @@ export function useAuth() {
     isAuthenticated: !!session,
     signIn,
     signInWithMagicLink,
-    signInWithGoogle,
     signOut,
     refreshProfile,
   }

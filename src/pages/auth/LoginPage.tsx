@@ -5,13 +5,13 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from '../../components/Toast'
 import { Eye, EyeOff, Mail, Sparkles } from 'lucide-react'
-import { GoogleIcon } from '../../components/GoogleIcon'
 import { ValletyLockup } from '../../components/ValletyLogo'
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner'
 import { useAuth } from '../../shared/hooks/useAuth'
 import { useAuthStore } from '../../shared/store/authStore'
 import { DEMO_EMAIL, DEMO_PASSWORD, seedDemoData } from '../../shared/lib/demoData'
 import { authCallbackUrl, passwordResetUrl } from '../../shared/lib/authRedirect'
+import { getRemember, setRemember } from '../../shared/lib/authPersistence'
 import { supabase } from '../../supabase/client'
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
@@ -55,9 +55,11 @@ function friendlyAuthError(message: string): string {
 function PasswordPanel({ onForgot, onMagic }: { onForgot: () => void; onMagic: () => void }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const { signIn, signInWithGoogle } = useAuth()
+  const { signIn } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [demoLoading, setDemoLoading] = useState(false)
+  // Remember-me: pre-filled from the stored preference (default checked).
+  const [remember, setRememberState] = useState(getRemember())
 
   const from = (location.state as { from?: Location })?.from?.pathname ?? '/'
 
@@ -65,6 +67,9 @@ function PasswordPanel({ onForgot, onMagic }: { onForgot: () => void; onMagic: (
     useForm<PasswordValues>({ resolver: zodResolver(passwordSchema) })
 
   const onSubmit = async (values: PasswordValues) => {
+    // Set persistence BEFORE signing in so the new session is written to the
+    // right store (localStorage when remembering, sessionStorage otherwise).
+    setRemember(remember)
     const { error } = await signIn(values.email, values.password)
     if (error) {
       toast.error(friendlyAuthError(error.message))
@@ -73,9 +78,9 @@ function PasswordPanel({ onForgot, onMagic }: { onForgot: () => void; onMagic: (
     navigate(from, { replace: true })
   }
 
-  const handleGoogle = async () => {
-    const { error } = await signInWithGoogle()
-    if (error) toast.error(error.message)
+  const toggleRemember = (checked: boolean) => {
+    setRememberState(checked)
+    setRemember(checked) // persist the preference for next visit
   }
 
   // Trial sandbox: sign in with the public demo account (self-provisioning it
@@ -121,12 +126,7 @@ function PasswordPanel({ onForgot, onMagic }: { onForgot: () => void; onMagic: (
       </div>
 
       <div>
-        <div className="flex items-center justify-between mb-1.5">
-          <label className="text-sm font-medium text-text-secondary">Password</label>
-          <button type="button" onClick={onForgot} className="text-xs text-brand hover:underline">
-            Forgot password?
-          </button>
-        </div>
+        <label className="block text-sm font-medium text-text-secondary mb-1.5">Password</label>
         <div className="relative">
           <input
             {...register('password')}
@@ -148,6 +148,23 @@ function PasswordPanel({ onForgot, onMagic }: { onForgot: () => void; onMagic: (
         {errors.password && <p className="text-red-400 text-xs mt-1.5">{errors.password.message}</p>}
       </div>
 
+      {/* Remember me (left) · Forgot password (right) */}
+      <div className="flex items-center justify-between">
+        <label className="flex cursor-pointer select-none items-center gap-2">
+          <input
+            type="checkbox"
+            checked={remember}
+            onChange={(e) => toggleRemember(e.target.checked)}
+            className="h-4 w-4 rounded border-border bg-bg-secondary"
+            style={{ accentColor: 'var(--color-accent)' }}
+          />
+          <span className="text-sm text-text-secondary">Remember me</span>
+        </label>
+        <button type="button" onClick={onForgot} className="text-xs text-brand hover:underline">
+          Forgot password?
+        </button>
+      </div>
+
       <button
         type="submit"
         disabled={isSubmitting}
@@ -155,24 +172,6 @@ function PasswordPanel({ onForgot, onMagic }: { onForgot: () => void; onMagic: (
       >
         {isSubmitting && <LoadingSpinner size="sm" />}
         {isSubmitting ? 'Signing in…' : 'Sign in'}
-      </button>
-
-      <div className="relative my-1">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-border" />
-        </div>
-        <div className="relative flex justify-center text-xs">
-          <span className="bg-bg-card px-2 text-text-secondary">or</span>
-        </div>
-      </div>
-
-      <button
-        type="button"
-        onClick={handleGoogle}
-        className="w-full bg-bg-secondary hover:bg-bg-secondary/70 border border-border text-text-primary font-medium rounded-lg py-2.5 flex items-center justify-center gap-2.5 transition-colors"
-      >
-        <GoogleIcon />
-        Continue with Google
       </button>
 
       <button
