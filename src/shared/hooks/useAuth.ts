@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from 'react'
 import { supabase } from '../../supabase/client'
 import { useAuthStore } from '../store/authStore'
+import { authCallbackUrl } from '../lib/authRedirect'
 import type { Profile } from '../../supabase/types'
 
 async function fetchProfile(userId: string): Promise<Profile | null> {
@@ -59,7 +60,7 @@ export function useAuth() {
   const signInWithMagicLink = useCallback(async (email: string) => {
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${window.location.origin}/login` },
+      options: { emailRedirectTo: authCallbackUrl() },
     })
     return { error }
   }, [])
@@ -67,7 +68,7 @@ export function useAuth() {
   const signInWithGoogle = useCallback(async () => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/login` },
+      options: { redirectTo: authCallbackUrl() },
     })
     return { error }
   }, [])

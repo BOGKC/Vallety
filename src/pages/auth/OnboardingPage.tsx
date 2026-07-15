@@ -137,6 +137,7 @@ export function OnboardingPage() {
     // backend. Business structure also switches the profile page into
     // business mode so the tax fields are ready.
     saveProfilePatch({
+      onboarded: true,
       home_currency: currency,
       ...(needsStructure && structure
         ? { business_enabled: true, business_type: structure.local as never }

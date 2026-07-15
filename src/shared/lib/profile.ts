@@ -50,6 +50,7 @@ export interface ValletyProfile {
   plan_renews_at: string | null
   trial_ends_at: string | null
   // First-run guidance (persisted so nothing ever re-shows once done/skipped)
+  onboarded: boolean
   getting_started_done: boolean
   tour_done: boolean
   // App preferences
@@ -107,6 +108,7 @@ export const DEFAULT_PROFILE: ValletyProfile = {
   plan_status: 'active',
   plan_renews_at: null,
   trial_ends_at: null,
+  onboarded: false,
   getting_started_done: false,
   tour_done: false,
   home_currency: 'EUR',

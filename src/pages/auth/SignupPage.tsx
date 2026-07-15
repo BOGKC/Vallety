@@ -7,6 +7,7 @@ import toast from '../../components/Toast'
 import { Eye, EyeOff, Mail } from 'lucide-react'
 import { GoogleIcon } from '../../components/GoogleIcon'
 import { ValletyLockup } from '../../components/ValletyLogo'
+import { authCallbackUrl } from '../../shared/lib/authRedirect'
 import { supabase } from '../../supabase/client'
 import { useAuth } from '../../shared/hooks/useAuth'
 import { useAuthStore } from '../../shared/store/authStore'
@@ -56,7 +57,7 @@ export function SignupPage() {
       password: values.password,
       options: {
         data: { full_name: values.fullName },
-        emailRedirectTo: `${window.location.origin}/login`,
+        emailRedirectTo: authCallbackUrl(),
       },
     })
 

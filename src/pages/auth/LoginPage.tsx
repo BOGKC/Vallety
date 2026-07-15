@@ -11,6 +11,7 @@ import { LoadingSpinner } from '../../shared/components/LoadingSpinner'
 import { useAuth } from '../../shared/hooks/useAuth'
 import { useAuthStore } from '../../shared/store/authStore'
 import { DEMO_EMAIL, DEMO_PASSWORD, seedDemoData } from '../../shared/lib/demoData'
+import { authCallbackUrl, passwordResetUrl } from '../../shared/lib/authRedirect'
 import { supabase } from '../../supabase/client'
 
 // ── Schemas ───────────────────────────────────────────────────────────────────
@@ -90,7 +91,7 @@ function PasswordPanel({ onForgot, onMagic }: { onForgot: () => void; onMagic: (
       const { data, error: signUpError } = await supabase.auth.signUp({
         email: DEMO_EMAIL,
         password: DEMO_PASSWORD,
-        options: { data: { full_name: 'Demo User' } },
+        options: { data: { full_name: 'Demo User' }, emailRedirectTo: authCallbackUrl() },
       })
       if (signUpError || !data.session) {
         setDemoLoading(false)
@@ -263,7 +264,7 @@ function ForgotPanel({ onBack }: { onBack: () => void }) {
 
   const onSubmit = async (values: ForgotValues) => {
     const { error } = await supabase.auth.resetPasswordForEmail(values.email, {
-      redirectTo: `${window.location.origin}/reset-password`,
+      redirectTo: passwordResetUrl(),
     })
     if (error) { toast.error(error.message); return }
     setSent(true)

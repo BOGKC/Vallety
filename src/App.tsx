@@ -21,6 +21,7 @@ import { SignupPage } from './pages/auth/SignupPage'
 import { LoginPage } from './pages/auth/LoginPage'
 import { ResetPasswordPage } from './pages/auth/ResetPasswordPage'
 import { OnboardingPage } from './pages/auth/OnboardingPage'
+import { AuthCallbackPage } from './pages/auth/AuthCallbackPage'
 
 // In-app pages are code-split so each loads on demand — keeps the initial
 // bundle lean (recharts, drawers, etc. only ship when their page is visited).
@@ -63,6 +64,7 @@ export default function App() {
             <Route path="/signup"         element={<SignupPage />} />
             <Route path="/login"          element={<LoginPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/auth/callback"  element={<AuthCallbackPage />} />
             <Route path="/onboarding"     element={<OnboardingPage />} />
 
             {/* ── Protected routes (AuthGuard → AppShell) ────────────────── */}

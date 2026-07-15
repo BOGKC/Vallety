@@ -42,8 +42,10 @@ export default defineConfig({
         // which also cures the stale-chunk dead-end after redeploys.
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallback: '/index.html',
-        // Never serve the SPA shell for Supabase/Anthropic API calls.
-        navigateFallbackDenylist: [/^\/api\//, /^\/auth\//],
+        // Never serve the SPA shell for backend API calls. NOTE: /auth/callback
+        // is a CLIENT route (must get the shell); Supabase auth lives on the
+        // supabase.co origin, so it's unaffected by this same-origin denylist.
+        navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
           {
             // Google Fonts stylesheets + font files.
