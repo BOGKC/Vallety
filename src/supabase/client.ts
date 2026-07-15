@@ -1,12 +1,18 @@
 import { createClient } from '@supabase/supabase-js'
 import type { Database } from './types'
+import { normalizeSupabaseUrl } from './normalizeUrl'
 
-// Strip any trailing slash(es) from the project URL. A trailing slash makes
-// supabase-js build request paths like ".../auth/v1//signup" (double slash),
-// which GoTrue rejects with "Invalid path specified in request URL". This is
-// the usual cause of that error — normalise it defensively regardless of how
-// the env var is entered in the dashboard.
-const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string | undefined)?.trim().replace(/\/+$/, '') ?? ''
+const supabaseUrl = normalizeSupabaseUrl(
+  import.meta.env.VITE_SUPABASE_URL as string | undefined,
+  (pathname, origin) => {
+    if (import.meta.env.DEV) {
+      console.warn(
+        `[supabase] VITE_SUPABASE_URL had a path ("${pathname}"); using origin "${origin}". ` +
+        'Set it to just the project URL, e.g. https://<ref>.supabase.co',
+      )
+    }
+  },
+)
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined)?.trim() ?? ''
 
 if (!supabaseUrl || !supabaseAnonKey) {
