@@ -5,11 +5,9 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import toast from '../../components/Toast'
 import { Eye, EyeOff, Mail } from 'lucide-react'
-import { GoogleIcon } from '../../components/GoogleIcon'
 import { ValletyLockup } from '../../components/ValletyLogo'
 import { authCallbackUrl } from '../../shared/lib/authRedirect'
 import { supabase } from '../../supabase/client'
-import { useAuth } from '../../shared/hooks/useAuth'
 import { useAuthStore } from '../../shared/store/authStore'
 import { LoadingSpinner } from '../../shared/components/LoadingSpinner'
 
@@ -31,7 +29,6 @@ type FormValues = z.infer<typeof schema>
 
 export function SignupPage() {
   const navigate = useNavigate()
-  const { signInWithGoogle } = useAuth()
   const session = useAuthStore((s) => s.session)
   const initialized = useAuthStore((s) => s.initialized)
   const [showPassword, setShowPassword] = useState(false)
@@ -89,11 +86,6 @@ export function SignupPage() {
     } else {
       setConfirmEmail(values.email)
     }
-  }
-
-  const handleGoogle = async () => {
-    const { error } = await signInWithGoogle()
-    if (error) toast.error(error.message)
   }
 
   if (confirmEmail) {
@@ -233,24 +225,6 @@ export function SignupPage() {
             >
               {isSubmitting && <LoadingSpinner size="sm" />}
               {isSubmitting ? 'Creating account…' : 'Create account'}
-            </button>
-
-            <div className="relative my-1">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border" />
-              </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="bg-bg-card px-2 text-text-secondary">or</span>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={handleGoogle}
-              className="w-full bg-bg-secondary hover:bg-bg-secondary/70 border border-border text-text-primary font-medium rounded-lg py-2.5 flex items-center justify-center gap-2.5 transition-colors"
-            >
-              <GoogleIcon />
-              Continue with Google
             </button>
           </form>
 
