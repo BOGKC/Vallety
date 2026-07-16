@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, ArrowLeftRight, Target, Calendar, TrendingUp,
-  Sparkles, Settings, ChevronLeft, ChevronRight,
+  Settings, ChevronLeft, ChevronRight,
   FileText, Receipt, Percent, Users, Home, PieChart, Eye,
   type LucideIcon,
 } from 'lucide-react'
@@ -22,8 +22,6 @@ interface NavItem {
   icon: LucideIcon
   to: string
   end?: boolean
-  /** AI Advisor gets a persistent accent treatment + slightly larger icon. */
-  accent?: boolean
 }
 
 interface NavGroup {
@@ -52,7 +50,6 @@ const MODE_NAV: Record<AppMode, NavGroup[]> = {
       items: [
         { label: 'Net worth', icon: TrendingUp, to: '/net-worth' },
         { label: 'Household', icon: Home, to: '/household' },
-        { label: 'AI Advisor', icon: Sparkles, to: '/advisor', accent: true },
       ],
     },
   ],
@@ -74,10 +71,6 @@ const MODE_NAV: Record<AppMode, NavGroup[]> = {
         { label: 'Budgets', icon: Target, to: '/budgets' },
       ],
     },
-    {
-      label: 'Advisor',
-      items: [{ label: 'AI Advisor', icon: Sparkles, to: '/advisor', accent: true }],
-    },
   ],
   investment: [
     {
@@ -95,10 +88,6 @@ const MODE_NAV: Record<AppMode, NavGroup[]> = {
         { label: 'Budgets', icon: Target, to: '/budgets' },
         { label: 'Net worth', icon: TrendingUp, to: '/net-worth' },
       ],
-    },
-    {
-      label: 'Advisor',
-      items: [{ label: 'AI Advisor', icon: Sparkles, to: '/advisor', accent: true }],
     },
   ],
 }
@@ -127,9 +116,7 @@ function SidebarNavItem({
           collapsed ? 'justify-center' : 'gap-3',
           isActive
             ? 'bg-[var(--color-accent-muted)] text-[var(--color-accent)]'
-            : item.accent
-              ? 'text-[var(--color-accent)] hover:bg-bg-elevated'
-              : 'text-text-secondary hover:bg-bg-elevated hover:text-text-primary'
+            : 'text-text-secondary hover:bg-bg-elevated hover:text-text-primary'
         )
       }
       style={({ isActive }) => ({
@@ -138,9 +125,7 @@ function SidebarNavItem({
         transitionProperty: 'background-color, color, border-color',
       })}
     >
-      <item.icon
-        className={cn('flex-shrink-0', item.accent ? 'h-5 w-5' : 'h-[18px] w-[18px]')}
-      />
+      <item.icon className="h-[18px] w-[18px] flex-shrink-0" />
       {!collapsed && (
         <span className="truncate">{item.label}</span>
       )}

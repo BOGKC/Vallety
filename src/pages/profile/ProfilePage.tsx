@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { format, isToday } from 'date-fns'
 import {
-  ArrowUpRight, Bug, Camera, ChevronLeft, Globe, Info, Lightbulb, Sparkles,
+  ArrowUpRight, Bug, Camera, ChevronLeft, Globe, Info, Lightbulb,
   Wallet, Briefcase, TrendingUp, Check, Lock, Trash2, type LucideIcon,
 } from 'lucide-react'
 import toast from '../../components/Toast'
@@ -22,13 +22,12 @@ import { PremiumBadge } from '../../components/premium/PremiumBadge'
 import { planLabel, type FeatureKey, type Tier } from '../../shared/lib/plans'
 import type { AppMode } from '../../shared/types'
 import { supabase } from '../../supabase/client'
-import { getApiKey, setApiKey, ANTHROPIC_KEY_STORAGE } from '../../shared/lib/claudeClient'
 import { readTransactions, TRANSACTIONS_KEY } from '../../shared/lib/transactions'
 import { BUDGETS_KEY } from '../../shared/lib/budgets'
 import { GOALS_KEY } from '../../shared/lib/goals'
 import {
   saveProfilePatch, readPlan, storageUsedKb, collectAllData,
-  clearAllValletyKeys, LAST_UPDATED_KEY, AI_USAGE_KEY,
+  clearAllValletyKeys, LAST_UPDATED_KEY,
   NEXT_BILLING_KEY, type ValletyProfile, type Plan, type LoyaltyCard,
 } from '../../shared/lib/profile'
 import {
@@ -60,15 +59,13 @@ const MONTHS = [
 ]
 
 const PLAN_FEATURES: Record<Plan, string[]> = {
-  Free: ['Transactions, budgets, bills & goals', 'CSV import from Finnish banks', 'Net worth tracking', '5 AI Advisor messages / month'],
-  Personal: ['Everything in Free', 'Unlimited budgets & goals', '20 AI Advisor messages / month', 'Household sharing'],
-  Freelancer: ['Everything in Personal', 'Business profile & invoicing', 'VAT & YEL tracking', 'Unlimited AI Advisor'],
-  Business: ['Everything in Freelancer', 'Multi-entity bookkeeping', 'Priority support', 'Unlimited AI Advisor'],
-  Investor: ['Everything in Personal', 'Portfolio & watchlist tools', 'Scenario modelling', 'Unlimited AI Advisor'],
-  'All Access': ['Every Vallety feature', 'All modes unlocked', 'Priority support', 'Unlimited AI Advisor'],
+  Free: ['Transactions, budgets, bills & goals', 'CSV import from Finnish banks', 'Net worth tracking'],
+  Personal: ['Everything in Free', 'Unlimited budgets & goals', 'Full transaction history', 'Household sharing'],
+  Freelancer: ['Everything in Personal', 'Business profile & invoicing', 'VAT & YEL tracking'],
+  Business: ['Everything in Freelancer', 'Multi-entity bookkeeping', 'Accountant export', 'Priority support'],
+  Investor: ['Everything in Personal', 'Portfolio & watchlist tools', 'Scenario modelling'],
+  'All Access': ['Every Vallety feature', 'All modes unlocked', 'Priority support'],
 }
-
-const AI_LIMITS: Partial<Record<Plan, number>> = { Free: 5, Personal: 20 }
 
 // ── Small utilities ───────────────────────────────────────────────────────────
 
@@ -103,30 +100,6 @@ function browserInfo(): string {
     : ua.includes('Mac') ? 'macOS'
     : ua.includes('Linux') ? 'Linux' : 'this device'
   return `${browser} on ${os}`
-}
-
-async function testAnthropicKey(key: string): Promise<string | null> {
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-api-key': key,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5',
-        max_tokens: 1,
-        messages: [{ role: 'user', content: 'ping' }],
-      }),
-    })
-    if (res.ok) return null
-    const body = await res.json().catch(() => null)
-    return (body as { error?: { message?: string } } | null)?.error?.message ?? `Request failed (${res.status})`
-  } catch (e) {
-    return e instanceof Error ? e.message : 'Network error'
-  }
 }
 
 // ═══ SECTION 1 — Profile header ════════════════════════════════════════════════
@@ -688,10 +661,6 @@ function NotificationsSection({ p, up, ticks }: { p: ValletyProfile; up: UpdateF
         <Toggle ariaLabel="Monthly summary" checked={n.monthly_summary}
           onChange={(v) => setN({ monthly_summary: v })} />
       </Row>
-      <Row label="AI Advisor recap" sub="Monthly AI insights about your finances">
-        <Toggle ariaLabel="AI Advisor recap" checked={n.ai_recap}
-          onChange={(v) => setN({ ai_recap: v })} />
-      </Row>
       <Row label="Unusual spending" sub="Alert when a transaction is unusually large for its category">
         <Toggle ariaLabel="Unusual spending" checked={n.unusual_spending}
           onChange={(v) => setN({ unusual_spending: v })} />
@@ -846,39 +815,9 @@ function LoyaltyRow({
 
 function ConnectionsSection({ p, up }: { p: ValletyProfile; up: UpdateFn }) {
   const [bankSheet, setBankSheet] = useState(false)
-  const [keyStored, setKeyStored] = useState<string | null>(() => getApiKey())
-  const [keyOpen, setKeyOpen] = useState(false)
-  const [keyInput, setKeyInput] = useState('')
-  const [removeConfirm, setRemoveConfirm] = useState(false)
-  const [testState, setTestState] = useState<'idle' | 'testing' | 'ok' | string>('idle')
 
   const setLoyalty = (key: keyof ValletyProfile['loyalty'], card?: LoyaltyCard) =>
     up({ loyalty: { ...p.loyalty, [key]: card } }, 'loyalty')
-
-  const saveKey = () => {
-    if (!keyInput.trim()) return
-    setApiKey(keyInput)
-    setKeyStored(keyInput.trim())
-    setKeyInput('')
-    setKeyOpen(false)
-    setTestState('idle')
-    toast.success('API key saved')
-  }
-
-  const removeKey = () => {
-    try { window.localStorage.removeItem(ANTHROPIC_KEY_STORAGE) } catch { /* ignore */ }
-    setKeyStored(null)
-    setRemoveConfirm(false)
-    setTestState('idle')
-    toast.success('API key removed')
-  }
-
-  const runTest = async () => {
-    if (!keyStored) return
-    setTestState('testing')
-    const err = await testAnthropicKey(keyStored)
-    setTestState(err ?? 'ok')
-  }
 
   return (
     <Section label="Connected accounts & integrations">
@@ -931,78 +870,6 @@ function ConnectionsSection({ p, up }: { p: ValletyProfile; up: UpdateFn }) {
         card={p.loyalty.finnair}
         onSave={(c) => setLoyalty('finnair', c)}
         onRemove={() => setLoyalty('finnair', undefined)} />
-
-      <Row
-        label="AI Advisor"
-        sub="Connect your Anthropic API key to enable AI-powered insights"
-        prefix={<Sparkles className="h-4 w-4" style={{ color: 'var(--color-accent)' }} />}
-      >
-        {keyStored ? (
-          <>
-            <span
-              className="rounded-full px-2 py-0.5 text-[11px] font-medium"
-              style={{ backgroundColor: 'var(--color-success-muted)', color: 'var(--color-success)' }}
-            >
-              Connected
-            </span>
-            <span className="text-[12px] text-text-muted">sk-ant-…{keyStored.slice(-4)}</span>
-            <GhostBtn danger onClick={() => setRemoveConfirm((v) => !v)}>Remove key</GhostBtn>
-          </>
-        ) : (
-          <GhostBtn accent onClick={() => setKeyOpen((v) => !v)}>Add key</GhostBtn>
-        )}
-      </Row>
-      <Collapse open={removeConfirm && !!keyStored} maxH={80}>
-        <div className="flex items-center gap-2 px-5 pb-4">
-          <p className="text-[13px] text-text-secondary">Remove the stored API key?</p>
-          <GhostBtn danger onClick={removeKey}>Yes, remove</GhostBtn>
-          <GhostBtn onClick={() => setRemoveConfirm(false)}>Cancel</GhostBtn>
-        </div>
-      </Collapse>
-      <Collapse open={keyOpen && !keyStored} maxH={190}>
-        <div className="flex flex-col gap-2 px-5 pb-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <input
-              type="password"
-              value={keyInput}
-              onChange={(e) => setKeyInput(e.target.value)}
-              placeholder="sk-ant-api03-..."
-              className="h-9 w-full rounded-md border border-default bg-bg-input px-3 text-[13px] text-text-primary placeholder:text-text-muted focus:border-accent sm:w-[280px]"
-            />
-            <AccentBtn onClick={saveKey} disabled={!keyInput.trim()}>Paste and save</AccentBtn>
-          </div>
-          <p className="text-[12px] text-text-muted">
-            Your key is stored only in this browser and never sent to our servers.
-          </p>
-          <a
-            href="https://console.anthropic.com"
-            target="_blank"
-            rel="noreferrer"
-            className="text-[12px] hover:underline"
-            style={{ color: 'var(--color-accent)' }}
-          >
-            Get an API key →
-          </a>
-        </div>
-      </Collapse>
-      {keyStored && (
-        <div className="px-5 py-3">
-          <button
-            type="button"
-            onClick={runTest}
-            className="text-[13px] hover:underline"
-            style={{ color: 'var(--color-accent)' }}
-          >
-            {testState === 'testing' ? 'Testing…' : 'Test connection'}
-          </button>
-          {testState === 'ok' && (
-            <span className="ml-2 text-[13px]" style={{ color: 'var(--color-success)' }}>Connection working ✓</span>
-          )}
-          {testState !== 'idle' && testState !== 'testing' && testState !== 'ok' && (
-            <span className="ml-2 text-[13px]" style={{ color: 'var(--color-danger)' }}>{testState}</span>
-          )}
-        </div>
-      )}
     </Section>
   )
 }
@@ -1153,13 +1020,9 @@ function BillingSection() {
   const [historyOpen, setHistoryOpen] = useState(false)
   const [cancelOpen, setCancelOpen] = useState(false)
   const [upgradeNote, setUpgradeNote] = useState(false)
-  const aiUsed = useMemo(() => {
-    try { return Number(window.localStorage.getItem(AI_USAGE_KEY)) || 0 } catch { return 0 }
-  }, [])
   const nextBilling = useMemo(() => {
     try { return window.localStorage.getItem(NEXT_BILLING_KEY) } catch { return null }
   }, [])
-  const limit = AI_LIMITS[plan]
   const isFree = plan === 'Free'
 
   return (
@@ -1193,25 +1056,6 @@ function BillingSection() {
           </p>
         </Collapse>
       </div>
-
-      <Row label="AI Advisor usage" sub="Messages used this billing period">
-        {limit ? (
-          <div className="flex items-center gap-2">
-            <div className="h-1.5 w-28 overflow-hidden rounded-full bg-bg-elevated">
-              <div
-                className="progress-fill h-full rounded-full"
-                style={{
-                  width: `${Math.min(100, (aiUsed / limit) * 100)}%`,
-                  backgroundColor: 'var(--color-accent)',
-                }}
-              />
-            </div>
-            <span className="text-[13px] text-text-secondary">{aiUsed} of {limit}</span>
-          </div>
-        ) : (
-          <span className="text-[13px] text-text-secondary">Unlimited</span>
-        )}
-      </Row>
 
       <Row label="Next billing date" sub="Your subscription renews automatically">
         <span className="text-[13px] text-text-muted">

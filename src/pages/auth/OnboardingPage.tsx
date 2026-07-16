@@ -190,7 +190,7 @@ export function OnboardingPage() {
             <>
               <h1 className="text-2xl font-semibold text-text-primary">How will you use Vallety?</h1>
               <p className="mb-6 mt-1 text-sm text-text-secondary">
-                This shapes your navigation, dashboard, and AI advisor.
+                This shapes your navigation and dashboard.
               </p>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {MODE_CARDS.map((c) => {

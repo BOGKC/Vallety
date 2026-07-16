@@ -13,7 +13,6 @@ export const PAGE_TITLES: Record<string, string> = {
   '/scenarios': 'Scenarios',
   '/personal/scenarios': 'Scenarios',
   '/net-worth': 'Net worth',
-  '/advisor': 'AI Advisor',
   '/profile': 'Profile & settings',
   '/settings': 'Profile & settings',
   '/settings/profile': 'Profile & settings',

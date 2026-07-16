@@ -3,7 +3,6 @@ import { readPlanState, daysLeftInTrial, PLAN_CHANGED_EVENT } from '../lib/billi
 import {
   hasFeature as tierHasFeature, limitsFor, type Tier, type PlanStatus, type FeatureKey,
 } from '../lib/plans'
-import { AI_USAGE_KEY } from '../lib/profile'
 
 // Single source of truth for gating. Re-reads on the in-tab plan-changed event
 // and cross-tab storage events, so upgrades/trials reflect immediately.
@@ -36,8 +35,6 @@ export interface UsePlan {
   hasFeature: (key: FeatureKey) => boolean
   /** Count-limit for the current plan, e.g. limit('budgets'). Infinity = unlimited. */
   limit: (key: keyof ReturnType<typeof limitsFor>) => number
-  /** AI messages used this month (from the existing usage counter). */
-  aiMessagesUsed: number
 }
 
 export function usePlan(): UsePlan {
@@ -48,9 +45,6 @@ export function usePlan(): UsePlan {
   const graceActive = planStatus === 'cancelled' && planRenewsAt != null && new Date(planRenewsAt) > new Date()
   const entitled = planStatus === 'active' || planStatus === 'trialing' || planStatus === 'past_due' || graceActive
   const effectivePlan: Tier = entitled ? plan : 'free'
-
-  let aiMessagesUsed = 0
-  try { aiMessagesUsed = Number(window.localStorage.getItem(AI_USAGE_KEY)) || 0 } catch { /* ignore */ }
 
   return {
     plan: effectivePlan,
@@ -63,6 +57,5 @@ export function usePlan(): UsePlan {
     trialEndsAt,
     hasFeature: (key) => tierHasFeature(effectivePlan, key),
     limit: (key) => limitsFor(effectivePlan)[key],
-    aiMessagesUsed,
   }
 }

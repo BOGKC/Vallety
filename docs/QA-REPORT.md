@@ -51,7 +51,6 @@ Vallety's financial data (transactions, budgets, goals, bills, debts, accounts, 
 
 - **Real Supabase auth** — signup/login/magic-link/OAuth/reset against a live project (dummy creds can't complete `getSession`).
 - **Google OAuth** provider round-trip.
-- **Anthropic Advisor** live calls, real rate-limit behavior.
 - **Real bank CSV exports** from OP/Nordea/S-Pankki/Danske/Handelsbanken (only representative fixtures tested).
 - **Stripe / billing**, **email delivery**, **push notifications on a physical device**.
 - **Cross-browser E2E matrix** (Chromium/Firefox/WebKit) — needs a running backend; RTL/Playwright scaffolding is in place to add these.

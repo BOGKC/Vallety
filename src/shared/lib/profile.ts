@@ -8,7 +8,6 @@ export const PROFILE_PHOTO_KEY = 'vallety_profile_photo'
 export const PLAN_KEY = 'vallety_plan'
 export const CREATED_AT_KEY = 'vallety_created_at'
 export const LAST_UPDATED_KEY = 'vallety_last_updated'
-export const AI_USAGE_KEY = 'vallety_ai_usage'
 export const NEXT_BILLING_KEY = 'vallety_next_billing'
 
 export type Plan = 'Free' | 'Personal' | 'Freelancer' | 'Business' | 'Investor' | 'All Access'
@@ -22,7 +21,6 @@ export interface NotificationPrefs {
   overdue_invoices: boolean
   subscription_price_changes: boolean
   monthly_summary: boolean
-  ai_recap: boolean
   unusual_spending: boolean
 }
 
@@ -96,7 +94,6 @@ export const DEFAULT_NOTIFICATIONS: NotificationPrefs = {
   overdue_invoices: true,
   subscription_price_changes: true,
   monthly_summary: true,
-  ai_recap: true,
   unusual_spending: false,
 }
 

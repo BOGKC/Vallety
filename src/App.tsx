@@ -33,7 +33,6 @@ const BillsPage = lazy(() => import('./modes/personal/BillsPage').then((m) => ({
 const SubscriptionsPage = lazy(() => import('./modes/personal/SubscriptionsPage').then((m) => ({ default: m.SubscriptionsPage })))
 const NetWorthPage = lazy(() => import('./modes/personal/NetWorthPage').then((m) => ({ default: m.NetWorthPage })))
 const HouseholdPage = lazy(() => import('./modes/personal/HouseholdPage').then((m) => ({ default: m.HouseholdPage })))
-const AdvisorPage = lazy(() => import('./modes/personal/AdvisorPage').then((m) => ({ default: m.AdvisorPage })))
 const ScenariosPage = lazy(() => import('./modes/personal/ScenariosPage').then((m) => ({ default: m.ScenariosPage })))
 const BusinessDashboard = lazy(() => import('./modes/business/BusinessDashboard').then((m) => ({ default: m.BusinessDashboard })))
 const InvoicesPage = lazy(() => import('./modes/business/InvoicesPage').then((m) => ({ default: m.InvoicesPage })))
@@ -115,7 +114,6 @@ export default function App() {
                 <Route path="/profile"                 element={<ProfilePage />} />
                 <Route path="/settings"                element={<Navigate to="/profile" replace />} />
                 <Route path="/settings/profile"        element={<Navigate to="/profile" replace />} />
-                <Route path="/advisor"                 element={<AdvisorPage />} />
                 <Route path="/pricing"                 element={<PricingPage />} />
 
               </Route>

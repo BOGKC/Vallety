@@ -8,14 +8,14 @@ import { formatEuro } from '../../shared/lib/formatters'
  * while the informational content stays intact.
  */
 
-/** Three dots pulsing in sequence — AI thinking. */
+/** Three dots pulsing in sequence — an inline "working" indicator. */
 export function PulseDots({ className }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-1 ${className ?? ''}`} aria-hidden>
       {[0, 1, 2].map((i) => (
         <span
           key={i}
-          className="advisor-dot h-1.5 w-1.5 rounded-full"
+          className="pulse-dot h-1.5 w-1.5 rounded-full"
           style={{ backgroundColor: 'var(--color-accent)', animationDelay: `${i * 0.15}s` }}
         />
       ))}

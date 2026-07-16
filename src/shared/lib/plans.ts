@@ -27,7 +27,7 @@ export const TIERS: TierDef[] = [
   { key: 'freelancer', name: 'Freelancer', monthly: 12.99, tagline: 'Personal + light business tools.' },
   { key: 'investor', name: 'Investor', monthly: 14.99, tagline: 'Personal + full portfolio tracking.' },
   { key: 'business', name: 'Business', monthly: 19.99, tagline: 'Everything a solo founder needs.', recommended: true },
-  { key: 'all_access', name: 'All Access', monthly: 27.99, tagline: 'Every feature, unlimited AI.' },
+  { key: 'all_access', name: 'All Access', monthly: 27.99, tagline: 'Every feature, all modes unlocked.' },
 ]
 
 export const tierDef = (t: Tier): TierDef => TIERS.find((x) => x.key === t) ?? TIERS[0]
@@ -56,7 +56,7 @@ export function billedTotal(t: Tier, period: BillingPeriod): number {
 // ── Features ───────────────────────────────────────────────────────────────────
 
 export type FeatureKey =
-  | 'csv_import' | 'bank_sync' | 'ai_advisor' | 'unlimited_ai'
+  | 'csv_import' | 'bank_sync'
   | 'business_mode' | 'investment_mode' | 'household' | 'accountant_export'
 
 const PAID: Tier[] = ['personal', 'freelancer', 'investor', 'business', 'all_access']
@@ -65,8 +65,6 @@ const PAID: Tier[] = ['personal', 'freelancer', 'investor', 'business', 'all_acc
 export const FEATURE_TIERS: Record<FeatureKey, Tier[]> = {
   csv_import: PAID,
   bank_sync: PAID,
-  ai_advisor: ['free', ...PAID], // free gets a metered taste (see LIMITS.aiMessages)
-  unlimited_ai: ['freelancer', 'investor', 'business', 'all_access'],
   business_mode: ['freelancer', 'business', 'all_access'],
   investment_mode: ['investor', 'all_access'],
   household: PAID,
@@ -76,8 +74,6 @@ export const FEATURE_TIERS: Record<FeatureKey, Tier[]> = {
 export const FEATURE_LABELS: Record<FeatureKey, string> = {
   csv_import: 'CSV import',
   bank_sync: 'Bank sync',
-  ai_advisor: 'AI Advisor',
-  unlimited_ai: 'Unlimited AI Advisor',
   business_mode: 'Business mode',
   investment_mode: 'Investor mode',
   household: 'Household sharing',
@@ -101,15 +97,14 @@ export interface Limits {
   transactions: number
   budgets: number
   goals: number
-  aiMessages: number
   historyMonths: number
 }
 
 const UNLIMITED = Infinity
 
-const FREE_LIMITS: Limits = { transactions: 50, budgets: 2, goals: 2, aiMessages: 5, historyMonths: 3 }
-const PERSONAL_LIMITS: Limits = { transactions: UNLIMITED, budgets: UNLIMITED, goals: UNLIMITED, aiMessages: 20, historyMonths: UNLIMITED }
-const UNLIMITED_LIMITS: Limits = { transactions: UNLIMITED, budgets: UNLIMITED, goals: UNLIMITED, aiMessages: UNLIMITED, historyMonths: UNLIMITED }
+const FREE_LIMITS: Limits = { transactions: 50, budgets: 2, goals: 2, historyMonths: 3 }
+const PERSONAL_LIMITS: Limits = { transactions: UNLIMITED, budgets: UNLIMITED, goals: UNLIMITED, historyMonths: UNLIMITED }
+const UNLIMITED_LIMITS: Limits = { transactions: UNLIMITED, budgets: UNLIMITED, goals: UNLIMITED, historyMonths: UNLIMITED }
 
 export function limitsFor(tier: Tier): Limits {
   if (tier === 'free') return FREE_LIMITS
@@ -124,7 +119,6 @@ export const COMPARISON_ROWS: { label: string; check: (t: Tier) => boolean | str
   { label: 'History', check: (t) => (limitsFor(t).historyMonths === UNLIMITED ? 'Full' : `${limitsFor(t).historyMonths} months`) },
   { label: 'CSV import', check: (t) => hasFeature(t, 'csv_import') },
   { label: 'Bank sync', check: (t) => hasFeature(t, 'bank_sync') },
-  { label: 'AI Advisor', check: (t) => (hasFeature(t, 'unlimited_ai') ? 'Unlimited' : `${limitsFor(t).aiMessages}/mo`) },
   { label: 'Household sharing', check: (t) => hasFeature(t, 'household') },
   { label: 'Business mode', check: (t) => hasFeature(t, 'business_mode') },
   { label: 'Investor mode', check: (t) => hasFeature(t, 'investment_mode') },

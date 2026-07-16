@@ -10,8 +10,8 @@ import { upgradeToPlan, startTrial, priceSummary } from '../../shared/lib/billin
 
 // Features listed on each tier card (in order).
 const CARD_FEATURES: FeatureKey[] = [
-  'csv_import', 'bank_sync', 'ai_advisor', 'household',
-  'business_mode', 'investment_mode', 'accountant_export', 'unlimited_ai',
+  'csv_import', 'bank_sync', 'household',
+  'business_mode', 'investment_mode', 'accountant_export',
 ]
 
 // ── Billing period toggle ───────────────────────────────────────────────────────

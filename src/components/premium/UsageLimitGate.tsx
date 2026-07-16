@@ -4,7 +4,7 @@ import { useUpgrade } from './UpgradeModalProvider'
 import type { Tier } from '../../shared/lib/plans'
 
 /**
- * For count-limited free features (50 transactions, 2 budgets, 20 AI/mo…).
+ * For count-limited free features (50 transactions, 2 budgets…).
  * Under the limit: renders children. At/over the limit: an inline, dismissible
  * upgrade nudge instead of a silent block. Never traps the user.
  */
@@ -17,7 +17,7 @@ export function UsageLimitGate({
 }: {
   used: number
   limit: number
-  /** Plural noun for the copy, e.g. "transactions", "budgets", "AI messages". */
+  /** Plural noun for the copy, e.g. "transactions", "budgets". */
   noun: string
   tier?: Tier
   children?: ReactNode

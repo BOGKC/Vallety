@@ -3,7 +3,7 @@ import { PulseDots } from './loaders'
 
 /**
  * Rotating contextual loading messages for operations that take a noticeable
- * moment (CSV import, AI thinking, report generation…). Calm and specific —
+ * moment (CSV import, report generation…). Calm and specific —
  * never generic "Loading…", never jokey about someone's money.
  *
  * Behaviour:
@@ -19,7 +19,6 @@ import { PulseDots } from './loaders'
 export type LoadingOperation =
   | 'csvImport'
   | 'bankSync'
-  | 'advisor'
   | 'report'
   | 'netWorth'
   | 'generic'
@@ -37,11 +36,6 @@ const SCRIPTS: Record<LoadingOperation, string[]> = {
     'Fetching recent transactions…',
     'Organizing everything…',
     'Tidying up…',
-  ],
-  advisor: [
-    'Reading your numbers…',
-    'Thinking it through…',
-    'Putting it together…',
   ],
   report: [
     'Crunching the numbers…',

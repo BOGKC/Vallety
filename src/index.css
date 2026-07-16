@@ -311,8 +311,8 @@ textarea:focus {
   animation: paid-pop 0.25s ease-out;
 }
 
-/* AI Advisor — typing indicator + streaming caret */
-@keyframes advisor-dot {
+/* Inline "thinking" typing indicator — three sequenced pulsing dots */
+@keyframes pulse-dot {
   0%, 80%, 100% {
     transform: scale(0.6);
     opacity: 0.4;
@@ -323,21 +323,8 @@ textarea:focus {
   }
 }
 
-.advisor-dot {
-  animation: advisor-dot 1.2s infinite ease-in-out;
-}
-
-@keyframes advisor-caret {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0;
-  }
-}
-
-.advisor-caret {
-  animation: advisor-caret 1s steps(1) infinite;
+.pulse-dot {
+  animation: pulse-dot 1.2s infinite ease-in-out;
 }
 
 /* ============================================================

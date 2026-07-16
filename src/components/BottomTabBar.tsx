@@ -1,7 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import {
-  LayoutDashboard, ArrowLeftRight, Target, TrendingUp, Sparkles,
-  FileText, Receipt, Percent, PieChart, Eye, type LucideIcon,
+  LayoutDashboard, ArrowLeftRight, Target, TrendingUp, Calendar,
+  FileText, Receipt, Percent, Users, PieChart, Eye, type LucideIcon,
 } from 'lucide-react'
 import { useAppStore } from '../shared/store/appStore'
 import type { AppMode } from '../shared/types'
@@ -13,27 +13,29 @@ interface Tab {
   end?: boolean
 }
 
+// Five tabs per mode keeps the bar visually balanced — each slot maps to a
+// core destination for that mode so the layout stays even.
 const MODE_TABS: Record<AppMode, Tab[]> = {
   personal: [
     { label: 'Home', icon: LayoutDashboard, to: '/', end: true },
     { label: 'Money', icon: ArrowLeftRight, to: '/transactions' },
     { label: 'Plan', icon: Target, to: '/budgets' },
+    { label: 'Bills', icon: Calendar, to: '/bills' },
     { label: 'Wealth', icon: TrendingUp, to: '/net-worth' },
-    { label: 'Advisor', icon: Sparkles, to: '/advisor' },
   ],
   business: [
     { label: 'Home', icon: LayoutDashboard, to: '/business', end: true },
     { label: 'Invoices', icon: FileText, to: '/business/invoices' },
     { label: 'Expenses', icon: Receipt, to: '/business/expenses' },
     { label: 'Tax', icon: Percent, to: '/business/tax' },
-    { label: 'Advisor', icon: Sparkles, to: '/advisor' },
+    { label: 'Clients', icon: Users, to: '/business/clients' },
   ],
   investment: [
     { label: 'Home', icon: LayoutDashboard, to: '/investment', end: true },
     { label: 'Portfolio', icon: PieChart, to: '/investment/portfolio' },
     { label: 'Watchlist', icon: Eye, to: '/investment/watchlist' },
     { label: 'Money', icon: ArrowLeftRight, to: '/transactions' },
-    { label: 'Advisor', icon: Sparkles, to: '/advisor' },
+    { label: 'Wealth', icon: TrendingUp, to: '/net-worth' },
   ],
 }
 

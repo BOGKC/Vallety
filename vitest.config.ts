@@ -16,7 +16,7 @@ export default defineConfig({
       // Coverage target is the business logic — the money math where a bug
       // costs a real euro. UI shells/animation are exercised via Playwright.
       include: ['src/shared/lib/**/*.ts'],
-      exclude: ['src/shared/lib/**/*.test.ts', 'src/shared/lib/claudeClient.ts', 'src/shared/lib/queryClient.ts'],
+      exclude: ['src/shared/lib/**/*.test.ts', 'src/shared/lib/queryClient.ts'],
     },
   },
 })
