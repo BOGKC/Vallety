@@ -144,6 +144,11 @@
   --color-text-secondary: var(--text-secondary);
   --color-border: var(--border-default);
 
+  /* ── Zone surfaces (header/sidebar) — see [data-theme="light"] for light ── */
+  --header-bg: rgba(19, 26, 46, 0.8);         /* frosted sticky header */
+  --sidebar-bg: var(--bg-secondary);          /* left nav rail */
+  --sidebar-border: var(--border-subtle);     /* rail ↔ content divider */
+
   /* ── Theme-tuned effect knobs (see [data-theme="light"] for light values) ── */
   --logo-tip-mix: #F4F7FF;                    /* bright tip highlight on the V mark */
   --glass-bg: rgba(19, 26, 46, 0.8);          /* frosted menus/modals/sticky header */
@@ -162,56 +167,72 @@
    Set on <html data-theme="light">, so switching re-skins live.
    ============================================================ */
 :root[data-theme='light'] {
-  /* Elevation: page is a soft grey, cards are white, wells slightly grey. */
-  --bg-base: #E6EBF3;
-  --bg-0: #F4F6FB;   /* page background */
-  --bg-1: #EDF1F8;   /* recessed wells, inputs */
-  --bg-2: #FFFFFF;   /* base card level */
-  --bg-3: #E7ECF4;   /* raised/hover, skeleton base, progress track */
+  /* Cool blue-gray elevation — the page is tinted (never stark white) so white
+     cards visibly lift off it. Think Linear / Stripe light mode. */
+  --bg-base: #E4EAF3;
+  --bg-0: #EEF2F8;   /* page background — soft cool blue-gray */
+  --bg-1: #E7EDF6;   /* recessed wells */
+  --bg-2: #FFFFFF;   /* base card level — lifts off the cooler page */
+  --bg-3: #E4EAF3;   /* hover, skeleton base, progress track (cool gray) */
   --bg-4: #FFFFFF;   /* dropdowns, popovers (lift via shadow) */
   --bg-5: #FFFFFF;   /* modals */
+  --bg-input: #FFFFFF;   /* inputs are white with a cool-gray border */
+  --bg-elevated: #EEF3FA; /* chips, avatar circles, hover pills — cool tint on white */
 
-  --card-gradient: linear-gradient(180deg, rgba(59, 91, 219, 0.04) 0%, rgba(59, 91, 219, 0) 40%);
+  /* Zone surfaces so sidebar / header / content read as three distinct planes. */
+  --header-bg: rgba(255, 255, 255, 0.92);
+  --sidebar-bg: #F4F7FC;
+  --sidebar-border: #E2E8F2;
 
-  /* Accent ramp stays — #3B5BDB reads well on white. Glows are softened. */
-  --accent-glow: rgba(59, 91, 219, 0.18);
-  --color-accent-muted: rgba(59, 91, 219, 0.10);
-  --teal-glow: rgba(15, 157, 122, 0.18);
-  --purple-glow: rgba(147, 51, 234, 0.18);
+  --card-gradient: linear-gradient(180deg, rgba(59, 91, 219, 0.03) 0%, rgba(59, 91, 219, 0) 42%);
 
-  /* Semantic tints re-based for a light surface. */
-  --color-success-muted: rgba(34, 197, 94, 0.14);
-  --color-warning-muted: rgba(245, 158, 11, 0.16);
-  --color-danger-muted: rgba(239, 68, 68, 0.12);
-  --color-info-muted: rgba(59, 130, 246, 0.12);
+  /* Brand blue pops on the cool light bg. Glows are gentle. */
+  --accent-glow: rgba(59, 91, 219, 0.16);
+  --color-accent-muted: rgba(59, 91, 219, 0.10); /* ≈ #E4EAFB active tint */
+  --teal-glow: rgba(15, 157, 122, 0.16);
+  --purple-glow: rgba(147, 51, 234, 0.16);
 
-  /* Text: dark on light. Primary is near-ink, never pure black. */
-  --text-primary: #0F1729;
-  --text-secondary: #475569;
-  --text-muted: #64748B;
-  --text-faint: #94A3B8;
+  /* Deepen semantics so amounts/badges meet contrast on light. */
+  --color-success: #16A34A;
+  --color-success-muted: rgba(22, 163, 74, 0.12);
+  --color-success-border: rgba(22, 163, 74, 0.28);
+  --color-warning: #B45309;
+  --color-warning-muted: rgba(180, 83, 9, 0.12);
+  --color-warning-border: rgba(180, 83, 9, 0.28);
+  --color-danger: #DC2626;
+  --color-danger-muted: rgba(220, 38, 38, 0.10);
+  --color-danger-border: rgba(220, 38, 38, 0.26);
+  --color-info: #2563EB;
+  --color-info-muted: rgba(37, 99, 235, 0.12);
+
+  /* Text: cool near-navy, never pure black. */
+  --text-primary: #1A2138;
+  --text-secondary: #5A6B85;
+  --text-muted: #8A99B3;
+  --text-faint: #AAB6CA;
   --text-inverse: #FFFFFF;
 
-  /* Borders: dark alpha instead of white alpha. */
-  --border-subtle: rgba(15, 23, 42, 0.06);
-  --border-default: rgba(15, 23, 42, 0.10);
-  --border-hover: rgba(15, 23, 42, 0.16);
-  --border-strong: rgba(15, 23, 42, 0.24);
+  /* Solid cool-gray borders read cleaner than alpha on a light surface. */
+  --border-subtle: #EAF0F7;
+  --border-default: #E2E8F2;
+  --border-hover: #D4DCE8;
+  --border-strong: #C4CFDE;
   --border-accent: rgba(59, 91, 219, 0.40);
 
-  /* Shadows: soft, colored by ink rather than pure black; drop white bevels. */
-  --shadow-rest: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --shadow-raised: 0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.08);
+  /* Cool-toned depth shadows — the fix for the flat look. Cards lift off the
+     tinted page with a soft two-layer shadow. */
+  --shadow-rest: 0 1px 3px rgba(30, 50, 90, 0.06), 0 4px 12px rgba(30, 50, 90, 0.04);
+  --shadow-raised: 0 2px 6px rgba(30, 50, 90, 0.08), 0 8px 20px rgba(30, 50, 90, 0.06);
   --shadow-floating:
-    0 1px 2px rgba(15, 23, 42, 0.06),
-    0 8px 24px rgba(15, 23, 42, 0.10),
-    0 16px 40px rgba(15, 23, 42, 0.08);
+    0 1px 3px rgba(30, 50, 90, 0.06),
+    0 8px 24px rgba(30, 50, 90, 0.08),
+    0 16px 40px rgba(30, 50, 90, 0.06);
 
   /* Effect knobs tuned for a light background. */
-  --logo-tip-mix: #0F1729;                       /* darker tip so the mark reads on white */
-  --glass-bg: rgba(255, 255, 255, 0.85);         /* frosted chrome reads light on light */
-  --glass-border: rgba(15, 23, 42, 0.08);
-  --skeleton-shimmer: rgba(15, 23, 42, 0.06);    /* dark band sweeps a light surface */
+  --logo-tip-mix: #1A2138;                       /* darker tip so the mark reads on white */
+  --glass-bg: rgba(255, 255, 255, 0.9);          /* frosted chrome reads light on light */
+  --glass-border: #E2E8F2;
+  --skeleton-shimmer: rgba(30, 50, 90, 0.06);    /* cool band sweeps a light surface */
   --fx-glow-opacity: 0.40;
   --fx-aurora-opacity: 0.9;
   --fx-particle-alpha: 1.6;                       /* nudge dust up so it stays visible */

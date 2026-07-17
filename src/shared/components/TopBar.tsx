@@ -212,9 +212,10 @@ export function TopBar({ onMenuClick }: TopBarProps) {
 
   return (
     <header
-      className="safe-top sticky top-0 z-40 flex h-[52px] flex-shrink-0 items-center justify-between gap-4 border-b border-subtle px-4 md:h-14"
+      className="safe-top sticky top-0 z-40 flex h-[52px] flex-shrink-0 items-center justify-between gap-4 border-b px-4 md:h-14"
       style={{
-        backgroundColor: 'rgba(19, 26, 46, 0.8)',
+        backgroundColor: 'var(--header-bg)',
+        borderColor: 'var(--border-default)',
         backdropFilter: 'blur(20px) saturate(140%)',
         WebkitBackdropFilter: 'blur(20px) saturate(140%)',
         boxSizing: 'content-box',

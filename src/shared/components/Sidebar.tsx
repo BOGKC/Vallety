@@ -11,7 +11,6 @@ import { useAppStore } from '../store/appStore'
 import { useAuthStore } from '../store/authStore'
 import { usePlan } from '../hooks/usePlan'
 import { planLabel } from '../lib/plans'
-import { APP_VERSION_LABEL } from '../lib/version'
 import { cn } from '../lib/cn'
 import type { AppMode } from '../types'
 
@@ -177,10 +176,12 @@ export function Sidebar({ mobile = false, forceCollapsed, touch = false }: Sideb
       style={{
         width: mobile ? '100%' : collapsed ? (touch ? 72 : 60) : 240,
         transition: 'width var(--transition-base)',
+        backgroundColor: 'var(--sidebar-bg)',
+        borderColor: 'var(--sidebar-border)',
       }}
       className={cn(
-        'flex flex-col bg-bg-secondary overflow-hidden flex-shrink-0',
-        mobile ? 'w-full' : 'h-full border-r border-[var(--border-subtle)]'
+        'flex flex-col overflow-hidden flex-shrink-0',
+        mobile ? 'w-full' : 'h-full border-r'
       )}
     >
       {/* Header ───────────────────────────────────────────────────────────── */}
@@ -311,10 +312,8 @@ export function Sidebar({ mobile = false, forceCollapsed, touch = false }: Sideb
             </NavLink>
           </div>
         )}
-        {/* Version — single source of truth (shared/lib/version.ts) */}
-        {!collapsed && (
-          <p className="px-1 pt-1.5 text-[10px] text-text-muted">Vallety {APP_VERSION_LABEL}</p>
-        )}
+        {/* Version lives in Settings → About; keeping it out of the account
+            block avoids it crowding/overlapping the user row. */}
       </div>
 
       {/* Expand affordance when collapsed (desktop) ───────────────────────── */}
