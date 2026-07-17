@@ -107,7 +107,7 @@ export function AppLoader() {
             <linearGradient id="splash-v" x1="9" y1="38" x2="40" y2="10" gradientUnits="userSpaceOnUse">
               <stop offset="0%" stopColor="var(--accent-600, #2F49B0)" />
               <stop offset="55%" stopColor="var(--accent-500, #3B5BDB)" />
-              <stop offset="100%" stopColor="color-mix(in srgb, var(--accent-500, #3B5BDB) 55%, #F4F7FF)" />
+              <stop offset="100%" stopColor="color-mix(in srgb, var(--accent-500, #3B5BDB) 55%, var(--logo-tip-mix, #F4F7FF))" />
             </linearGradient>
             {/* Clip the light sweep to the mark's silhouette */}
             <clipPath id="splash-clip">

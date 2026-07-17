@@ -13,6 +13,7 @@ import { useAuthStore } from '../../shared/store/authStore'
 import { CurrencyPicker } from '../../shared/components/CurrencyPicker'
 import { getCurrency } from '../../lib/currencies'
 import { notifyHomeCurrencyChanged } from '../../shared/hooks/useHomeCurrency'
+import { applyTheme } from '../../shared/lib/theme'
 import {
   applyOptimisticProfile, saveProfileToSupabase, mergeDbIntoLocal,
   uploadAvatar, removeAvatar, type ProfileSavePatch,
@@ -315,10 +316,10 @@ function PrefsSection({ p, up, ticks }: { p: ValletyProfile; up: UpdateFn; ticks
           value={p.theme}
           options={[
             { value: 'dark', label: 'Dark' },
-            { value: 'light', label: 'Light', disabled: true, tooltip: 'Coming soon' },
+            { value: 'light', label: 'Light' },
             { value: 'system', label: 'System' },
           ]}
-          onChange={(v) => up({ theme: v }, 'theme')}
+          onChange={(v) => { up({ theme: v }, 'theme'); applyTheme(v) }}
         />
       </Row>
       <Row label="First day of week" stamp={ticks.week_start}>

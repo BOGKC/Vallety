@@ -2,6 +2,11 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import { BootError } from './components/BootError'
+import { initTheme } from './shared/lib/theme'
+
+// Sync data-theme with the stored preference (the inline script in index.html
+// sets it pre-paint; this re-affirms it and wires the "system" OS listener).
+initTheme()
 
 const root = createRoot(document.getElementById('root')!)
 

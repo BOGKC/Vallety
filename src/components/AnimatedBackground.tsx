@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { useAppStore } from '../shared/store/appStore'
+import { useResolvedTheme } from '../shared/hooks/useResolvedTheme'
 
 /* ══════════════════════════════════════════════════════════════════
    BACKGROUND CONFIG — tune everything here.
@@ -82,7 +83,11 @@ interface Particle {
  */
 export function AnimatedBackground() {
   const mode = useAppStore((s) => s.mode)
+  const theme = useResolvedTheme()
   const fx = MODE_FX[mode] ?? MODE_FX.personal
+  // Accent dust on white is fainter than on navy — lift its alpha in light mode
+  // so it stays visible without becoming distracting.
+  const particleAlpha = theme === 'light' ? 1.6 : 1
 
   const [reduced] = useState(
     () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -168,7 +173,7 @@ export function AnimatedBackground() {
         else if (p.x > w + 4) p.x = -4
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
-        ctx.fillStyle = `rgba(${rgb}, ${p.alpha})`
+        ctx.fillStyle = `rgba(${rgb}, ${Math.min(0.7, p.alpha * particleAlpha)})`
         ctx.fill()
       }
 
@@ -210,7 +215,7 @@ export function AnimatedBackground() {
       window.removeEventListener('resize', resize)
       document.removeEventListener('visibilitychange', onVisibility)
     }
-  }, [reduced])
+  }, [reduced, particleAlpha])
 
   /* ── Layer 5: cursor glow (desktop only) ── */
   useEffect(() => {
@@ -254,7 +259,9 @@ export function AnimatedBackground() {
     }
   }, [reduced, finePointer])
 
-  const auroraOpacity = BG_CONFIG.aurora.intensity === 'medium' ? 1 : 0.75
+  // Base intensity from config × the per-theme aurora knob (CSS var), so light
+  // mode can lift the pale accent tints just enough to read on white.
+  const auroraOpacity = `calc(${BG_CONFIG.aurora.intensity === 'medium' ? 1 : 0.75} * var(--fx-aurora-opacity, 1))`
 
   return (
     <div
