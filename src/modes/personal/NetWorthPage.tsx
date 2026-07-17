@@ -7,20 +7,23 @@ import {
   Plus, TrendingUp, Landmark, Pencil, ArrowUpRight, ArrowDownRight,
 } from 'lucide-react'
 import { format } from 'date-fns'
-import { formatEuro } from '../../shared/lib/formatters'
+import { formatCurrency } from '../../shared/lib/formatters'
 import {
-  readAccounts, ensureMonthlySnapshot, computeTotals, monthlyDelta,
+  readAccounts, ensureMonthlySnapshot, computeTotalsConverted, monthlyDelta,
   ACCOUNT_ICONS, accountTypeLabel, isLiability,
   type Account, type Snapshot,
 } from '../../shared/lib/netWorth'
 import { AccountDrawer } from './AccountDrawer'
 import { EmptyState } from '../../components/EmptyState'
-import { AnimatedEuro } from '../../components/AnimatedNumber'
+import { AnimatedMoney } from '../../components/AnimatedNumber'
 import { readHoldings, computePortfolio } from '../../shared/lib/portfolio'
+import { useHomeCurrency } from '../../shared/hooks/useHomeCurrency'
+import { currencySymbol } from '../../lib/currencies'
+import { useRates } from '../../shared/hooks/useRates'
 
 interface ChartTooltipProps {
   active?: boolean
-  payload?: { payload: { net: number; date: string } }[]
+  payload?: { payload: { net: number; date: string; home: string } }[]
 }
 
 function ChartTooltip({ active, payload }: ChartTooltipProps) {
@@ -31,16 +34,23 @@ function ChartTooltip({ active, payload }: ChartTooltipProps) {
       <p className="text-[11px] text-text-muted">
         {new Date(point.date).toLocaleDateString('en-IE', { day: 'numeric', month: 'short', year: 'numeric' })}
       </p>
-      <p className="text-[13px] font-medium text-text-primary">Net worth: {formatEuro(point.net)}</p>
+      <p className="text-[13px] font-medium text-text-primary">Net worth: {formatCurrency(point.net, point.home)}</p>
     </div>
   )
 }
 
 function AccountRow({
-  account, onEdit,
-}: { account: Account; onEdit: () => void }) {
+  account, onEdit, homeCurrency, convert,
+}: {
+  account: Account
+  onEdit: () => void
+  homeCurrency: string
+  convert: (amount: number, from: string, to: string) => { amount: number | null; ok: boolean }
+}) {
   const Icon = ACCOUNT_ICONS[account.type]
   const liability = isLiability(account.type)
+  const foreign = (account.currency || homeCurrency) !== homeCurrency
+  const conv = foreign ? convert(account.balance, account.currency, homeCurrency) : null
   return (
     <div className="group flex items-center gap-3 rounded-lg bg-bg-card px-4 py-3">
       <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-bg-elevated">
@@ -52,12 +62,21 @@ function AccountRow({
           {account.institution || accountTypeLabel(account.type)}
         </span>
       </div>
-      <span
-        className="flex-shrink-0 text-[14px] font-semibold"
-        style={{ color: liability ? 'var(--color-danger)' : 'var(--color-success)' }}
-      >
-        {formatEuro(account.balance)}
-      </span>
+      <div className="flex flex-shrink-0 flex-col items-end">
+        <span
+          className="text-[14px] font-semibold"
+          style={{ color: liability ? 'var(--color-danger)' : 'var(--color-success)' }}
+        >
+          {formatCurrency(account.balance, account.currency)}
+        </span>
+        {foreign && (
+          <span className="text-[11px] text-text-muted">
+            {conv && conv.ok && conv.amount != null
+              ? `≈ ${formatCurrency(conv.amount, homeCurrency)}`
+              : 'rate unavailable'}
+          </span>
+        )}
+      </div>
       <button
         onClick={onEdit}
         className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-text-muted opacity-0 transition-opacity hover:bg-bg-elevated hover:text-text-primary group-hover:opacity-100"
@@ -71,6 +90,8 @@ function AccountRow({
 
 export function NetWorthPage() {
   const navigate = useNavigate()
+  const home = useHomeCurrency()
+  const { convert } = useRates()
   const [accounts, setAccounts] = useState<Account[]>(() => readAccounts())
   const [snapshots, setSnapshots] = useState<Snapshot[]>(() => ensureMonthlySnapshot())
   const [drawer, setDrawer] = useState<{ open: boolean; mode: 'add' | 'edit'; account: Account | null }>({
@@ -101,18 +122,30 @@ export function NetWorthPage() {
     [accounts, portfolioValue]
   )
 
-  const totals = useMemo(() => computeTotals(allAssets), [allAssets])
-  const delta = useMemo(() => monthlyDelta(totals.net, snapshots, now), [totals.net, snapshots, now])
+  // Totals are converted into the user's home currency; per-account rows still
+  // show each account's original amount. Rate-less accounts are flagged, not
+  // silently mis-summed (totals.unconverted).
+  const totals = useMemo(
+    () => computeTotalsConverted(allAssets, home, convert),
+    [allAssets, home, convert],
+  )
+  // Snapshots were recorded in EUR; convert to home for the trend/delta so the
+  // chart lines up with the (converted) hero figure.
+  const toHome = (eur: number) => convert(eur, 'EUR', home).amount ?? eur
+  const delta = useMemo(
+    () => monthlyDelta(totals.net, snapshots.map((s) => ({ ...s, netWorth: toHome(s.netWorth) })), now),
+    [totals.net, snapshots, now, home, convert], // eslint-disable-line react-hooks/exhaustive-deps
+  )
 
   const hasAccounts = allAssets.length > 0
   const assets = allAssets.filter((a) => !isLiability(a.type))
   const liabilities = allAssets.filter((a) => isLiability(a.type))
 
   const chartData = useMemo(
-    () => snapshots.map((s) => ({ label: format(new Date(s.date), 'MMM'), net: s.netWorth, date: s.date })),
-    [snapshots]
+    () => snapshots.map((s) => ({ label: format(new Date(s.date), 'MMM'), net: toHome(s.netWorth), date: s.date, home })),
+    [snapshots, home, convert] // eslint-disable-line react-hooks/exhaustive-deps
   )
-  const hasNegative = snapshots.some((s) => s.netWorth < 0)
+  const hasNegative = chartData.some((s) => s.net < 0)
 
   const heroColor =
     !hasAccounts || totals.net === 0
@@ -156,7 +189,7 @@ export function NetWorthPage() {
               Total net worth
             </p>
             <p className="num-hero mt-1 leading-none" style={{ color: heroColor, fontSize: 'clamp(32px, 9vw, 44px)' }}>
-              {heroIsEmpty ? '€—' : <AnimatedEuro value={totals.net} />}
+              {heroIsEmpty ? `${currencySymbol(home)}—` : <AnimatedMoney value={totals.net} currency={home} />}
             </p>
             {delta !== null && (
               <div
@@ -164,7 +197,7 @@ export function NetWorthPage() {
                 style={{ color: delta >= 0 ? '#22C55E' : '#EF4444' }}
               >
                 {delta >= 0 ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
-                {delta >= 0 ? '+' : '-'}{formatEuro(Math.abs(delta))} this month
+                {delta >= 0 ? '+' : '-'}{formatCurrency(Math.abs(delta), home)} this month
               </div>
             )}
           </div>
@@ -173,13 +206,13 @@ export function NetWorthPage() {
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="rounded-lg border border-default bg-bg-card p-4">
               <p className="text-[18px] font-semibold" style={{ color: 'var(--color-success)' }}>
-                {formatEuro(totals.assets)}
+                {formatCurrency(totals.assets, home)}
               </p>
               <p className="mt-0.5 text-[12px] text-text-muted">Total assets</p>
             </div>
             <div className="rounded-lg border border-default bg-bg-card p-4">
               <p className="text-[18px] font-semibold" style={{ color: 'var(--color-danger)' }}>
-                {formatEuro(totals.liabilities)}
+                {formatCurrency(totals.liabilities, home)}
               </p>
               <p className="mt-0.5 text-[12px] text-text-muted">Total liabilities</p>
             </div>
@@ -236,12 +269,12 @@ export function NetWorthPage() {
               <div className="mb-2 flex items-center justify-between">
                 <h2 className="text-[14px] font-semibold text-text-primary">Assets</h2>
                 <span className="text-[14px] font-semibold" style={{ color: 'var(--color-success)' }}>
-                  {formatEuro(totals.assets)}
+                  {formatCurrency(totals.assets, home)}
                 </span>
               </div>
               <div className="stagger-list flex flex-col gap-2">
                 {assets.map((a) => (
-                  <AccountRow key={a.id} account={a}
+                  <AccountRow key={a.id} account={a} homeCurrency={home} convert={convert}
                     onEdit={() => (a.id === '__portfolio' ? navigate('/investment/portfolio') : openEdit(a))} />
                 ))}
               </div>
@@ -254,11 +287,11 @@ export function NetWorthPage() {
               <div className="mb-2 flex items-center justify-between">
                 <h2 className="text-[14px] font-semibold text-text-primary">Liabilities</h2>
                 <span className="text-[14px] font-semibold" style={{ color: 'var(--color-danger)' }}>
-                  {formatEuro(totals.liabilities)}
+                  {formatCurrency(totals.liabilities, home)}
                 </span>
               </div>
               <div className="stagger-list flex flex-col gap-2">
-                {liabilities.map((a) => <AccountRow key={a.id} account={a} onEdit={() => openEdit(a)} />)}
+                {liabilities.map((a) => <AccountRow key={a.id} account={a} homeCurrency={home} convert={convert} onEdit={() => openEdit(a)} />)}
               </div>
             </section>
           )}

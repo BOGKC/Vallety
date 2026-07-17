@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatEuro, parseAmount } from './formatters'
+import { formatEuro, formatCurrency, parseAmount } from './formatters'
 
 describe('formatEuro', () => {
   it('rounds to whole euros by default with the sign before the symbol', () => {
@@ -27,6 +27,42 @@ describe('formatEuro', () => {
   it('guards against non-finite input', () => {
     expect(formatEuro(NaN)).toBe('€0')
     expect(formatEuro(Infinity)).toBe('€0')
+  })
+})
+
+describe('formatCurrency', () => {
+  const en = 'en-US'
+  it('formats with the correct symbol and 2 decimals for standard currencies', () => {
+    expect(formatCurrency(1234.5, 'USD', { locale: en })).toBe('$1,234.50')
+    expect(formatCurrency(1234.5, 'GBP', { locale: en })).toBe('£1,234.50')
+  })
+
+  it('renders no-decimal currencies as whole numbers (no cents)', () => {
+    expect(formatCurrency(1234.5, 'JPY', { locale: en })).toBe('¥1,235')
+    expect(formatCurrency(1000, 'KRW', { locale: en })).toBe('₩1,000')
+    // ISK/HUF are also zero-decimal
+    expect(formatCurrency(1234.9, 'ISK', { locale: en })).not.toMatch(/[.,]\d\d$/)
+    expect(formatCurrency(1234.9, 'HUF', { locale: en })).not.toMatch(/[.,]\d\d$/)
+  })
+
+  it('puts the minus sign ahead of the symbol and never shows -0', () => {
+    expect(formatCurrency(-1234.5, 'USD', { locale: en })).toBe('-$1,234.50')
+    expect(formatCurrency(-0.3, 'USD', { locale: en, decimals: 0 })).toBe('$0')
+    expect(formatCurrency(-0.004, 'EUR', { locale: en })).toBe('€0.00')
+  })
+
+  it('honours a decimals override for compact totals', () => {
+    expect(formatCurrency(1234.5, 'USD', { locale: en, decimals: 0 })).toBe('$1,235')
+  })
+
+  it('guards non-finite input', () => {
+    expect(formatCurrency(NaN, 'USD', { locale: en })).toBe('$0.00')
+  })
+
+  it('does not crash on an unknown currency (renders the code + amount)', () => {
+    const out = formatCurrency(1000, 'ZZZ', { locale: en })
+    expect(out).toContain('ZZZ')
+    expect(out).toContain('1,000.00')
   })
 })
 

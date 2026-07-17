@@ -10,6 +10,9 @@ import { ValletyMark } from '../../components/ValletyLogo'
 import { Modal } from '../../shared/components/Modal'
 import { useAppStore } from '../../shared/store/appStore'
 import { useAuthStore } from '../../shared/store/authStore'
+import { CurrencyPicker } from '../../shared/components/CurrencyPicker'
+import { getCurrency } from '../../lib/currencies'
+import { notifyHomeCurrencyChanged } from '../../shared/hooks/useHomeCurrency'
 import {
   applyOptimisticProfile, saveProfileToSupabase, mergeDbIntoLocal,
   uploadAvatar, removeAvatar, type ProfileSavePatch,
@@ -40,13 +43,7 @@ import {
 type UpdateFn = (patch: ProfileSavePatch, tickKey?: string) => void
 type Ticks = Record<string, number>
 
-const CURRENCIES = [
-  { code: 'EUR', symbol: '€' }, { code: 'USD', symbol: '$' }, { code: 'GBP', symbol: '£' },
-  { code: 'SEK', symbol: 'kr' }, { code: 'NOK', symbol: 'kr' }, { code: 'DKK', symbol: 'kr' },
-  { code: 'CHF', symbol: 'CHF' }, { code: 'PLN', symbol: 'zł' }, { code: 'INR', symbol: '₹' },
-]
-const currencyOptions = CURRENCIES.map((c) => ({ value: c.code, label: `${c.code} (${c.symbol})` }))
-const currencySymbol = (code: string) => CURRENCIES.find((c) => c.code === code)?.symbol ?? code
+const currencySymbol = (code: string) => getCurrency(code)?.symbol ?? code
 
 const BANKS = [
   'OP (Osuuspankki)', 'Nordea', 'S-Pankki', 'Danske Bank', 'Handelsbanken',
@@ -284,8 +281,8 @@ function PrefsSection({ p, up, ticks }: { p: ValletyProfile; up: UpdateFn; ticks
           </span>
         }
       >
-        <SelectBox ariaLabel="Home currency" value={p.home_currency} options={currencyOptions}
-          onChange={(v) => up({ home_currency: v }, 'home_currency')} />
+        <CurrencyPicker ariaLabel="Home currency" value={p.home_currency} className="sm:w-72"
+          onChange={(v) => { up({ home_currency: v }, 'home_currency'); notifyHomeCurrencyChanged() }} />
       </Row>
       <Row label="Language" stamp={ticks.language} prefix={<Globe className="h-4 w-4 text-text-muted" />}>
         <SelectBox
@@ -560,7 +557,7 @@ function BusinessSection({ p, up, ticks }: { p: ValletyProfile; up: UpdateFn; ti
             />
           </Row>
           <Row label="Default invoice currency" stamp={ticks.invoice_currency}>
-            <SelectBox ariaLabel="Invoice currency" value={p.invoice_currency} options={currencyOptions}
+            <CurrencyPicker ariaLabel="Invoice currency" value={p.invoice_currency} className="sm:w-72"
               onChange={(v) => up({ invoice_currency: v }, 'invoice_currency')} />
           </Row>
           <Row label="Default payment terms" stamp={ticks.payment_terms}>

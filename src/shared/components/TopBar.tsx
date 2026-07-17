@@ -7,6 +7,8 @@ import { useAuth } from '../hooks/useAuth'
 import { usePlan } from '../hooks/usePlan'
 import { planLabel } from '../lib/plans'
 import { resolvePageTitle } from '../lib/pageTitles'
+import { useHomeCurrency } from '../hooks/useHomeCurrency'
+import { currencySymbol } from '../../lib/currencies'
 import toast from '../../components/Toast'
 
 // ── Page title resolver ─────────────────────────────────────────────────────────
@@ -20,21 +22,16 @@ function timeGreeting(): string {
 
 // ── Currency pill ───────────────────────────────────────────────────────────────
 
-const CURRENCY_SYMBOLS: Record<string, string> = {
-  EUR: '€', USD: '$', GBP: '£', JPY: '¥',
-}
-
 function CurrencyPill() {
-  const profile = useAuthStore((s) => s.profile)
-  const currency = profile?.currency ?? 'EUR'
-  const symbol = CURRENCY_SYMBOLS[currency] ?? ''
+  const currency = useHomeCurrency()
+  const symbol = currencySymbol(currency)
 
   // Informational only (the active currency comes from the profile), so this is
   // a non-interactive indicator rather than a button that does nothing.
   return (
     <span
       className="hidden md:inline-flex h-7 items-center rounded-full bg-bg-elevated px-2 text-[12px] font-medium text-text-secondary"
-      title={`Currency: ${currency}`}
+      title={`Home currency: ${currency}`}
     >
       {symbol} {currency}
     </span>

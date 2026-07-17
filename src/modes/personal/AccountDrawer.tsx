@@ -9,6 +9,9 @@ import { FieldError, RequiredMark } from '../../shared/components/FormField'
 import { useShake } from '../../shared/hooks/useShake'
 import { parseAmount } from '../../shared/lib/formatters'
 import { accountSchema, type AccountFormValues } from '../../shared/lib/formSchemas'
+import { CurrencyPicker } from '../../shared/components/CurrencyPicker'
+import { currencySymbol } from '../../lib/currencies'
+import { useHomeCurrency } from '../../shared/hooks/useHomeCurrency'
 import {
   addAccount, updateAccount, deleteAccount, ACCOUNT_TYPES,
   type Account, type AccountType,
@@ -16,8 +19,6 @@ import {
 
 const fieldClass =
   'w-full rounded-md border border-default bg-bg-input px-3 h-10 text-[14px] text-text-primary placeholder:text-text-muted focus:border-accent'
-
-const CURRENCIES = ['EUR', 'USD', 'GBP', 'CHF']
 
 interface Props {
   open: boolean
@@ -28,9 +29,10 @@ interface Props {
 }
 
 export function AccountDrawer({ open, mode, account, onClose, onSaved }: Props) {
+  const homeCurrency = useHomeCurrency()
   const [type, setType] = useState<AccountType>('checking')
   const [institution, setInstitution] = useState('')
-  const [currency, setCurrency] = useState('EUR')
+  const [currency, setCurrency] = useState(homeCurrency)
   const [wasOpen, setWasOpen] = useState(false)
 
   const {
@@ -50,7 +52,7 @@ export function AccountDrawer({ open, mode, account, onClose, onSaved }: Props) 
       setInstitution(account.institution ?? '')
       setCurrency(account.currency)
     } else {
-      setType('checking'); setInstitution(''); setCurrency('EUR')
+      setType('checking'); setInstitution(''); setCurrency(homeCurrency)
     }
   } else if (!open && wasOpen) {
     setWasOpen(false)
@@ -169,11 +171,11 @@ export function AccountDrawer({ open, mode, account, onClose, onSaved }: Props) 
                 onChange={(e) => setInstitution(e.target.value)} />
             </label>
 
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <div className="flex-1">
                 <span className="text-[12px] text-text-muted">Current balance<RequiredMark /></span>
                 <div className="mt-1 flex items-end gap-2 border-b-2 border-default py-1.5 focus-within:border-accent">
-                  <span className="text-[20px] font-medium leading-none text-text-muted">€</span>
+                  <span className="text-[20px] font-medium leading-none text-text-muted">{currencySymbol(currency)}</span>
                   <input
                     inputMode="decimal"
                     placeholder="0"
@@ -183,11 +185,9 @@ export function AccountDrawer({ open, mode, account, onClose, onSaved }: Props) 
                 </div>
                 <FieldError message={errors.balance?.message} />
               </div>
-              <label className="flex w-24 flex-col gap-1.5">
+              <label className="flex flex-col gap-1.5 sm:w-56">
                 <span className="text-[12px] text-text-muted">Currency</span>
-                <select className={fieldClass} value={currency} onChange={(e) => setCurrency(e.target.value)}>
-                  {CURRENCIES.map((c) => <option key={c} value={c}>{c}</option>)}
-                </select>
+                <CurrencyPicker ariaLabel="Account currency" value={currency} onChange={setCurrency} />
               </label>
             </div>
           </div>

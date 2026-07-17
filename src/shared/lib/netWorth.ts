@@ -139,6 +139,28 @@ export function computeTotals(accounts: Account[]): Totals {
   return { assets, liabilities, net: assets - liabilities, count: accounts.length }
 }
 
+type Convert = (amount: number, from: string, to: string) => { amount: number | null; ok: boolean }
+
+/**
+ * Totals with every account balance converted into `home` currency. Accounts
+ * whose rate is unavailable are excluded from the sums and counted in
+ * `unconverted` so the UI can flag them rather than show a wrong number.
+ */
+export function computeTotalsConverted(
+  accounts: Account[], home: string, convert: Convert,
+): Totals & { unconverted: number } {
+  let assets = 0
+  let liabilities = 0
+  let unconverted = 0
+  for (const a of accounts) {
+    const r = convert(a.balance, a.currency || home, home)
+    if (!r.ok || r.amount == null) { unconverted++; continue }
+    if (isLiability(a.type)) liabilities += r.amount
+    else assets += r.amount
+  }
+  return { assets, liabilities, net: assets - liabilities, count: accounts.length, unconverted }
+}
+
 // ── Snapshots ─────────────────────────────────────────────────────────────────
 
 export interface Snapshot {
