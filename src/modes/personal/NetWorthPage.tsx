@@ -9,9 +9,9 @@ import {
 import { format } from 'date-fns'
 import { formatCurrency } from '../../shared/lib/formatters'
 import {
-  readAccounts, ensureMonthlySnapshot, computeTotalsConverted, monthlyDelta,
+  readAccounts, ensureMonthlySnapshot, groupByCurrency, monthlyDelta,
   ACCOUNT_ICONS, accountTypeLabel, isLiability,
-  type Account, type Snapshot,
+  type Account, type Snapshot, type CurrencyTotals,
 } from '../../shared/lib/netWorth'
 import { AccountDrawer } from './AccountDrawer'
 import { EmptyState } from '../../components/EmptyState'
@@ -19,11 +19,10 @@ import { AnimatedMoney } from '../../components/AnimatedNumber'
 import { readHoldings, computePortfolio } from '../../shared/lib/portfolio'
 import { useHomeCurrency } from '../../shared/hooks/useHomeCurrency'
 import { currencySymbol } from '../../lib/currencies'
-import { useRates } from '../../shared/hooks/useRates'
 
 interface ChartTooltipProps {
   active?: boolean
-  payload?: { payload: { net: number; date: string; home: string } }[]
+  payload?: { payload: { net: number; date: string; currency: string } }[]
 }
 
 function ChartTooltip({ active, payload }: ChartTooltipProps) {
@@ -34,23 +33,30 @@ function ChartTooltip({ active, payload }: ChartTooltipProps) {
       <p className="text-[11px] text-text-muted">
         {new Date(point.date).toLocaleDateString('en-IE', { day: 'numeric', month: 'short', year: 'numeric' })}
       </p>
-      <p className="text-[13px] font-medium text-text-primary">Net worth: {formatCurrency(point.net, point.home)}</p>
+      <p className="text-[13px] font-medium text-text-primary">Net worth: {formatCurrency(point.net, point.currency)}</p>
     </div>
   )
 }
 
-function AccountRow({
-  account, onEdit, homeCurrency, convert,
-}: {
-  account: Account
-  onEdit: () => void
-  homeCurrency: string
-  convert: (amount: number, from: string, to: string) => { amount: number | null; ok: boolean }
-}) {
+/** Render a set of per-currency totals as "€1,200 · $340 · 450 kr" (no summing). */
+function GroupedTotals({ groups, pick }: { groups: CurrencyTotals[]; pick: 'assets' | 'liabilities' | 'net' }) {
+  const parts = groups.filter((g) => pick === 'net' || g[pick] !== 0)
+  if (parts.length === 0) return <>{formatCurrency(0, groups[0]?.currency ?? 'EUR')}</>
+  return (
+    <>
+      {parts.map((g, i) => (
+        <span key={g.currency}>
+          {i > 0 && <span className="text-text-muted"> · </span>}
+          {formatCurrency(g[pick], g.currency)}
+        </span>
+      ))}
+    </>
+  )
+}
+
+function AccountRow({ account, onEdit }: { account: Account; onEdit: () => void }) {
   const Icon = ACCOUNT_ICONS[account.type]
   const liability = isLiability(account.type)
-  const foreign = (account.currency || homeCurrency) !== homeCurrency
-  const conv = foreign ? convert(account.balance, account.currency, homeCurrency) : null
   return (
     <div className="group flex items-center gap-3 rounded-lg bg-bg-card px-4 py-3">
       <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-bg-elevated">
@@ -62,21 +68,12 @@ function AccountRow({
           {account.institution || accountTypeLabel(account.type)}
         </span>
       </div>
-      <div className="flex flex-shrink-0 flex-col items-end">
-        <span
-          className="text-[14px] font-semibold"
-          style={{ color: liability ? 'var(--color-danger)' : 'var(--color-success)' }}
-        >
-          {formatCurrency(account.balance, account.currency)}
-        </span>
-        {foreign && (
-          <span className="text-[11px] text-text-muted">
-            {conv && conv.ok && conv.amount != null
-              ? `≈ ${formatCurrency(conv.amount, homeCurrency)}`
-              : 'rate unavailable'}
-          </span>
-        )}
-      </div>
+      <span
+        className="flex-shrink-0 text-[14px] font-semibold"
+        style={{ color: liability ? 'var(--color-danger)' : 'var(--color-success)' }}
+      >
+        {formatCurrency(account.balance, account.currency)}
+      </span>
       <button
         onClick={onEdit}
         className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-text-muted opacity-0 transition-opacity hover:bg-bg-elevated hover:text-text-primary group-hover:opacity-100"
@@ -91,7 +88,6 @@ function AccountRow({
 export function NetWorthPage() {
   const navigate = useNavigate()
   const home = useHomeCurrency()
-  const { convert } = useRates()
   const [accounts, setAccounts] = useState<Account[]>(() => readAccounts())
   const [snapshots, setSnapshots] = useState<Snapshot[]>(() => ensureMonthlySnapshot())
   const [drawer, setDrawer] = useState<{ open: boolean; mode: 'add' | 'edit'; account: Account | null }>({
@@ -122,19 +118,19 @@ export function NetWorthPage() {
     [accounts, portfolioValue]
   )
 
-  // Totals are converted into the user's home currency; per-account rows still
-  // show each account's original amount. Rate-less accounts are flagged, not
-  // silently mis-summed (totals.unconverted).
-  const totals = useMemo(
-    () => computeTotalsConverted(allAssets, home, convert),
-    [allAssets, home, convert],
-  )
-  // Snapshots were recorded in EUR; convert to home for the trend/delta so the
-  // chart lines up with the (converted) hero figure.
-  const toHome = (eur: number) => convert(eur, 'EUR', home).amount ?? eur
+  // Per-currency totals. No conversion happens — balances are only summed
+  // within the same currency, never across, so we never show a meaningless
+  // mixed-currency number.
+  const groups = useMemo(() => groupByCurrency(allAssets, home), [allAssets, home])
+  const singleCurrency = groups.length <= 1
+  const soleNet = singleCurrency ? (groups[0]?.net ?? 0) : 0
+  // The trend chart & month-over-month delta only make sense in one currency
+  // (there's no conversion to reconcile a mixed set), so they show only then.
+  const trendCurrency = groups[0]?.currency ?? home
+
   const delta = useMemo(
-    () => monthlyDelta(totals.net, snapshots.map((s) => ({ ...s, netWorth: toHome(s.netWorth) })), now),
-    [totals.net, snapshots, now, home, convert], // eslint-disable-line react-hooks/exhaustive-deps
+    () => (singleCurrency ? monthlyDelta(soleNet, snapshots, now) : null),
+    [singleCurrency, soleNet, snapshots, now],
   )
 
   const hasAccounts = allAssets.length > 0
@@ -142,16 +138,18 @@ export function NetWorthPage() {
   const liabilities = allAssets.filter((a) => isLiability(a.type))
 
   const chartData = useMemo(
-    () => snapshots.map((s) => ({ label: format(new Date(s.date), 'MMM'), net: toHome(s.netWorth), date: s.date, home })),
-    [snapshots, home, convert] // eslint-disable-line react-hooks/exhaustive-deps
+    () => snapshots.map((s) => ({ label: format(new Date(s.date), 'MMM'), net: s.netWorth, date: s.date, currency: trendCurrency })),
+    [snapshots, trendCurrency]
   )
   const hasNegative = chartData.some((s) => s.net < 0)
 
   const heroColor =
-    !hasAccounts || totals.net === 0
+    !hasAccounts
       ? 'var(--text-muted)'
-      : totals.net > 0 ? '#22C55E' : '#EF4444'
-  const heroIsEmpty = !hasAccounts || totals.net === 0
+      : singleCurrency
+        ? (soleNet > 0 ? '#22C55E' : soleNet < 0 ? '#EF4444' : 'var(--text-muted)')
+        : 'var(--text-primary)'
+  const heroIsEmpty = !hasAccounts
 
   const onAccountsSaved = (list: Account[]) => {
     setAccounts(list)
@@ -188,8 +186,12 @@ export function NetWorthPage() {
             <p className="text-[12px] font-medium uppercase text-text-muted" style={{ letterSpacing: '0.08em' }}>
               Total net worth
             </p>
-            <p className="num-hero mt-1 leading-none" style={{ color: heroColor, fontSize: 'clamp(32px, 9vw, 44px)' }}>
-              {heroIsEmpty ? `${currencySymbol(home)}—` : <AnimatedMoney value={totals.net} currency={home} />}
+            <p className="num-hero mt-1 leading-none" style={{ color: heroColor, fontSize: 'clamp(28px, 8vw, 44px)' }}>
+              {heroIsEmpty
+                ? `${currencySymbol(home)}—`
+                : singleCurrency
+                  ? <AnimatedMoney value={soleNet} currency={trendCurrency} />
+                  : <span className="num-hero" style={{ fontSize: 'clamp(20px, 5vw, 30px)' }}><GroupedTotals groups={groups} pick="net" /></span>}
             </p>
             {delta !== null && (
               <div
@@ -206,25 +208,33 @@ export function NetWorthPage() {
           <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="rounded-lg border border-default bg-bg-card p-4">
               <p className="text-[18px] font-semibold" style={{ color: 'var(--color-success)' }}>
-                {formatCurrency(totals.assets, home)}
+                <GroupedTotals groups={groups} pick="assets" />
               </p>
               <p className="mt-0.5 text-[12px] text-text-muted">Total assets</p>
             </div>
             <div className="rounded-lg border border-default bg-bg-card p-4">
               <p className="text-[18px] font-semibold" style={{ color: 'var(--color-danger)' }}>
-                {formatCurrency(totals.liabilities, home)}
+                <GroupedTotals groups={groups} pick="liabilities" />
               </p>
               <p className="mt-0.5 text-[12px] text-text-muted">Total liabilities</p>
             </div>
             <div className="rounded-lg border border-default bg-bg-card p-4">
-              <p className="text-[18px] font-semibold text-text-primary">{totals.count}</p>
+              <p className="text-[18px] font-semibold text-text-primary">{allAssets.length}</p>
               <p className="mt-0.5 text-[12px] text-text-muted">Accounts tracked</p>
             </div>
           </div>
 
           {/* Chart / empty state */}
           <div className="mt-5 rounded-lg border border-default bg-bg-card p-5">
-            {snapshots.length === 0 ? (
+            {!singleCurrency ? (
+              <div className="flex flex-col items-center gap-2 py-8 text-center">
+                <TrendingUp className="h-9 w-9 text-text-muted" />
+                <p className="max-w-xs text-[13px] text-text-secondary">
+                  Your accounts span multiple currencies. The net-worth trend is shown
+                  when all accounts use a single currency (amounts are never converted).
+                </p>
+              </div>
+            ) : snapshots.length === 0 ? (
               <div className="flex flex-col items-center gap-2 py-8 text-center">
                 <TrendingUp className="h-9 w-9 text-text-muted" />
                 <p className="max-w-xs text-[13px] text-text-secondary">
@@ -269,12 +279,12 @@ export function NetWorthPage() {
               <div className="mb-2 flex items-center justify-between">
                 <h2 className="text-[14px] font-semibold text-text-primary">Assets</h2>
                 <span className="text-[14px] font-semibold" style={{ color: 'var(--color-success)' }}>
-                  {formatCurrency(totals.assets, home)}
+                  <GroupedTotals groups={groups} pick="assets" />
                 </span>
               </div>
               <div className="stagger-list flex flex-col gap-2">
                 {assets.map((a) => (
-                  <AccountRow key={a.id} account={a} homeCurrency={home} convert={convert}
+                  <AccountRow key={a.id} account={a}
                     onEdit={() => (a.id === '__portfolio' ? navigate('/investment/portfolio') : openEdit(a))} />
                 ))}
               </div>
@@ -287,11 +297,11 @@ export function NetWorthPage() {
               <div className="mb-2 flex items-center justify-between">
                 <h2 className="text-[14px] font-semibold text-text-primary">Liabilities</h2>
                 <span className="text-[14px] font-semibold" style={{ color: 'var(--color-danger)' }}>
-                  {formatCurrency(totals.liabilities, home)}
+                  <GroupedTotals groups={groups} pick="liabilities" />
                 </span>
               </div>
               <div className="stagger-list flex flex-col gap-2">
-                {liabilities.map((a) => <AccountRow key={a.id} account={a} homeCurrency={home} convert={convert} onEdit={() => openEdit(a)} />)}
+                {liabilities.map((a) => <AccountRow key={a.id} account={a} onEdit={() => openEdit(a)} />)}
               </div>
             </section>
           )}

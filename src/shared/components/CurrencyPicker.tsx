@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, Search, Check } from 'lucide-react'
-import { CURRENCIES, getCurrency, searchCurrencies } from '../../lib/currencies'
+import { CURRENCIES, getCurrency, groupedCurrencies } from '../../lib/currencies'
 import { cn } from '../lib/cn'
 
 interface Props {
@@ -12,9 +12,10 @@ interface Props {
 }
 
 /**
- * Searchable currency dropdown. Type "kro" to filter to SEK/NOK/DKK/ISK, "yen"
- * to JPY, etc. Each option shows the symbol, code, and name. Built as a small
- * self-contained combobox (no external dependency).
+ * Searchable currency dropdown, grouped by region (Eurozone & Nordics first).
+ * Region headers are non-selectable labels; type "kro" to filter to
+ * SEK/NOK/DKK/ISK across all groups. Each option shows the symbol, code, and
+ * name. Built as a small self-contained combobox (no external dependency).
  */
 export function CurrencyPicker({ value, onChange, ariaLabel = 'Currency', className }: Props) {
   const [open, setOpen] = useState(false)
@@ -23,7 +24,7 @@ export function CurrencyPicker({ value, onChange, ariaLabel = 'Currency', classN
   const inputRef = useRef<HTMLInputElement>(null)
 
   const selected = getCurrency(value) ?? CURRENCIES[0]
-  const results = searchCurrencies(query)
+  const regions = groupedCurrencies(query)
 
   const close = () => { setOpen(false); setQuery('') }
 
@@ -84,29 +85,38 @@ export function CurrencyPicker({ value, onChange, ariaLabel = 'Currency', classN
             />
           </div>
           <ul className="max-h-60 overflow-y-auto py-1">
-            {results.length === 0 && (
+            {regions.length === 0 && (
               <li className="px-3 py-2 text-[13px] text-text-muted">No match</li>
             )}
-            {results.map((c) => {
-              const active = c.code === selected.code
-              return (
-                <li key={c.code} role="option" aria-selected={active}>
-                  <button
-                    type="button"
-                    onClick={() => choose(c.code)}
-                    className={cn(
-                      'flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] hover:bg-bg-input',
-                      active ? 'text-[var(--color-accent)]' : 'text-text-primary',
-                    )}
-                  >
-                    <span className="w-7 flex-shrink-0 text-text-muted">{c.symbol}</span>
-                    <span className="w-10 flex-shrink-0 font-medium">{c.code}</span>
-                    <span className="truncate text-text-secondary">{c.name}</span>
-                    {active && <Check className="ml-auto h-4 w-4 flex-shrink-0" />}
-                  </button>
-                </li>
-              )
-            })}
+            {regions.map((region) => (
+              <li key={region.label} role="group" aria-label={region.label}>
+                <p className="sticky top-0 bg-bg-elevated px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+                  {region.label}
+                </p>
+                <ul>
+                  {region.currencies.map((c) => {
+                    const active = c.code === selected.code
+                    return (
+                      <li key={c.code} role="option" aria-selected={active}>
+                        <button
+                          type="button"
+                          onClick={() => choose(c.code)}
+                          className={cn(
+                            'flex w-full items-center gap-2.5 px-3 py-2 text-left text-[13px] hover:bg-bg-input',
+                            active ? 'text-[var(--color-accent)]' : 'text-text-primary',
+                          )}
+                        >
+                          <span className="w-7 flex-shrink-0 text-text-muted">{c.symbol}</span>
+                          <span className="w-10 flex-shrink-0 font-medium">{c.code}</span>
+                          <span className="truncate text-text-secondary">{c.name}</span>
+                          {active && <Check className="ml-auto h-4 w-4 flex-shrink-0" />}
+                        </button>
+                      </li>
+                    )
+                  })}
+                </ul>
+              </li>
+            ))}
           </ul>
         </div>
       )}

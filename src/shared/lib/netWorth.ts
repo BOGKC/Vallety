@@ -139,26 +139,36 @@ export function computeTotals(accounts: Account[]): Totals {
   return { assets, liabilities, net: assets - liabilities, count: accounts.length }
 }
 
-type Convert = (amount: number, from: string, to: string) => { amount: number | null; ok: boolean }
+export interface CurrencyTotals {
+  currency: string
+  assets: number
+  liabilities: number
+  net: number
+  count: number
+}
 
 /**
- * Totals with every account balance converted into `home` currency. Accounts
- * whose rate is unavailable are excluded from the sums and counted in
- * `unconverted` so the UI can flag them rather than show a wrong number.
+ * Per-currency totals. There is no conversion between currencies, so balances
+ * are only ever summed WITHIN the same currency — never across. Groups are
+ * ordered with the home currency first, then by descending net magnitude, so
+ * the UI can render "€1,200 · $340 · 450 kr" without ever combining currencies.
  */
-export function computeTotalsConverted(
-  accounts: Account[], home: string, convert: Convert,
-): Totals & { unconverted: number } {
-  let assets = 0
-  let liabilities = 0
-  let unconverted = 0
+export function groupByCurrency(accounts: Account[], home: string): CurrencyTotals[] {
+  const map = new Map<string, CurrencyTotals>()
   for (const a of accounts) {
-    const r = convert(a.balance, a.currency || home, home)
-    if (!r.ok || r.amount == null) { unconverted++; continue }
-    if (isLiability(a.type)) liabilities += r.amount
-    else assets += r.amount
+    const currency = (a.currency || home).toUpperCase()
+    const g = map.get(currency) ?? { currency, assets: 0, liabilities: 0, net: 0, count: 0 }
+    if (isLiability(a.type)) g.liabilities += a.balance
+    else g.assets += a.balance
+    g.net = g.assets - g.liabilities
+    g.count += 1
+    map.set(currency, g)
   }
-  return { assets, liabilities, net: assets - liabilities, count: accounts.length, unconverted }
+  return [...map.values()].sort((x, y) => {
+    if (x.currency === home) return -1
+    if (y.currency === home) return 1
+    return Math.abs(y.net) - Math.abs(x.net)
+  })
 }
 
 // ── Snapshots ─────────────────────────────────────────────────────────────────

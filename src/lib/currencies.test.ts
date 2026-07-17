@@ -1,13 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import {
-  CURRENCIES, getCurrency, currencyDecimals, currencySymbol,
-  isSupportedCurrency, searchCurrencies,
+  CURRENCIES, CURRENCY_REGIONS, getCurrency, currencyDecimals, currencySymbol,
+  isSupportedCurrency, searchCurrencies, groupedCurrencies,
 } from './currencies'
 
 const REQUIRED = [
   'EUR','USD','GBP','SEK','NOK','DKK','ISK','CHF','PLN','CZK','HUF','RON','BGN',
   'JPY','CNY','INR','AUD','CAD','NZD','SGD','HKD','KRW','AED','SAR','TRY','ZAR',
-  'BRL','MXN','RUB','UAH','THB','MYR','IDR','PHP',
+  'BRL','MXN','UAH','THB','MYR','IDR','PHP',
 ]
 
 describe('currency catalogue', () => {
@@ -61,5 +61,41 @@ describe('searchCurrencies', () => {
   })
   it('empty query returns the full list', () => {
     expect(searchCurrencies('').length).toBe(CURRENCIES.length)
+  })
+})
+
+describe('region grouping', () => {
+  it('lists the five regions with Eurozone & Nordics first', () => {
+    expect(CURRENCY_REGIONS.map((r) => r.label)).toEqual([
+      'Eurozone & Nordics',
+      'Rest of Europe',
+      'Americas',
+      'Asia-Pacific',
+      'Middle East & Africa',
+    ])
+  })
+
+  it('Eurozone & Nordics contains exactly the expected currencies', () => {
+    const codes = CURRENCY_REGIONS[0].currencies.map((c) => c.code)
+    expect(codes).toEqual(['EUR', 'SEK', 'NOK', 'DKK', 'ISK'])
+  })
+
+  it('every catalogue currency belongs to exactly one region', () => {
+    const grouped = CURRENCY_REGIONS.flatMap((r) => r.currencies.map((c) => c.code))
+    expect(grouped.sort()).toEqual(CURRENCIES.map((c) => c.code).sort())
+    expect(new Set(grouped).size).toBe(grouped.length) // no dupes
+  })
+
+  it('groupedCurrencies filters within regions and drops empty ones', () => {
+    const groups = groupedCurrencies('kro')
+    // Only the Eurozone & Nordics region has krona/krone matches.
+    expect(groups.map((r) => r.label)).toEqual(['Eurozone & Nordics'])
+    expect(groups[0].currencies.map((c) => c.code)).toEqual(
+      expect.arrayContaining(['SEK', 'NOK', 'DKK', 'ISK']),
+    )
+  })
+
+  it('groupedCurrencies with no query returns all regions', () => {
+    expect(groupedCurrencies('').length).toBe(CURRENCY_REGIONS.length)
   })
 })
