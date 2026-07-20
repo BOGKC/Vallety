@@ -50,8 +50,6 @@ export function SignupPage() {
 
   const onSubmit = async (values: FormValues) => {
     const emailRedirectTo = authCallbackUrl()
-    // Surfaced so the exact redirect can be inspected in the browser console.
-    console.log('[auth] signUp emailRedirectTo:', emailRedirectTo)
 
     let result
     try {

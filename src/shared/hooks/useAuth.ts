@@ -3,6 +3,7 @@ import { supabase } from '../../supabase/client'
 import { useAuthStore } from '../store/authStore'
 import { useAppStore } from '../store/appStore'
 import { authCallbackUrl } from '../lib/authRedirect'
+import { clearAllValletyKeys } from '../lib/profile'
 import type { Profile } from '../../supabase/types'
 
 async function fetchProfile(userId: string): Promise<Profile | null> {
@@ -76,6 +77,12 @@ export function useAuth() {
 
   const signOut = useCallback(async () => {
     await supabase.auth.signOut()
+    // Local-first data lives in localStorage under global (non-user-scoped)
+    // keys, so on a shared device it would otherwise be visible to the next
+    // person who signs in. Clear all app data on logout so nothing leaks
+    // across accounts / to the next user. (Users can back up via the GDPR
+    // JSON export before logging out.)
+    clearAllValletyKeys()
     reset()
   }, [reset])
 
