@@ -3,6 +3,7 @@ import { FileText, Plus, X, Trash2, Send, CheckCircle } from 'lucide-react'
 import toast from '../../components/Toast'
 import { Drawer } from '../../components/Drawer'
 import { EmptyState } from '../../components/EmptyState'
+import { ApproxBadge } from '../../shared/components/ApproxNotice'
 import { formatEuro, parseAmount } from '../../shared/lib/formatters'
 import { cn } from '../../shared/lib/cn'
 import {
@@ -189,9 +190,14 @@ export function InvoicesPage() {
               <input className={fieldClass} type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
             </label>
             {parseAmount(amount) > 0 && (
-              <p className="rounded-md bg-bg-elevated px-3 py-2 text-[13px] text-text-secondary">
-                Total incl. ALV: <span className="font-semibold text-text-primary">{formatEuro(parseAmount(amount) * (1 + vatRate / 100))}</span>
-              </p>
+              <div className="rounded-md bg-bg-elevated px-3 py-2">
+                <p className="text-[13px] text-text-secondary">
+                  Net {formatEuro(parseAmount(amount))} + {vatRate}% ALV{' '}
+                  {formatEuro(parseAmount(amount) * (vatRate / 100))} ={' '}
+                  <span className="font-semibold text-text-primary">Total incl. ALV {formatEuro(parseAmount(amount) * (1 + vatRate / 100))}</span>
+                </p>
+                <ApproxBadge className="mt-1.5" detail="Estimated using the ALV rate you selected. Confirm the correct rate for your goods or services with Vero." />
+              </div>
             )}
           </div>
         </div>

@@ -11,6 +11,7 @@ import { Modal } from '../../shared/components/Modal'
 import { useAppStore } from '../../shared/store/appStore'
 import { useAuthStore } from '../../shared/store/authStore'
 import { CurrencyPicker } from '../../shared/components/CurrencyPicker'
+import { ApproxNotice } from '../../shared/components/ApproxNotice'
 import { getCurrency } from '../../lib/currencies'
 import { notifyHomeCurrencyChanged } from '../../shared/hooks/useHomeCurrency'
 import { applyTheme } from '../../shared/lib/theme'
@@ -556,6 +557,37 @@ function BusinessSection({ p, up, ticks }: { p: ValletyProfile; up: UpdateFn; ti
               ]}
               onChange={(v) => up({ age_bracket: v }, 'age_bracket')}
             />
+          </Row>
+
+          {/* Editable tax-estimate rates — defaults come from TAX_RATES. */}
+          <Row
+            label="Estimate rates"
+            sub="Override the default percentages used for the take-home & tax estimates. Leave blank to use the defaults."
+            stack
+          >
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-wrap items-center gap-3">
+                <label className="flex items-center gap-1.5 text-[12px] text-text-muted">
+                  Income tax
+                  <TextField initial={p.est_income_tax_rate} type="number" placeholder="30" width={72}
+                    onCommit={(v) => up({ est_income_tax_rate: v }, 'est_income_tax_rate')} />
+                  %
+                </label>
+                <label className="flex items-center gap-1.5 text-[12px] text-text-muted">
+                  ALV
+                  <TextField initial={p.est_alv_rate} type="number" placeholder="25.5" width={72}
+                    onCommit={(v) => up({ est_alv_rate: v }, 'est_alv_rate')} />
+                  %
+                </label>
+                <label className="flex items-center gap-1.5 text-[12px] text-text-muted">
+                  YEL
+                  <TextField initial={p.est_yel_rate} type="number" placeholder="24.1" width={72}
+                    onCommit={(v) => up({ est_yel_rate: v }, 'est_yel_rate')} />
+                  %
+                </label>
+              </div>
+              <ApproxNotice />
+            </div>
           </Row>
           <Row label="Default invoice currency" stamp={ticks.invoice_currency}>
             <CurrencyPicker ariaLabel="Invoice currency" value={p.invoice_currency} className="sm:w-72"

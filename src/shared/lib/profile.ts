@@ -73,6 +73,11 @@ export interface ValletyProfile {
   vat_frequency: 'monthly' | 'quarterly' | 'annual'
   yel_income: string
   age_bracket: 'under53' | '53-62' | 'over62'
+  // Simplified tax-estimate rate overrides (percent strings; '' = use the
+  // TAX_RATES defaults in src/lib/taxEstimate.ts).
+  est_income_tax_rate: string
+  est_alv_rate: string
+  est_yel_rate: string
   invoice_currency: string
   payment_terms: '14' | '30' | 'custom'
   payment_terms_custom: string
@@ -128,6 +133,9 @@ export const DEFAULT_PROFILE: ValletyProfile = {
   vat_frequency: 'quarterly',
   yel_income: '',
   age_bracket: 'under53',
+  est_income_tax_rate: '',
+  est_alv_rate: '',
+  est_yel_rate: '',
   invoice_currency: 'EUR',
   payment_terms: '30',
   payment_terms_custom: '',

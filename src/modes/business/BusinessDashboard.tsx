@@ -1,12 +1,16 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { startOfMonth, endOfMonth } from 'date-fns'
 import { FileText, Receipt, Percent, PiggyBank, Plus, ArrowRight, Briefcase } from 'lucide-react'
 import toast from '../../components/Toast'
 import { Modal } from '../../shared/components/Modal'
 import { EmptyState } from '../../components/EmptyState'
 import { AnimatedEuro } from '../../components/AnimatedNumber'
+import { ApproxBadge, ApproxNotice } from '../../shared/components/ApproxNotice'
 import { formatEuro, parseAmount } from '../../shared/lib/formatters'
 import { addTransaction } from '../../shared/lib/transactions'
+import { readProfile } from '../../shared/lib/profile'
+import { estimateTakeHome, resolveRates, ratesSummary } from '../../lib/taxEstimate'
 import {
   readInvoices, readExpenses, computeBusinessSummary, invoiceGross, type Invoice,
 } from '../../shared/lib/business'
@@ -45,8 +49,32 @@ export function BusinessDashboard() {
   const now = useMemo(() => new Date(), [])
   const s = useMemo(() => computeBusinessSummary(invoices, expenses, now), [invoices, expenses, now])
 
+  // Simplified take-home estimate (src/lib/taxEstimate.ts). Auto-recalculates
+  // from this month's gross revenue + expenses and the user's (editable) rates —
+  // no manual "calculate" button; changing invoices/expenses/settings re-derives.
+  const est = useMemo(() => {
+    const mStart = startOfMonth(now)
+    const mEnd = endOfMonth(now)
+    const inMonth = (iso: string) => {
+      const d = new Date(iso)
+      return !Number.isNaN(d.getTime()) && d >= mStart && d <= mEnd
+    }
+    const grossRevenue = invoices
+      .filter((i) => i.status === 'paid' && inMonth(i.paidAt ?? i.issuedAt))
+      .reduce((a, i) => a + invoiceGross(i), 0)
+    const expensesMonth = expenses.filter((e) => inMonth(e.date)).reduce((a, e) => a + e.amount, 0)
+    const p = readProfile()
+    const rates = resolveRates({
+      incomeTaxPct: p.est_income_tax_rate,
+      alvPct: p.est_alv_rate,
+      yelPct: p.est_yel_rate,
+    })
+    return estimateTakeHome({ revenue: grossRevenue, expenses: expensesMonth, ...rates })
+  }, [invoices, expenses, now])
+
+  const takeHome = est.takeHome
   const hasData = invoices.length > 0 || expenses.length > 0
-  const safeColor = s.safeToPay > 0 ? '#22C55E' : s.safeToPay < 0 ? '#EF4444' : 'var(--text-muted)'
+  const safeColor = takeHome > 0 ? '#22C55E' : takeHome < 0 ? '#EF4444' : 'var(--text-muted)'
 
   // The bridge between modes: paying yourself creates PERSONAL income, so the
   // business take-home flows straight into the personal budget picture.
@@ -102,24 +130,46 @@ export function BusinessDashboard() {
                 Safe to pay yourself
               </p>
               <p className="num-hero mt-1 leading-none" style={{ color: safeColor, fontSize: 'clamp(32px, 8vw, 52px)' }}>
-                <AnimatedEuro value={s.safeToPay} />
+                <AnimatedEuro value={takeHome} />
               </p>
-              <p className="mt-2 text-[13px] text-text-secondary">
-                This month's revenue minus ALV, estimated tax, YEL, and expenses
-              </p>
+              <div className="mt-2 flex flex-col items-center gap-1 sm:items-start">
+                <p className="text-[13px] text-text-secondary">
+                  This month's revenue minus ALV, estimated tax, YEL, and expenses
+                </p>
+                <ApproxBadge detail={ratesSummary(est.rates)} />
+              </div>
             </div>
             <button
-              onClick={() => { setTransferAmount(s.safeToPay > 0 ? String(Math.floor(s.safeToPay)) : ''); setTransferOpen(true) }}
+              onClick={() => { setTransferAmount(takeHome > 0 ? String(Math.floor(takeHome)) : ''); setTransferOpen(true) }}
               className="btn-accent inline-flex h-10 flex-shrink-0 items-center gap-1.5 self-center rounded-md px-4 text-[13px] font-semibold text-white sm:self-auto"
               style={{ backgroundColor: 'var(--color-accent)' }}
             >
               Transfer to personal <ArrowRight className="h-4 w-4" />
             </button>
           </div>
-          <p className="mt-4 border-t border-subtle pt-3 text-[11px] text-text-muted">
-            Estimates only — VAT, advance tax and YEL figures are approximations, not official
-            calculations. Confirm with your accountant or Vero.
-          </p>
+
+          {/* Transparent breakdown — exactly how the number was reached. */}
+          <div className="mt-4 border-t border-subtle pt-3">
+            <div className="flex flex-col gap-1.5">
+              {est.lines.map((line) => (
+                <div key={line.key} className="flex items-baseline justify-between gap-3 text-[13px]">
+                  <span className="text-text-secondary">
+                    {line.label}
+                    <span className="ml-1.5 text-[11px] text-text-muted">{line.note}</span>
+                  </span>
+                  <span className="tabular-nums" style={{ color: line.amount < 0 ? 'var(--color-danger)' : 'var(--text-primary)' }}>
+                    {line.amount < 0 ? '−' : ''}{formatEuro(Math.abs(line.amount))}
+                  </span>
+                </div>
+              ))}
+              <div className="mt-1 flex items-baseline justify-between gap-3 border-t border-subtle pt-2 text-[13px] font-semibold">
+                <span className="text-text-primary">Estimated take-home</span>
+                <span className="tabular-nums" style={{ color: safeColor }}>{formatEuro(takeHome)}</span>
+              </div>
+            </div>
+          </div>
+
+          <ApproxNotice className="mt-4" detail={ratesSummary(est.rates)} />
         </div>
       </div>
 

@@ -1,11 +1,16 @@
 import { useMemo, useState } from 'react'
-import { Percent, PiggyBank, ShieldCheck, Info } from 'lucide-react'
+import { Percent, PiggyBank, ShieldCheck } from 'lucide-react'
 import { AnimatedEuro } from '../../components/AnimatedNumber'
+import { ApproxBadge, ApproxNotice } from '../../shared/components/ApproxNotice'
 import { formatEuro } from '../../shared/lib/formatters'
 import { readProfile } from '../../shared/lib/profile'
 import {
   readInvoices, readExpenses, computeBusinessSummary, ADVANCE_TAX_RATE,
 } from '../../shared/lib/business'
+
+const TAX_DETAIL =
+  `Estimated using: advance tax ~${Math.round(ADVANCE_TAX_RATE * 100)}% of profit, ALV as collected minus deductible, ` +
+  'and YEL by age bracket. These are general rates, not your exact figures.'
 
 export function TaxPage() {
   const [invoices] = useState(() => readInvoices())
@@ -62,6 +67,9 @@ export function TaxPage() {
           <p className="mt-2 text-[13px] text-text-secondary">
             ALV owed + estimated advance tax + YEL for the year so far
           </p>
+          <div className="mt-2 flex justify-center">
+            <ApproxBadge detail={TAX_DETAIL} />
+          </div>
         </div>
       </div>
 
@@ -76,6 +84,7 @@ export function TaxPage() {
               <div className="min-w-0 flex-1">
                 <p className="text-[14px] font-medium text-text-primary">{c.label}</p>
                 <p className="text-[12px] text-text-muted">{c.sub}</p>
+                <ApproxBadge className="mt-1" detail={TAX_DETAIL} />
               </div>
               <span className="text-[18px] font-semibold text-text-primary">{formatEuro(c.value)}</span>
             </div>
@@ -83,15 +92,7 @@ export function TaxPage() {
         })}
       </div>
 
-      <div className="mt-5 flex items-start gap-2 rounded-md border border-default bg-bg-elevated px-3.5 py-3">
-        <Info className="mt-0.5 h-3.5 w-3.5 flex-shrink-0" style={{ color: 'var(--color-info)' }} />
-        <p className="text-[12px] leading-relaxed text-text-secondary">
-          These are rough estimates to help you set money aside — not official calculations.
-          Your actual advance tax depends on your total income and municipality, and ALV filing
-          follows your Vero schedule. Always confirm figures with your accountant
-          (veroasiantuntija) or directly with Vero.
-        </p>
-      </div>
+      <ApproxNotice className="mt-5" detail={TAX_DETAIL} />
     </div>
   )
 }
