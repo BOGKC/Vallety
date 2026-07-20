@@ -16,6 +16,7 @@ import { cn } from '../../shared/lib/cn'
 import { GettingStarted } from '../../components/GettingStarted'
 import { InfoTip, TERM_DEFS } from '../../components/InfoTip'
 import { AnimatedEuro, AnimatedPercent } from '../../components/AnimatedNumber'
+import { ApproxBadge } from '../../shared/components/ApproxNotice'
 import { SkeletonBlock, SkeletonMetricCard, SkeletonChartArea } from '../../components/skeletons'
 import { useMinLoading } from '../../shared/hooks/useMinLoading'
 
@@ -219,9 +220,12 @@ export function PersonalDashboard() {
             >
               {safeToSpend.hasIncome ? <AnimatedEuro value={safeToSpend.amount} /> : '€—'}
             </p>
-            <p className="mt-2 text-[13px] text-text-secondary">
-              After bills, budgets and goals
-            </p>
+            <div className="mt-2 flex flex-col items-center gap-1 sm:items-start">
+              <p className="text-[13px] text-text-secondary">
+                After bills, budgets and goals
+              </p>
+              <ApproxBadge detail="Estimated from your monthly income minus bills, budgets and goals. Actual safe-to-spend depends on real timing and spending — expand the breakdown to see each deduction." />
+            </div>
           </div>
 
           <button
