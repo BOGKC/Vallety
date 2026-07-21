@@ -105,7 +105,7 @@ export function BusinessDashboard() {
   if (!hasData) {
     return (
       <div className="mx-auto max-w-5xl">
-        <h1 className="sr-only">Business dashboard</h1>
+        <h1 className="sr-only">Solo founder dashboard</h1>
         <div className="rounded-lg bg-bg-card">
           <EmptyState
             icon={Briefcase}
@@ -121,7 +121,7 @@ export function BusinessDashboard() {
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-4 sm:gap-6">
-      <h1 className="sr-only">Business dashboard</h1>
+      <h1 className="sr-only">Solo founder dashboard</h1>
 
       {/* Hero — the killer number */}
       <div className="relative">
@@ -212,7 +212,7 @@ export function BusinessDashboard() {
             View all →
           </button>
         </div>
-        <div className="stagger-list flex flex-col divide-y divide-[rgba(255,255,255,0.05)]">
+        <div className="stagger-list flex flex-col divide-y divide-subtle">
           {recent.map((inv) => {
             const st = STATUS_STYLE[inv.status]
             return (

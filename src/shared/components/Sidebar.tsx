@@ -54,7 +54,7 @@ const MODE_NAV: Record<AppMode, NavGroup[]> = {
   ],
   business: [
     {
-      label: 'Business',
+      label: 'Solo founder',
       items: [
         { label: 'Dashboard', icon: LayoutDashboard, to: '/business', end: true },
         { label: 'Invoices', icon: FileText, to: '/business/invoices' },
@@ -73,7 +73,7 @@ const MODE_NAV: Record<AppMode, NavGroup[]> = {
   ],
   investment: [
     {
-      label: 'Invest',
+      label: 'Investor',
       items: [
         { label: 'Dashboard', icon: LayoutDashboard, to: '/investment', end: true },
         { label: 'Portfolio', icon: PieChart, to: '/investment/portfolio' },

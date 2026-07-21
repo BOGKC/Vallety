@@ -308,17 +308,21 @@ export function SubscriptionsPage() {
         </button>
       </div>
 
-      {/* Total banner */}
-      <div className="mb-5 rounded-lg border border-default bg-bg-card p-5">
-        <p className="text-[28px] font-bold text-text-primary"><AnimatedEuro value={monthlyTotal} />/month</p>
-        {active.length > 0 && (
-          <p className="mt-0.5 text-[14px] text-text-secondary">
-            across {active.length} active subscription{active.length === 1 ? '' : 's'}
-          </p>
-        )}
-      </div>
+      {/* Total banner — hidden until there's at least one subscription, so a
+          brand-new user sees the friendly empty state instead of "€0.00/month". */}
+      {!noSubsAtAll && (
+        <div className="mb-5 rounded-lg border border-default bg-bg-card p-5">
+          <p className="text-[28px] font-bold text-text-primary"><AnimatedEuro value={monthlyTotal} />/month</p>
+          {active.length > 0 && (
+            <p className="mt-0.5 text-[14px] text-text-secondary">
+              across {active.length} active subscription{active.length === 1 ? '' : 's'}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Tabs */}
+      {!noSubsAtAll && (
       <div className="mb-5 inline-flex items-center gap-1 rounded-full bg-bg-elevated p-1">
         {tabs.map((t) => {
           const isActive = tab === t.value
@@ -337,6 +341,7 @@ export function SubscriptionsPage() {
           )
         })}
       </div>
+      )}
 
       {/* ACTIVE */}
       {tab === 'active' && (

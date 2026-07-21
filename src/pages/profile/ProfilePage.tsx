@@ -152,7 +152,7 @@ function ProfileHeader({ p, onAvatarSaved }: { p: ValletyProfile; onAvatarSaved:
   return (
     <div
       className="flex items-center gap-5 p-6"
-      style={{ backgroundColor: 'var(--bg-card)', borderRadius: 14, border: '1px solid rgba(255,255,255,0.07)' }}
+      style={{ backgroundColor: 'var(--bg-card)', borderRadius: 14, border: '1px solid var(--border-default)' }}
     >
       <div className="relative flex-shrink-0">
         {photo ? (
@@ -487,7 +487,7 @@ function BusinessSection({ p, up, ticks }: { p: ValletyProfile; up: UpdateFn; ti
       </Row>
 
       <Collapse open={p.business_enabled} maxH={1400}>
-        <div className="divide-y divide-[rgba(255,255,255,0.05)] border-t border-[rgba(255,255,255,0.05)]">
+        <div className="divide-y divide-subtle border-t border-subtle">
           <Row label="Business name" stamp={ticks.business_name}>
             <TextField initial={p.business_name} placeholder="Your business name"
               onCommit={(v) => up({ business_name: v }, 'business_name')} />
@@ -1065,7 +1065,9 @@ function BillingSection() {
               className="rounded-full px-3 py-1 text-[14px] font-semibold text-white"
               style={{ backgroundColor: 'var(--color-accent)' }}
             >
-              {plan}
+              {/* Match the identity label used in the sidebar/header/profile header
+                  ("Free plan", not a bare "Free") so the plan name never drifts. */}
+              {plan === 'Free' ? 'Free plan' : plan}
             </span>
             <ul className="mt-3 space-y-1">
               {PLAN_FEATURES[plan].map((f) => (

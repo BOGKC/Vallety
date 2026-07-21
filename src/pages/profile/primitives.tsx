@@ -25,11 +25,11 @@ export function Section({
         {badge}
       </div>
       <div
-        className="divide-y divide-[rgba(255,255,255,0.05)] overflow-hidden"
+        className="divide-y divide-subtle overflow-hidden"
         style={{
           backgroundColor: danger ? 'rgba(239,68,68,0.02)' : 'var(--bg-card)',
           borderRadius: 14,
-          border: danger ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(255,255,255,0.07)',
+          border: danger ? '1px solid rgba(239,68,68,0.2)' : '1px solid var(--border-default)',
         }}
       >
         {children}
@@ -100,7 +100,7 @@ export function Toggle({
       style={{
         height: 22,
         minHeight: 22, // beat the global 44px mobile touch-target rule
-        backgroundColor: checked ? 'var(--color-accent)' : 'rgba(255,255,255,0.12)',
+        backgroundColor: checked ? 'var(--color-accent)' : 'var(--border-strong)',
         transition: 'background-color var(--dur-base) var(--ease-in-out-smooth)',
       }}
     >
@@ -144,8 +144,8 @@ export function Pills<T extends string | number>({
             className="rounded-full px-3 py-1.5 text-[13px] font-medium"
             style={{
               minHeight: 32,
-              backgroundColor: active ? 'var(--color-accent)' : 'rgba(255,255,255,0.05)',
-              color: active ? '#fff' : '#94A3B8',
+              backgroundColor: active ? 'var(--color-accent)' : 'var(--bg-elevated)',
+              color: active ? '#fff' : 'var(--text-secondary)',
               opacity: o.disabled ? 0.5 : 1,
               cursor: o.disabled ? 'not-allowed' : 'pointer',
               transition: 'var(--transition-fast)',
@@ -402,7 +402,7 @@ export function ConfirmInline({
     : typed.trim().toLowerCase() === word.trim().toLowerCase()
   return (
     <Collapse open={open} maxH={180}>
-      <div className="border-t border-[rgba(255,255,255,0.05)] px-5 py-4">
+      <div className="border-t border-subtle px-5 py-4">
         <p className="mb-2 text-[13px] text-text-secondary">{prompt}</p>
         <div className="flex flex-wrap items-center gap-2">
           <input

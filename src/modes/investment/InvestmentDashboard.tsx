@@ -19,7 +19,7 @@ export function InvestmentDashboard() {
   if (holdings.length === 0) {
     return (
       <div className="mx-auto max-w-5xl">
-        <h1 className="sr-only">Portfolio dashboard</h1>
+        <h1 className="sr-only">Investor dashboard</h1>
         <div className="rounded-lg bg-bg-card">
           <EmptyState
             icon={PieChartIcon}
@@ -39,7 +39,7 @@ export function InvestmentDashboard() {
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-4 sm:gap-6">
-      <h1 className="sr-only">Portfolio dashboard</h1>
+      <h1 className="sr-only">Investor dashboard</h1>
 
       {/* Hero */}
       <div className="relative">

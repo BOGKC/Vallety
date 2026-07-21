@@ -46,6 +46,14 @@ export function useAuth() {
         // local mode switch.)
         if (profile?.active_mode) useAppStore.getState().setMode(profile.active_mode)
       }
+    }).catch((e) => {
+      // If getSession() (or the profile fetch) rejects, we must still finish
+      // bootstrapping — otherwise AuthGuard/AppLoader spin forever on a blank
+      // screen. Treat it as "signed out": the user lands on the login screen
+      // (a recoverable state) rather than a permanent spinner.
+      console.error('[auth] bootstrap failed; continuing signed-out:', e)
+      store().setSession(null)
+    }).finally(() => {
       store().setLoading(false)
       store().setInitialized(true)
     })

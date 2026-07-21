@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
-import { Percent, PiggyBank, ShieldCheck } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { Percent, PiggyBank, ShieldCheck, Plus, Calculator } from 'lucide-react'
 import { AnimatedEuro } from '../../components/AnimatedNumber'
+import { EmptyState } from '../../components/EmptyState'
 import { ApproxBadge, ApproxNotice } from '../../shared/components/ApproxNotice'
 import { formatEuro } from '../../shared/lib/formatters'
 import { readProfile } from '../../shared/lib/profile'
@@ -13,11 +15,33 @@ const TAX_DETAIL =
   'and YEL by age bracket. These are general rates, not your exact figures.'
 
 export function TaxPage() {
+  const navigate = useNavigate()
   const [invoices] = useState(() => readInvoices())
   const [expenses] = useState(() => readExpenses())
   const profile = useMemo(() => readProfile(), [])
   const now = useMemo(() => new Date(), [])
   const s = useMemo(() => computeBusinessSummary(invoices, expenses, now), [invoices, expenses, now])
+  const hasData = invoices.length > 0 || expenses.length > 0
+
+  // Nothing to estimate yet — show a friendly prompt with a clear next step
+  // rather than a screen of €0.00 figures.
+  if (!hasData) {
+    return (
+      <div className="mx-auto max-w-3xl">
+        <h1 className="mb-5 text-[18px] font-semibold text-text-primary">Tax &amp; ALV</h1>
+        <div className="rounded-lg bg-bg-card">
+          <EmptyState
+            icon={Calculator}
+            title="Your tax picture appears once you have activity"
+            description="Create an invoice or log a business expense and Vallety will estimate your ALV, advance tax and YEL — with a clear breakdown and the standard rates it used."
+            primaryAction={{ label: 'Create an invoice', icon: Plus, onClick: () => navigate('/business/invoices') }}
+            secondaryAction={{ label: 'Log an expense', onClick: () => navigate('/business/expenses') }}
+          />
+        </div>
+        <ApproxNotice className="mt-4" detail={TAX_DETAIL} />
+      </div>
+    )
+  }
 
   const vatFrequency = profile.vat_registered
     ? { monthly: 'monthly', quarterly: 'quarterly', annual: 'annually' }[profile.vat_frequency]
