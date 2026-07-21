@@ -912,18 +912,25 @@ alter table public.profiles
     check (language in ('en', 'fi', 'sv'));
 
 -- ── avatars storage bucket ───────────────────────────────────────────────────
--- Public-read bucket so profile.avatar_url can be rendered with a plain <img>.
--- Writes are restricted to the owner via the policies below (path is
--- "<user-id>/avatar.<ext>", so the first path segment must equal auth.uid()).
+-- Public-read bucket so profile.avatar_url can be rendered with a plain <img>
+-- (the public object URL does not consult RLS). Writes are restricted to the
+-- owner via the policies below (path is "<user-id>/avatar.<ext>", so the first
+-- path segment must equal auth.uid()).
 insert into storage.buckets (id, name, public)
 values ('avatars', 'avatars', true)
 on conflict (id) do nothing;
 
--- Anyone can read (bucket is public).
+-- Listing/selecting via the storage API is owner-only, so the bucket can't be
+-- enumerated to harvest every user's id. (A blanket `using (bucket_id='avatars')`
+-- read policy would expose all "<user-id>/avatar.*" paths.) Public rendering is
+-- unaffected because it uses the public object URL, not this policy.
 do $$ begin
-  create policy "avatars: public read"
+  create policy "avatars: owner list"
     on storage.objects for select
-    using (bucket_id = 'avatars');
+    using (
+      bucket_id = 'avatars'
+      and (storage.foldername(name))[1] = auth.uid()::text
+    );
 exception when duplicate_object then null; end $$;
 
 -- Owners can upload / overwrite / delete only files under their own folder.
@@ -1066,3 +1073,34 @@ exception when duplicate_object then null; end $$;
 -- auth.uid() = user_id and auth.uid() is NULL for the anon role, anon already
 -- matches zero rows. If you want them to additionally never even evaluate for
 -- anon, recreate each with "... to authenticated ...". Purely cosmetic here.
+
+-- ####################################################################
+-- >>> Billing columns are server-writable only (see 010_*)
+-- ####################################################################
+-- RLS limits a user to their own profiles row but is not column-aware, so
+-- without this an authenticated client could self-grant a paid plan via
+--   supabase.from('profiles').update({ plan: 'all_access' }).
+-- This trigger keeps the billing columns writable only by trusted server roles
+-- (the future Stripe webhook using the service_role key); ordinary profile
+-- edits still apply. SECURITY INVOKER is required so current_user is the real
+-- caller's PostgREST role.
+create or replace function public.enforce_plan_immutable_by_client()
+returns trigger
+language plpgsql
+as $$
+begin
+  if current_user in ('authenticated', 'anon') then
+    new.plan           := old.plan;
+    new.plan_status    := old.plan_status;
+    new.plan_renews_at := old.plan_renews_at;
+    new.trial_ends_at  := old.trial_ends_at;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists profiles_enforce_plan_immutable on public.profiles;
+create trigger profiles_enforce_plan_immutable
+  before update on public.profiles
+  for each row
+  execute function public.enforce_plan_immutable_by_client();

@@ -73,7 +73,17 @@ export function SignupPage() {
 
     const { data, error } = result
     if (error) {
-      toast.error(error.message)
+      // Don't echo the raw provider error: "User already registered" would let
+      // an attacker enumerate which emails have accounts. For that case show the
+      // same "check your email" screen a brand-new signup shows, so the two are
+      // indistinguishable. (With "Confirm email" enabled in Supabase — see the
+      // security to-do — an existing address already returns an obfuscated
+      // success, so this branch is belt-and-braces.)
+      if (/already\s*registered|already\s*exists|already\s*in\s*use/i.test(error.message)) {
+        setConfirmEmail(values.email)
+        return
+      }
+      toast.error("We couldn't complete sign-up. Please check your details and try again.")
       return
     }
 

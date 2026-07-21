@@ -65,6 +65,14 @@ async function writePlanState(patch: Partial<PlanState>): Promise<void> {
   })
   // Best-effort server mirror. Requires the profiles columns from the migration
   // in docs/migrations/003_plan.sql. Failure never blocks the local update.
+  //
+  // NOTE: as of docs/migrations/010_billing_and_storage_hardening.sql the DB
+  // ignores plan/plan_status/plan_renews_at/trial_ends_at written by the client
+  // (a trigger reverts them) — only the service_role key (a future Stripe
+  // webhook) may set them. This UPDATE therefore no-ops those columns
+  // server-side by design; it is kept so the day billing moves server-side the
+  // read path can trust profiles as the source of truth. Client gating today is
+  // a UX convenience only, never a security boundary.
   try {
     const { data } = await supabase.auth.getUser()
     if (data.user) {

@@ -184,11 +184,26 @@ export function readProfile(): ValletyProfile {
 }
 
 /** Spread-merge a patch into the stored profile (never overwrites the rest). */
+// Profile free-text fields (business_name, iban, address, phone…) have no
+// dedicated form schema, so bound every string here as a defence-in-depth cap
+// against storage-bloat / oversized writes. It is not a security boundary on its
+// own (output is React-escaped and rows are RLS-scoped to the owner), just a
+// sane ceiling applied at the single write choke point.
+const MAX_PROFILE_STR = 256
+
+function clampProfileStrings(patch: Partial<ValletyProfile>): Partial<ValletyProfile> {
+  const out: Record<string, unknown> = { ...patch }
+  for (const [k, v] of Object.entries(out)) {
+    if (typeof v === 'string' && v.length > MAX_PROFILE_STR) out[k] = v.slice(0, MAX_PROFILE_STR)
+  }
+  return out as Partial<ValletyProfile>
+}
+
 export function saveProfilePatch(patch: Partial<ValletyProfile>): void {
   try {
     const raw = window.localStorage.getItem(PROFILE_KEY)
     const stored = raw ? JSON.parse(raw) : {}
-    window.localStorage.setItem(PROFILE_KEY, JSON.stringify({ ...stored, ...patch }))
+    window.localStorage.setItem(PROFILE_KEY, JSON.stringify({ ...stored, ...clampProfileStrings(patch) }))
     window.localStorage.setItem(LAST_UPDATED_KEY, new Date().toISOString())
   } catch {
     /* storage full or unavailable — the in-memory state still works */
