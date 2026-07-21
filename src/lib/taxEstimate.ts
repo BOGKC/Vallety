@@ -1,5 +1,5 @@
 // SIMPLIFIED ESTIMATE — base percentages only. Must be reviewed by a Finnish tax
-// professional before users rely on these figures for real decisions.
+// professional before users rely on these figures.
 //
 // A deliberately transparent MVP model: flat base rates, no brackets, no
 // deductions, no municipality logic. Every figure it produces is an

@@ -12,14 +12,16 @@ import { addTransaction } from '../../shared/lib/transactions'
 import { readProfile } from '../../shared/lib/profile'
 import { estimateTakeHome, resolveRates, ratesSummary } from '../../lib/taxEstimate'
 import {
-  readInvoices, readExpenses, computeBusinessSummary, invoiceGross, type Invoice,
+  readInvoices, readExpenses, computeBusinessSummary, invoiceGross, ADVANCE_TAX_RATE, type Invoice,
 } from '../../shared/lib/business'
 
-function MetricCard({ icon: Icon, label, value, sub }: {
+function MetricCard({ icon: Icon, label, value, sub, approx }: {
   icon: typeof FileText
   label: string
   value: React.ReactNode
   sub?: string
+  /** When set, the figure is an estimate — render the mandatory badge + rates. */
+  approx?: string
 }) {
   return (
     <div className="card rounded-lg border border-default bg-bg-card p-4">
@@ -29,6 +31,7 @@ function MetricCard({ icon: Icon, label, value, sub }: {
       </div>
       <p className="mt-2 text-[22px] font-semibold leading-tight text-text-primary">{value}</p>
       {sub && <p className="mt-1 text-[12px] text-text-muted">{sub}</p>}
+      {approx && <ApproxBadge className="mt-1.5" detail={approx} />}
     </div>
   )
 }
@@ -182,8 +185,20 @@ export function BusinessDashboard() {
           value={<AnimatedEuro value={s.outstanding} />}
           sub={s.outstandingCount > 0 ? `${s.outstandingCount} unpaid invoice${s.outstandingCount === 1 ? '' : 's'}` : 'nothing unpaid'}
         />
-        <MetricCard icon={Percent} label="ALV owed to Vero" value={<AnimatedEuro value={s.vatOwed} />} sub="year to date" />
-        <MetricCard icon={PiggyBank} label="Tax to set aside" value={<AnimatedEuro value={s.advanceTaxYtd} />} sub="est. advance tax, YTD" />
+        <MetricCard
+          icon={Percent}
+          label="ALV owed to Vero"
+          value={<AnimatedEuro value={s.vatOwed} />}
+          sub="year to date"
+          approx="ALV collected minus deductible ALV, using the standard 25.5% rate (reduced 14% / 10%). A simplified estimate — confirm with a veroasiantuntija."
+        />
+        <MetricCard
+          icon={PiggyBank}
+          label="Tax to set aside"
+          value={<AnimatedEuro value={s.advanceTaxYtd} />}
+          sub="est. advance tax, YTD"
+          approx={`Estimated advance tax (ennakkovero) at a flat ~${Math.round(ADVANCE_TAX_RATE * 100)}% of year-to-date profit. Not your exact liability — confirm with a veroasiantuntija.`}
+        />
       </div>
 
       {/* Recent invoices */}
