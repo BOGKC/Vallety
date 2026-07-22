@@ -1,7 +1,8 @@
-\set A '11111111-1111-1111-1111-111111111111'
-\set B '22222222-2222-2222-2222-222222222222'
+-- Cross-user RLS proof. Runs in the Supabase SQL editor (or psql) as-is:
+--   user A = 11111111-…  user B = 22222222-…
+-- Everything happens inside begin;…rollback; so it leaves NO data behind.
 begin;
-insert into auth.users (id,email) values ('11111111-1111-1111-1111-111111111111','a@t'),('22222222-2222-2222-2222-222222222222','b@t');
+insert into auth.users (id,email) values ('11111111-1111-1111-1111-111111111111','a@t'),('22222222-2222-2222-2222-222222222222','b@t') on conflict (id) do nothing;
 
 -- Seed one row per table OWNED BY A, via service_role (bypasses RLS for setup).
 set local role service_role;
