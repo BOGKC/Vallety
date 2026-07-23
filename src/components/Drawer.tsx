@@ -57,6 +57,9 @@ export function Drawer({ open, onClose, ariaLabel, children }: DrawerProps) {
         )}
         onClick={onClose}
         aria-hidden
+        // While dragging the sheet down, fade the scrim in step with the gesture
+        // so the sheet feels physically connected to the backdrop.
+        style={isMobile && dragY > 0 ? { opacity: Math.max(0.35, 1 - dragY / 500), transition: 'none' } : undefined}
       />
       <div
         role="dialog"
@@ -70,12 +73,16 @@ export function Drawer({ open, onClose, ariaLabel, children }: DrawerProps) {
           transition: dragging ? 'none' : 'transform var(--dur-base) var(--ease-out-expo)',
         }}
       >
-        {/* Drag handle — mobile only */}
+        {/* Drag-to-dismiss grab zone — mobile only. A generous, full-width hit
+            area (not just the thin pill) so a downward swipe near the top of the
+            sheet dismisses it. `touch-none` keeps the browser from turning the
+            drag into a scroll/refresh gesture. */}
         <div
-          className="flex justify-center pb-1 pt-2 md:hidden"
+          className="flex justify-center pb-2 pt-3 md:hidden touch-none"
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
+          aria-hidden
         >
           <div className="h-1 w-9 rounded-full" style={{ backgroundColor: 'var(--border-default)' }} />
         </div>
