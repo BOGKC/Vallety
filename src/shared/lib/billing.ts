@@ -34,6 +34,9 @@ function notifyPlanChange(): void {
  * is wired. Toggle in the browser console: localStorage.vallety_dev_billing='1'
  */
 function devBillingEnabled(): boolean {
+  // Hard off in production builds — the local dev bypass must never let a real
+  // user self-activate a paid tier, even by setting the flag by hand.
+  if (!import.meta.env.DEV) return false
   try { return window.localStorage.getItem('vallety_dev_billing') === '1' } catch { return false }
 }
 

@@ -3,7 +3,7 @@ import { supabase } from '../../supabase/client'
 import { useAuthStore } from '../store/authStore'
 import { useAppStore } from '../store/appStore'
 import { authCallbackUrl } from '../lib/authRedirect'
-import { clearAllValletyKeys } from '../lib/profile'
+import { clearAllValletyKeys, ensureLocalDataOwner, purgeDataCaches } from '../lib/profile'
 import type { Profile } from '../../supabase/types'
 
 async function fetchProfile(userId: string): Promise<Profile | null> {
@@ -38,6 +38,8 @@ export function useAuth() {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       store().setSession(session)
       if (session?.user) {
+        // Wipe stale local data if it belonged to a different user (shared device).
+        ensureLocalDataOwner(session.user.id)
         const profile = await fetchProfile(session.user.id)
         store().setProfile(profile)
         // One-time on initial load: adopt the saved workspace mode so the
@@ -60,7 +62,10 @@ export function useAuth() {
 
     supabase.auth.onAuthStateChange(async (_event, session) => {
       store().setSession(session)
-      if (session?.user) store().setProfile(await fetchProfile(session.user.id))
+      if (session?.user) {
+        ensureLocalDataOwner(session.user.id)
+        store().setProfile(await fetchProfile(session.user.id))
+      }
       else store().setProfile(null)
       store().setLoading(false)
       store().setInitialized(true)
@@ -91,6 +96,7 @@ export function useAuth() {
     // across accounts / to the next user. (Users can back up via the GDPR
     // JSON export before logging out.)
     clearAllValletyKeys()
+    void purgeDataCaches() // also drop cached Supabase REST/Storage responses
     reset()
   }, [reset])
 

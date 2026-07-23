@@ -1159,9 +1159,28 @@ function DangerSection({
     navigate('/')
   }
 
-  const deleteAccount = () => {
-    try { window.localStorage.clear() } catch { /* ignore */ }
-    onAccountDeleted()
+  const [deleting, setDeleting] = useState(false)
+  const deleteAccount = async () => {
+    if (deleting) return
+    setDeleting(true)
+    try {
+      // Real GDPR erasure runs server-side (service_role) in the delete-account
+      // Edge Function: it removes the user's Storage files and deletes the auth
+      // user, which cascades every user-scoped table. The client cannot do this
+      // itself (no admin rights), and must NOT pretend success if it fails.
+      const { error } = await supabase.functions.invoke('delete-account', { method: 'POST' })
+      if (error) throw error
+      // Erasure done — end the session and wipe all local data on this device.
+      await supabase.auth.signOut().catch(() => {})
+      clearAllValletyKeys()
+      onAccountDeleted()
+    } catch {
+      toast.error(
+        "We couldn't complete the deletion — your account was NOT deleted. Please try again, or contact support.",
+      )
+    } finally {
+      setDeleting(false)
+    }
   }
 
   return (
@@ -1188,7 +1207,7 @@ function DangerSection({
         actionLabel="Confirm reset" onConfirm={resetApp} onCancel={() => setConfirm('')} />
 
       <Row danger label="Delete my account"
-        sub="Permanently deletes your account and all associated data. Under GDPR, this will be completed within 30 days.">
+        sub="Permanently and immediately deletes your account, all your data across every table, and your uploaded files. This cannot be undone.">
         <SolidDangerBtn onClick={() => setConfirm(confirm === 'account' ? '' : 'account')}>Delete account</SolidDangerBtn>
       </Row>
       <ConfirmInline
@@ -1354,9 +1373,9 @@ export function ProfilePage() {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center gap-3 text-center">
         <ValletyMark size={40} />
-        <h1 className="text-[18px] font-semibold text-text-primary">Account deletion requested</h1>
+        <h1 className="text-[18px] font-semibold text-text-primary">Account deleted</h1>
         <p className="text-[14px] text-text-secondary">
-          All your data will be removed within 30 days. Thank you for using Vallety.
+          Your account and all associated data have been permanently removed. Thank you for using Vallety.
         </p>
       </div>
     )

@@ -9,10 +9,15 @@ export const REMEMBER_KEY = 'vallety_remember'
 
 const hasWindow = typeof window !== 'undefined'
 
-/** Remember-me preference. Default TRUE — most users want to stay logged in. */
+/**
+ * Remember-me preference. Default FALSE — the safe choice for a finance app on a
+ * possibly-shared device: the session lives in sessionStorage and is gone when
+ * the browser closes unless the user explicitly opts in. (The storage adapter
+ * still reads both stores, so flipping this never strands an existing session.)
+ */
 export function getRemember(): boolean {
-  if (!hasWindow) return true
-  try { return window.localStorage.getItem(REMEMBER_KEY) !== '0' } catch { return true }
+  if (!hasWindow) return false
+  try { return window.localStorage.getItem(REMEMBER_KEY) === '1' } catch { return false }
 }
 
 /** Persist the preference (also used to pre-fill the checkbox next visit). */

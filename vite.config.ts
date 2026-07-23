@@ -7,6 +7,7 @@ import pkg from './package.json' with { type: 'json' }
 export default defineConfig({
   // Single source of truth for the app version — read from package.json so the
   // sidebar, About screen, etc. can never drift apart. See shared/lib/version.ts.
+  // (Production console output is suppressed at the app entry in main.tsx.)
   define: {
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(pkg.version),
   },

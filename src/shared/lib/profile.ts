@@ -269,3 +269,43 @@ export function clearAllValletyKeys(): void {
     /* ignore */
   }
 }
+
+// Which user the local-first data on this device belongs to.
+const DATA_OWNER_KEY = 'vallety_data_owner'
+
+/**
+ * Shared-device guard. All financial data lives under global localStorage keys,
+ * so if user A leaves the browser without an explicit sign-out (closed tab,
+ * lapsed session), those keys linger. When ANY user authenticates we compare
+ * their id to the stored owner: a mismatch means the local data belongs to a
+ * different account, so we wipe it before the app reads it — user B never sees
+ * user A's finances. A returning same-user match keeps their data intact.
+ * Must run during auth bootstrap, before any page reads local data.
+ */
+export function ensureLocalDataOwner(userId: string): void {
+  try {
+    const owner = window.localStorage.getItem(DATA_OWNER_KEY)
+    if (owner && owner !== userId) {
+      clearAllValletyKeys()
+      void purgeDataCaches()
+    }
+    window.localStorage.setItem(DATA_OWNER_KEY, userId)
+  } catch {
+    /* storage unavailable — nothing to protect */
+  }
+}
+
+/**
+ * Purge the service-worker cache of Supabase REST/Storage responses. Those are
+ * keyed by URL, not by user, so on a shared device a previous account's cached
+ * profile/avatar could otherwise be served. Called on sign-out and when a
+ * different user signs in. Best-effort and async; safe where Cache API is absent.
+ */
+export async function purgeDataCaches(): Promise<void> {
+  try {
+    if (typeof caches === 'undefined') return
+    await caches.delete('supabase-data')
+  } catch {
+    /* Cache API unavailable — nothing to purge */
+  }
+}

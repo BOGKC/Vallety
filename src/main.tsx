@@ -4,6 +4,18 @@ import './index.css'
 import { BootError } from './components/BootError'
 import { initTheme } from './shared/lib/theme'
 
+// Suppress diagnostic console output in production so no caught-exception or
+// auth/profile detail ever surfaces in an end user's browser console. Errors
+// still reach the ErrorBoundary UI. Kept fully verbose in dev.
+if (import.meta.env.PROD) {
+  const noop = () => {}
+  console.log = noop
+  console.debug = noop
+  console.info = noop
+  console.warn = noop
+  console.error = noop
+}
+
 // Sync data-theme with the stored preference (the inline script in index.html
 // sets it pre-paint; this re-affirms it and wires the "system" OS listener).
 initTheme()

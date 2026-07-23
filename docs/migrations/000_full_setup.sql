@@ -916,8 +916,9 @@ alter table public.profiles
 -- (the public object URL does not consult RLS). Writes are restricted to the
 -- owner via the policies below (path is "<user-id>/avatar.<ext>", so the first
 -- path segment must equal auth.uid()).
-insert into storage.buckets (id, name, public)
-values ('avatars', 'avatars', true)
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('avatars', 'avatars', true, 4194304, -- 4 MB, images only (enforced server-side)
+        array['image/png','image/jpeg','image/webp','image/gif'])
 on conflict (id) do nothing;
 
 -- Listing/selecting via the storage API is owner-only, so the bucket can't be
@@ -1035,8 +1036,9 @@ create policy "waitlist insert" on public.premium_waitlist
 -- financial documents) with strict owner-only read AND write. Convention:
 -- object path is "<user-id>/<expense-id>.<ext>", so the first folder segment
 -- must equal the caller's id for every operation.
-insert into storage.buckets (id, name, public)
-values ('receipts', 'receipts', false)
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('receipts', 'receipts', false, 10485760, -- 10 MB, images + PDF (enforced server-side)
+        array['image/png','image/jpeg','image/webp','application/pdf'])
 on conflict (id) do nothing;
 
 do $$ begin
